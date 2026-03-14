@@ -12,6 +12,7 @@ const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 
 const app = express();
+app.set('trust proxy', 1); // ✅ Required for Render / reverse proxies
 const PORT = process.env.PORT || 3000;
 
 // ---- RATE LIMITERS ----
