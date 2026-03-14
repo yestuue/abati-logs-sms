@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ABATI Admin</title>
+  <style>
+    body { font-family: sans-serif; background: #111; color: #eee; padding: 40px; }
+    input, button { padding: 10px 16px; border-radius: 6px; border: 1px solid #333; margin: 4px; }
+    button { background: #00E5A0; color: #111; border: none; cursor: pointer; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-top: 24px; }
+    th, td { padding: 12px; border-bottom: 1px solid #222; text-align: left; font-size: 0.9rem; }
+    th { color: #00E5A0; }
+    #login-box { max-width: 400px; margin: 100px auto; text-align: center; }
+    #dashboard { display: none; }
+    .stat { display: inline-block; background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 16px 28px; margin: 8px; }
+    .stat h2 { margin: 0; font-size: 2rem; color: #00E5A0; }
+    .stat p { margin: 4px 0 0; color: #888; font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+
+<div id="login-box">
+  <h2>ABATI Admin</h2>
+  <input id="email" type="email" placeholder="Admin email" /><br>
+  <input id="password" type="password" placeholder="Password" /><br>
+  <button onclick="login()">Login</button>
+  <p id="login-error" style="color:#ff6b6b;font-size:0.85rem"></p>
+</div>
+
+<div id="dashboard">
+  <h1>Admin Dashboard</h1>
+  <div id="stats"></div>
+  <h3 style="margin-top:32px">All Users</h3>
+  <table>
+    <thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Role</th><th>Joined</th></tr></thead>
+    <tbody id="user-table"></tbody>
+  </table>
+  <h3 style="margin-top:32px">Waitlist</h3>
+  <pre id="waitlist-data" style="background:#1a1a1a;padding:16px;border-radius:8px;overflow:auto;font-size:0.85rem"></pre>
+</div>
+
+<script>
+  let token = localStorage.getItem('admin-token');
+  if (token) loadDashboard();
+
+  async function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const res = await fetch('/api/v1/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (data.success && data.user.role === 'admin') {
+      localStorage.setItem('admin-token', data.token);
+      token = data.token;
+      loadDashboard();
+    } else {
+      document.getElementById('login-error').textContent = 'Access denied. Admin only.';
+    }
+  }
+
+  async function loadDashboard() {
+    const headers = { 'Authorization': 'Bearer ' + token };
+
+    const [statsRes, usersRes, waitlistRes] = await Promise.all([
+      fetch('/api/v1/admin/stats', { headers }),
+      fetch('/api/v1/admin/users', { headers }),
+      fetch('/api/v1/admin/waitlist', { headers })
+    ]);
+
+    if (statsRes.status === 401 || statsRes.status === 403) {
+      localStorage.removeItem('admin-token');
+      return;
+    }
+
+    document.getElementById('login-box').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+
+    const { stats } = await statsRes.json();
+    document.getElementById('stats').innerHTML = `
+      <div class="stat"><h2>${stats.totalUsers}</h2><p>Total Users</p></div>
+      <div class="stat"><h2>${stats.proUsers}</h2><p>Pro Users</p></div>
+      <div class="stat"><h2>${stats.newToday}</h2><p>New Today</p></div>
+    `;
+
+    const { data: users } = await usersRes.json();
+    document.getElementById('user-table').innerHTML = users.map(u => `
+      <tr>
+        <td>${u.fullName}</td>
+        <td>${u.email}</td>
+        <td>${u.plan}</td>
+        <td>${u.role}</td>
+        <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+      </tr>`).join('');
+
+    const wl = await waitlistRes.json();
+    document.getElementById('waitlist-data').textContent = wl.data || '(empty)';
+  }
+</script>
+</body>
+</html>
