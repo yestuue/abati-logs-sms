@@ -123,6 +123,23 @@ const smsSchema = new mongoose.Schema({
 });
 const SMS = mongoose.model('SMS', smsSchema);
 
+const numberOrderSchema = new mongoose.Schema({
+  userId:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  number:       { type: String, required: true },
+  country:      { type: String, default: 'US' },
+  service:      { type: String, required: true },
+  serviceLabel: { type: String },
+  orderType:    { type: String, enum: ['one_time','rental'], default: 'one_time' },
+  priceNaira:   { type: Number, required: true },
+  status:       { type: String, enum: ['active','expired','cancelled'], default: 'active' },
+  otp:          { type: String },
+  otpAt:        { type: Date },
+  expiresAt:    { type: Date },
+  twilioSid:    { type: String },
+  createdAt:    { type: Date, default: Date.now }
+});
+const NumberOrder = mongoose.model('NumberOrder', numberOrderSchema);
+
 // ============================================================
 // HELPERS
 // ============================================================
@@ -893,33 +910,13 @@ app.get('/api/v1/admin/waitlist', protect, adminOnly, async (req, res) => {
 // ============================================================
 // FALLBACK — known SPA routes get index.html, unknown routes get 404
 // ============================================================
-// Serve static HTML files directly, fallback to index.html for unknown routes
+const spaRoutes = ['/', '/dashboard.html', '/admin.html'];
 app.get('*', (req, res) => {
-  // Skip API routes (already handled above)
-  if (req.path.startsWith('/api/')) return res.status(404).json({ success:false, message:'Not found.' });
-
-  // Known HTML pages — serve directly
-  const htmlPages = ['/', '/dashboard.html', '/admin.html', '/login.html', '/register.html',
-    '/about.html', '/contact.html', '/support.html', '/terms.html', '/privacy.html',
-    '/refunds.html', '/forgot-password.html', '/offline.html'];
-
-  if (htmlPages.includes(req.path)) {
-    // Root gets index.html, others get their own file
-    const file = req.path === '/' ? 'index.html' : req.path.slice(1);
-    const filePath = path.join(__dirname, 'public', file);
-    return res.sendFile(filePath, err => {
-      if (err) res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
+  const knownRoute = spaRoutes.includes(req.path) || req.path.startsWith('/api/');
+  if (knownRoute) {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
-
-  // Static assets (js, css, images, icons, manifest, sw) — let express.static handle,
-  // if we got here it means file not found
-  if (req.path.includes('.')) {
-    return res.status(404).send('Not found');
-  }
-
-  // Unknown routes → index.html
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
 
 app.listen(PORT, () => {
@@ -948,3 +945,113 @@ cron.schedule('0 * * * *', async () => {
 });
 
 console.log('[Cron] Plan expiry checker scheduled — runs every hour.');
+// ============================================================
+// NUMBER MARKETPLACE ROUTES
+// ============================================================
+
+const SERVICES = [
+  { id:'whatsapp',     label:'WhatsApp',     priceOne:850,  priceRent:1200, popular:true  },
+  { id:'telegram',     label:'Telegram',     priceOne:650,  priceRent:950,  popular:false },
+  { id:'google_voice', label:'Google Voice', priceOne:750,  priceRent:1100, popular:false },
+  { id:'facebook',     label:'Facebook',     priceOne:600,  priceRent:900,  popular:false },
+  { id:'instagram',    label:'Instagram',    priceOne:600,  priceRent:900,  popular:false },
+  { id:'twitter',      label:'Twitter/X',    priceOne:550,  priceRent:800,  popular:false },
+  { id:'tinder',       label:'Tinder',       priceOne:700,  priceRent:1000, popular:false },
+  { id:'uber',         label:'Uber',         priceOne:600,  priceRent:900,  popular:false },
+  { id:'any',          label:'Any Service',  priceOne:500,  priceRent:750,  popular:false },
+];
+
+app.get('/api/v1/marketplace/services', (req, res) => {
+  res.json({ success:true, data: SERVICES });
+});
+
+app.post('/api/v1/marketplace/buy', protect, async (req, res) => {
+  try {
+    const { serviceId, orderType = 'one_time' } = req.body;
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ success:false, message:'User not found.' });
+    const service = SERVICES.find(s => s.id === serviceId);
+    if (!service) return res.status(400).json({ success:false, message:'Invalid service.' });
+    const priceNaira = orderType === 'rental' ? service.priceRent : service.priceOne;
+
+    let assignedNumber = null;
+
+    // Try Twilio API first
+    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+      try {
+        const auth = Buffer.from(process.env.TWILIO_ACCOUNT_SID + ':' + process.env.TWILIO_AUTH_TOKEN).toString('base64');
+        const searchRes = await fetch(
+          'https://api.twilio.com/2010-04-01/Accounts/' + process.env.TWILIO_ACCOUNT_SID + '/AvailablePhoneNumbers/US/Local.json?SmsEnabled=true&Limit=1',
+          { headers: { 'Authorization': 'Basic ' + auth } }
+        );
+        const searchData = await searchRes.json();
+        if (searchData.available_phone_numbers && searchData.available_phone_numbers.length > 0) {
+          const phoneNum = searchData.available_phone_numbers[0].phone_number;
+          const buyBody = new URLSearchParams({
+            PhoneNumber: phoneNum,
+            SmsUrl: (process.env.APP_URL || 'https://abati-logs-sms.onrender.com') + '/api/v1/sms/inbound',
+            SmsMethod: 'POST'
+          });
+          const buyRes = await fetch(
+            'https://api.twilio.com/2010-04-01/Accounts/' + process.env.TWILIO_ACCOUNT_SID + '/IncomingPhoneNumbers.json',
+            { method:'POST', headers:{ 'Authorization':'Basic ' + auth, 'Content-Type':'application/x-www-form-urlencoded' }, body: buyBody }
+          );
+          const buyData = await buyRes.json();
+          if (buyData.phone_number) assignedNumber = { number: buyData.phone_number, twilioSid: buyData.sid };
+        }
+      } catch (e) { console.error('[Twilio]', e.message); }
+    }
+
+    // Fallback to manual pool
+    if (!assignedNumber) {
+      const poolNum = await VirtualNumber.findOneAndUpdate(
+        { status:'available', assignedTo:null },
+        { status:'assigned', assignedTo: req.userId, assignedAt: new Date() },
+        { new:true }
+      );
+      if (poolNum) assignedNumber = { number: poolNum.number };
+    }
+
+    if (!assignedNumber) return res.status(503).json({ success:false, message:'No numbers available right now. Try again shortly.' });
+
+    let expiresAt = null;
+    if (orderType === 'rental') { expiresAt = new Date(); expiresAt.setDate(expiresAt.getDate() + 30); }
+
+    const order = await NumberOrder.create({
+      userId: req.userId, number: assignedNumber.number,
+      service: serviceId, serviceLabel: service.label,
+      orderType, priceNaira, expiresAt,
+      twilioSid: assignedNumber.twilioSid || null, status:'active'
+    });
+
+    console.log('[Marketplace]', user.email, 'bought', assignedNumber.number, 'for', service.label);
+    res.json({ success:true, message:'Number assigned for ' + service.label, order });
+  } catch (err) {
+    console.error('[Marketplace Buy]', err.message);
+    res.status(500).json({ success:false, message:'Server error.' });
+  }
+});
+
+app.get('/api/v1/marketplace/orders', protect, async (req, res) => {
+  try {
+    const orders = await NumberOrder.find({ userId: req.userId }).sort({ createdAt:-1 }).limit(50);
+    res.json({ success:true, data: orders });
+  } catch { res.status(500).json({ success:false, message:'Server error.' }); }
+});
+
+app.get('/api/v1/marketplace/orders/:orderId/sms', protect, async (req, res) => {
+  try {
+    const order = await NumberOrder.findOne({ _id: req.params.orderId, userId: req.userId });
+    if (!order) return res.status(404).json({ success:false, message:'Order not found.' });
+    const cleanNum = order.number.replace(/[\s\-\(\)]/g, '');
+    const msgs = await SMS.find({ from: { $exists:true }, to: new RegExp(cleanNum.replace(/\+/,'\\+'), 'i') }).sort({ createdAt:-1 }).limit(20);
+    res.json({ success:true, data: msgs, order });
+  } catch { res.status(500).json({ success:false, message:'Server error.' }); }
+});
+
+app.get('/api/v1/admin/marketplace/orders', protect, adminOnly, async (req, res) => {
+  try {
+    const orders = await NumberOrder.find().sort({ createdAt:-1 }).limit(200).populate('userId','fullName email');
+    res.json({ success:true, data: orders });
+  } catch { res.status(500).json({ success:false, message:'Server error.' }); }
+});
