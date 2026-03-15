@@ -15,7 +15,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <script src="https://js.paystack.co/v1/inline.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -43,9 +42,6 @@
     .sb-item:hover { background: var(--bg-hover); color: var(--text); }
     .sb-item.active { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
     .sb-item i { font-size: 1.05rem; flex-shrink: 0; }
-    .sb-plan-badge { margin-left: auto; font-size: .62rem; font-weight: 700; padding: 2px 7px; border-radius: 100px; }
-    .badge-pro  { background: rgba(245,184,32,.15); color: var(--yellow); }
-    .badge-free { background: rgba(255,255,255,.07); color: var(--muted); }
     .sb-footer { padding: 12px; border-top: 1px solid var(--border); }
     .sb-user { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); background: rgba(255,255,255,.03); border: 1px solid var(--border); }
     .sb-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #0c0c0f; font-weight: 800; font-size: .8rem; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; flex-shrink: 0; }
@@ -60,8 +56,6 @@
     .topbar-left h1 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; }
     .topbar-left p  { font-size: .78rem; color: var(--muted); margin-top: 2px; }
     .topbar-right { display: flex; align-items: center; gap: 10px; }
-    .upgrade-btn { display: flex; align-items: center; gap: 7px; padding: 9px 18px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: #0c0c0f; font-size: .82rem; font-weight: 700; cursor: pointer; font-family: 'Syne', sans-serif; transition: opacity .18s, box-shadow .18s; }
-    .upgrade-btn:hover { opacity: .9; box-shadow: var(--accent-glow); }
     .mob-menu-btn { display: none; background: none; border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; font-size: 1.1rem; }
 
     /* CONTENT */
@@ -98,7 +92,7 @@
     .comm-wa:hover  { background: rgba(37,211,102,0.16); transform: translateY(-1px); }
 
     /* STATS */
-    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+    .stats-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 22px; }
     .stat-tile { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 12px; transition: border-color .2s, transform .2s; position: relative; overflow: hidden; }
     .stat-tile:hover { border-color: var(--border-hover); transform: translateY(-2px); }
     .stat-tile-top { display: flex; justify-content: space-between; align-items: flex-start; }
@@ -121,10 +115,6 @@
     .number-display .nd-network { font-size: .8rem; color: var(--muted); margin-bottom: 22px; }
     .copy-btn { display: flex; align-items: center; gap: 7px; padding: 10px 22px; background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: var(--radius-sm); color: var(--accent); font-size: .83rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .18s; }
     .copy-btn:hover { background: rgba(0,229,160,.15); }
-    .locked-number { display: flex; flex-direction: column; align-items: center; padding: 52px 24px; text-align: center; gap: 14px; }
-    .lock-icon { width: 60px; height: 60px; border-radius: 50%; background: var(--bg-hover); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; color: var(--muted); }
-    .locked-number h3 { font-family: 'Syne', sans-serif; font-size: 1.05rem; }
-    .locked-number p  { font-size: .85rem; color: var(--muted); line-height: 1.6; max-width: 320px; }
 
     /* SMS */
     .sms-empty { display: flex; flex-direction: column; align-items: center; padding: 52px 24px; text-align: center; gap: 12px; color: var(--muted); }
@@ -165,11 +155,6 @@
     .save-btn { padding: 10px 22px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: #0c0c0f; font-size: .85rem; font-weight: 700; cursor: pointer; font-family: 'Syne', sans-serif; transition: opacity .18s; }
     .save-btn:hover { opacity: .9; }
     .save-btn:disabled { opacity: .5; cursor: not-allowed; }
-    .plan-info-box { background: var(--bg-hover); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 16px; }
-    .plan-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
-    .plan-row:last-child { border-bottom: none; }
-    .plan-row-label { font-size: .8rem; color: var(--muted); }
-    .plan-row-val   { font-size: .85rem; font-weight: 600; }
 
     /* MODAL */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.8); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -177,19 +162,13 @@
     .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 32px; width: 440px; max-width: 100%; position: relative; }
     .modal-close { position: absolute; top: 16px; right: 16px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: .9rem; transition: all .18s; }
     .modal-close:hover { color: var(--text); border-color: var(--border-hover); }
-    .modal-logo { width: 46px; height: 46px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; color: #0c0c0f; font-size: 1.1rem; margin-bottom: 18px; }
     .modal h2 { font-family: 'Syne', sans-serif; font-size: 1.3rem; margin-bottom: 6px; }
     .modal > p { font-size: .875rem; color: var(--muted); margin-bottom: 22px; line-height: 1.6; }
-    .pricing-box { background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: 12px; padding: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
     .pricing-amount { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); }
     .pricing-period { font-size: .78rem; color: var(--muted); margin-top: 2px; }
-    .perks-list { margin-bottom: 22px; }
     .perk-item { display: flex; align-items: center; gap: 9px; padding: 8px 0; font-size: .85rem; color: var(--text); border-bottom: 1px solid var(--border); }
     .perk-item:last-child { border-bottom: none; }
     .perk-item i { color: var(--accent); font-size: 1rem; flex-shrink: 0; }
-    .pay-btn { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: #0c0c0f; font-size: .95rem; font-weight: 700; cursor: pointer; font-family: 'Syne', sans-serif; transition: opacity .18s, box-shadow .18s; }
-    .pay-btn:hover { opacity: .9; box-shadow: var(--accent-glow); }
-    .pay-btn:disabled { opacity: .6; cursor: not-allowed; }
     .secure-note { text-align: center; font-size: .73rem; color: var(--muted); margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 5px; }
 
     /* TOAST */
@@ -239,10 +218,6 @@
 
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-thumb { background: #2a2a38; border-radius: 3px; }
-    .stat-tile.pro-tile { border-color: rgba(245,184,32,.18); }
-    .stat-tile.pro-tile::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--yellow), transparent); }
-    .days-bar { height: 4px; background: var(--bg-hover); border-radius: 2px; overflow: hidden; margin-top: 6px; }
-    .days-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width .5s ease; }
     .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); position: relative; }
     .pulse-dot::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; background: rgba(0,229,160,.3); animation: pulse 2s ease-out infinite; }
     @keyframes pulse { 0%,100%{transform:scale(1);opacity:.8} 50%{transform:scale(1.8);opacity:0} }
@@ -294,31 +269,6 @@
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- UPGRADE MODAL -->
-<div class="modal-overlay" id="upgrade-modal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeUpgradeModal()"><i class="ph ph-x"></i></button>
-    <div class="modal-logo">A</div>
-    <h2>Upgrade to Pro</h2>
-    <p>Get your own private virtual number from any country and receive SMS directly in your dashboard.</p>
-    <div class="pricing-box">
-      <div>
-        <div class="pricing-amount" id="modal-price">₦500</div>
-        <div class="pricing-period" id="modal-period">per number · 30 days</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:.75rem;color:var(--muted)">Powered by</div>
-        <div style="font-size:.85rem;font-weight:600;color:var(--text)">Paystack 🔒</div>
-      </div>
-    </div>
-    <div class="perks-list" id="modal-perks"></div>
-    <button class="pay-btn" id="pay-btn" onclick="initPayment()"><i class="ph ph-lock-key"></i> Pay Securely with Paystack</button>
-    <div class="secure-note"><i class="ph ph-shield-check"></i> 256-bit SSL · No card details stored</div>
-  </div>
-</div>
-
-<!-- SIDEBAR -->
-<aside class="sidebar" id="sidebar">
   <a href="/" class="sb-brand">
     <div class="sb-logo">A</div>
     <div><div class="sb-name">ABATI</div><div class="sb-tag">GLOBAL SMS</div></div>
@@ -326,7 +276,7 @@
   <nav class="sb-nav">
     <div class="sb-section">Main</div>
     <button class="sb-item active" data-panel="overview"><i class="ph-fill ph-squares-four"></i> Overview</button>
-    <button class="sb-item" data-panel="number"><i class="ph-fill ph-sim-card"></i> My Number <span class="sb-plan-badge badge-free" id="sb-plan-badge">FREE</span></button>
+    <button class="sb-item" data-panel="number"><i class="ph-fill ph-sim-card"></i> My Number</button>
     <button class="sb-item" data-panel="sms"><i class="ph-fill ph-chat-dots"></i> SMS Inbox</button>
     <button class="sb-item" data-panel="marketplace"><i class="ph-fill ph-storefront"></i> Buy Numbers</button>
     <div class="sb-section">Account</div>
@@ -358,7 +308,6 @@
     <div class="topbar-right">
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" style="background:none;border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);cursor:pointer;font-size:1rem;display:flex;align-items:center;transition:all .2s;"><i class="ph ph-sun"></i></button>
       <button class="pwa-install-btn" onclick="installPWA()" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:8px;color:var(--accent);font-size:.8rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;"><i class="ph ph-download-simple"></i> Install</button>
-      <button class="upgrade-btn" id="topbar-upgrade-btn" onclick="openUpgradeModal()" style="display:none"><i class="ph ph-star"></i> Upgrade to Pro</button>
       <button class="mob-menu-btn" onclick="toggleSidebar()"><i class="ph ph-list"></i></button>
     </div>
   </div>
@@ -381,30 +330,10 @@
       </div>
 
       <div class="stats-row">
-        <div class="stat-tile">
-          <div class="stat-tile-top"><div class="stat-icon"><i class="ph-fill ph-sim-card"></i></div></div>
-          <div class="stat-val" id="stat-numbers">0</div>
-          <div class="stat-lbl">Virtual Numbers</div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-tile-top"><div class="stat-icon"><i class="ph-fill ph-chat-dots"></i></div></div>
-          <div class="stat-val" id="stat-sms">0</div>
-          <div class="stat-lbl">SMS Received</div>
-        </div>
-        <div class="stat-tile pro-tile" id="days-tile">
-          <div class="stat-tile-top"><div class="stat-icon yellow"><i class="ph-fill ph-calendar"></i></div></div>
-          <div class="stat-val" id="stat-days">—</div>
-          <div class="stat-lbl">Days Remaining</div>
-          <div class="days-bar"><div class="days-bar-fill" id="days-bar" style="width:0%"></div></div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-tile-top"><div class="stat-icon"><i class="ph-fill ph-currency-ngn"></i></div></div>
-          <div class="stat-val" id="stat-spent">₦0</div>
-          <div class="stat-lbl">Total Spent</div>
-        </div>
+        
       </div>
 
-      <div class="card" id="plan-banner"><div class="card-body" style="padding:0"></div></div>
+      
 
       <div class="card">
         <div class="card-head">
@@ -483,8 +412,6 @@
         </div>
         <div class="profile-card">
           <h3><i class="ph-fill ph-star" style="color:var(--yellow)"></i> Subscription</h3>
-          <div class="plan-info-box" id="sub-info-box"></div>
-          <button class="save-btn" id="profile-upgrade-btn" onclick="openUpgradeModal()" style="display:none">Upgrade to Pro →</button>
         </div>
         <div class="profile-card">
           <h3><i class="ph-fill ph-sign-out" style="color:var(--red)"></i> Session</h3>
@@ -499,11 +426,8 @@
     <div class="panel" id="panel-marketplace">
       <div class="card" id="market-catalogue-card">
         <div class="card-head">
-          <div><h2>🇺🇸 Buy a US Number</h2><p>Pick a service, choose one-time or rental, get your number instantly</p></div>
-          <div style="display:flex;background:var(--bg-hover);border-radius:8px;padding:3px;gap:2px">
-            <button onclick="setOrderType('one_time')" id="btn-one-time" style="padding:6px 14px;border-radius:6px;border:none;font-size:.78rem;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:var(--accent);color:#0c0c0f;transition:all .2s">One-time</button>
-            <button onclick="setOrderType('rental')" id="btn-rental" style="padding:6px 14px;border-radius:6px;border:none;font-size:.78rem;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:none;color:var(--muted);transition:all .2s">30-day Rental</button>
-          </div>
+          <div><h2>🇺🇸 Buy a US Number</h2><p>Select a service below — your US number is assigned instantly</p></div>
+
         </div>
         <div class="card-body" style="padding:18px">
           <div id="services-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px">
@@ -559,7 +483,6 @@
 const TOKEN_KEY = 'abati-token';
 let TOKEN = localStorage.getItem(TOKEN_KEY);
 let currentUser = null;
-let proPrice = 500, proDays = 30, proPerks = '';
 
 const panelMeta = {
   overview:     ['Overview',          'Your dashboard at a glance'],
@@ -678,7 +601,6 @@ function hideAuth() { document.getElementById('auth-screen').style.display = 'no
 function logout()   { localStorage.removeItem(TOKEN_KEY); location.reload(); }
 
 async function initDashboard() {
-  try { const pr = await fetch('/api/v1/pricing'); const pd = await pr.json(); if (pd.success) { proPrice = pd.priceNaira; proDays = pd.proDays; proPerks = pd.proPerks; } } catch {}
   try {
     const r = await fetch('/api/v1/user/dashboard', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
     const d = await r.json();
@@ -691,49 +613,23 @@ function renderDashboard(user, stats) {
   document.getElementById('sb-av').textContent    = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   document.getElementById('sb-name').textContent  = user.fullName;
   document.getElementById('sb-email').textContent = user.email;
-  const isPro = user.plan === 'pro';
-  const badge = document.getElementById('sb-plan-badge');
-  badge.textContent = isPro ? 'PRO' : 'FREE';
-  badge.className = 'sb-plan-badge ' + (isPro ? 'badge-pro' : 'badge-free');
   if (user.role === 'admin') document.getElementById('admin-link').style.display = 'flex';
-  if (!isPro) document.getElementById('topbar-upgrade-btn').style.display = 'flex';
   showVerifyBanner(user);
   if (new URLSearchParams(window.location.search).get('verified') === '1') { toast('Email verified! Welcome to ABATI 🎉'); window.history.replaceState({}, '', '/dashboard.html'); }
   document.getElementById('stat-numbers').textContent = stats.virtualNumbers;
-  document.getElementById('stat-sms').textContent     = stats.smsReceived;
-  if (isPro) {
-    document.getElementById('stat-days').textContent = stats.daysRemaining + 'd';
-    const pct = Math.min(100, (stats.daysRemaining / proDays) * 100);
-    document.getElementById('days-bar').style.width = pct + '%';
-    document.getElementById('days-bar').style.background = pct < 20 ? 'var(--red)' : 'var(--accent)';
-  } else { document.getElementById('stat-days').textContent = '—'; }
-  loadTransactionTotal();
-  renderPlanBanner(user, stats);
+  document.getElementById('stat-sms').textContent     = stats.smsReceived; }
   renderNumberPanel(user);
   document.getElementById('profile-name').value  = user.fullName;
   document.getElementById('profile-email').value = user.email;
-  renderSubInfo(user, stats);
 }
 
-function renderPlanBanner(user, stats) {
-  const banner = document.querySelector('#plan-banner .card-body');
-  const isPro = user.plan === 'pro';
-  if (isPro) {
-    banner.innerHTML = `<div style="display:flex;align-items:center;gap:18px;padding:20px 24px;background:linear-gradient(135deg,rgba(245,184,32,.06),rgba(0,229,160,.04));border-radius:0 0 14px 14px"><div style="font-size:2rem;flex-shrink:0">⭐</div><div style="flex:1"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;color:var(--yellow);margin-bottom:3px">You're on Pro</div><div style="font-size:.82rem;color:var(--muted)">Your number is active · ${stats.daysRemaining} days remaining · Expires ${new Date(user.planExpiresAt).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'})}</div></div><button onclick="openUpgradeModal()" style="padding:9px 18px;background:var(--yellow-dim);border:1px solid rgba(245,184,32,.3);border-radius:8px;color:var(--yellow);font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;white-space:nowrap">Renew Plan</button></div>`;
-  } else {
-    banner.innerHTML = `<div style="display:flex;align-items:center;gap:18px;padding:20px 24px"><div style="font-size:2rem;flex-shrink:0">🚀</div><div style="flex:1"><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem;margin-bottom:3px">Upgrade to Pro</div><div style="font-size:.82rem;color:var(--muted)">Get a private number from any country, instant SMS delivery, and ${proDays}-day retention for just ₦${proPrice.toLocaleString()}</div></div><button onclick="openUpgradeModal()" style="padding:9px 18px;background:var(--accent);border:none;border-radius:8px;color:#0c0c0f;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;white-space:nowrap;flex-shrink:0">Get Pro →</button></div>`;
-  }
-}
+
 
 async function renderNumberPanel(user) {
-  const isPro = user.plan === 'pro';
   const content = document.getElementById('number-panel-content');
   const pulse   = document.getElementById('num-pulse');
   const statusT = document.getElementById('num-status-text');
-  if (!isPro) {
-    content.innerHTML = `<div class="locked-number"><div class="lock-icon"><i class="ph ph-lock-key"></i></div><h3>No number assigned yet</h3><p>Upgrade to Pro to get your own private virtual number from any country. SMS goes straight to your dashboard.</p><button onclick="openUpgradeModal()" style="padding:11px 26px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:#0c0c0f;font-size:.875rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;margin-top:6px">Get Pro for ₦${proPrice.toLocaleString()} →</button></div>`;
-    return;
-  }
+
   content.innerHTML = '<div style="padding:52px;text-align:center;color:var(--muted)">Loading your number...</div>';
   try {
     const r = await fetch('/api/v1/user/number', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
@@ -750,12 +646,7 @@ async function renderNumberPanel(user) {
   } catch { content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">Could not load number. Try refreshing.</div>'; }
 }
 
-function renderSubInfo(user, stats) {
-  const box = document.getElementById('sub-info-box');
-  const isPro = user.plan === 'pro';
-  box.innerHTML = `<div class="plan-row"><div class="plan-row-label">Current Plan</div><div class="plan-row-val" style="color:${isPro ? 'var(--yellow)' : 'var(--text)'}">${isPro ? '⭐ Pro' : 'Free'}</div></div><div class="plan-row"><div class="plan-row-label">Status</div><div class="plan-row-val" style="color:${isPro ? 'var(--accent)' : 'var(--muted)'}">${isPro ? 'Active' : 'Inactive'}</div></div>${isPro ? `<div class="plan-row"><div class="plan-row-label">Days Left</div><div class="plan-row-val">${stats.daysRemaining} days</div></div><div class="plan-row"><div class="plan-row-label">Expires</div><div class="plan-row-val">${new Date(user.planExpiresAt).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'})}</div></div>` : ''}`;
-  if (!isPro) document.getElementById('profile-upgrade-btn').style.display = 'block';
-}
+
 
 async function loadTransactions() {
   const tbody = document.getElementById('txn-body');
@@ -766,23 +657,15 @@ async function loadTransactions() {
     if (!d.success) { tbody.innerHTML = '<tr><td colspan="5" class="tbl-empty">Could not load transactions.</td></tr>'; return; }
     const txns = d.data;
     document.getElementById('txn-count-lbl').textContent = txns.length + ' transaction' + (txns.length !== 1 ? 's' : '');
-    if (!txns.length) { tbody.innerHTML = '<tr><td colspan="5" class="tbl-empty">No payments yet. Upgrade to Pro to get started.</td></tr>'; return; }
     tbody.innerHTML = txns.map(t => `<tr><td style="font-weight:600;text-transform:capitalize">${t.plan}</td><td style="color:var(--accent);font-weight:700">₦${Number(t.amountNaira).toLocaleString()}</td><td style="font-family:monospace;font-size:.75rem;color:var(--muted)">${t.reference}</td><td><span class="rb ${t.status === 'success' ? 't-success' : t.status === 'pending' ? 't-pending' : 't-failed'}">${t.status}</span></td><td style="color:var(--muted);font-size:.78rem">${new Date(t.paidAt || t.createdAt).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'})}</td></tr>`).join('');
   } catch { tbody.innerHTML = '<tr><td colspan="5" class="tbl-empty">Network error.</td></tr>'; }
 }
 
-async function loadTransactionTotal() {
-  try {
-    const r = await fetch('/api/v1/user/transactions', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
-    const d = await r.json();
-    if (d.success) { const total = d.data.filter(t => t.status === 'success').reduce((s, t) => s + (t.amountNaira || 0), 0); document.getElementById('stat-spent').textContent = '₦' + total.toLocaleString(); }
-  } catch {}
-}
+
 
 async function loadSMS() {
   const list  = document.getElementById('sms-list');
   const isPro = currentUser?.plan === 'pro';
-  if (!isPro) { list.innerHTML = `<div class="sms-empty"><i class="ph ph-lock-key"></i><h3>Pro feature</h3><p>Upgrade to Pro to start receiving SMS on your virtual number.</p><button onclick="openUpgradeModal()" style="margin-top:8px;padding:9px 20px;background:var(--accent);border:none;border-radius:var(--radius-sm);color:#0c0c0f;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif">Upgrade Now</button></div>`; document.getElementById('sms-count-lbl').textContent = 'Upgrade required'; return; }
   list.innerHTML = '<div style="padding:44px;text-align:center;color:var(--muted)">Loading messages...</div>';
   try {
     const r = await fetch('/api/v1/user/sms', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
@@ -803,38 +686,10 @@ function copyText(text, btn) { navigator.clipboard.writeText(text).then(() => { 
 function updateOverviewSMS(msgs) { const el = document.getElementById('overview-sms-list'); if (!msgs.length) return; el.innerHTML = msgs.map(m => `<div class="sms-item"><div class="sms-icon-wrap"><i class="ph-fill ph-chat-dots"></i></div><div><div class="sms-from">${escHtml(m.from)}</div><div class="sms-body">${escHtml(m.body)}</div><div class="sms-time">${fmtDate(m.createdAt)}</div></div></div>`).join(''); }
 function copyNumber(num, btn) { navigator.clipboard.writeText(num).then(() => { const orig = btn.innerHTML; btn.innerHTML = '<i class="ph ph-check"></i> Copied!'; setTimeout(() => { btn.innerHTML = orig; }, 2000); toast('Number copied to clipboard!'); }).catch(() => toast('Copy failed', 'error')); }
 
-function openUpgradeModal() {
-  document.getElementById('modal-price').textContent  = '₦' + proPrice.toLocaleString();
-  document.getElementById('modal-period').textContent = 'per number · ' + proDays + ' days';
-  const items = proPerks.split('·').map(s => s.trim()).filter(Boolean);
-  document.getElementById('modal-perks').innerHTML = items.map(i => `<div class="perk-item"><i class="ph-fill ph-check-circle"></i> ${i}</div>`).join('');
-  document.getElementById('upgrade-modal').classList.add('open');
-}
-function closeUpgradeModal() { document.getElementById('upgrade-modal').classList.remove('open'); }
 
-async function initPayment() {
-  const btn = document.getElementById('pay-btn');
-  btn.textContent = 'Initialising…'; btn.disabled = true;
-  try {
-    const r = await fetch('/api/v1/payments/initialize', { method: 'POST', headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' } });
-    const d = await r.json();
-    if (!d.success) { toast(d.message || 'Could not start payment', 'error'); btn.innerHTML = '<i class="ph ph-lock-key"></i> Pay Securely with Paystack'; btn.disabled = false; return; }
-    const handler = PaystackPop.setup({ key: d.publicKey, email: d.email, amount: d.amount, ref: d.reference, currency: 'NGN', metadata: { custom_fields: [{ display_name: 'Plan', variable_name: 'plan', value: 'Pro' }] },
-      onSuccess: async (res) => { toast('Payment received! Verifying…'); closeUpgradeModal(); await verifyPayment(res.reference); },
-      onCancel: () => { toast('Payment cancelled', 'error'); btn.innerHTML = '<i class="ph ph-lock-key"></i> Pay Securely with Paystack'; btn.disabled = false; }
-    });
-    handler.openIframe();
-  } catch { toast('Network error. Try again.', 'error'); btn.innerHTML = '<i class="ph ph-lock-key"></i> Pay Securely with Paystack'; btn.disabled = false; }
-}
 
-async function verifyPayment(reference) {
-  try {
-    const r = await fetch('/api/v1/payments/verify', { method: 'POST', headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ reference }) });
-    const d = await r.json();
-    if (d.success) { toast('🎉 You are now Pro! Welcome to the club.'); setTimeout(() => initDashboard(), 800); }
-    else { toast(d.message || 'Verification failed. Contact support.', 'error'); }
-  } catch { toast('Verification error. Contact support.', 'error'); }
-}
+
+
 
 async function saveProfile() {
   const name = document.getElementById('profile-name').value.trim();
@@ -872,7 +727,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter') { const active = document.querySelector('.auth-form.active'); if (!active) return; if (active.id === 'form-login') doLogin(); if (active.id === 'form-register') doRegister(); }
   if (e.key === 'Escape') closeUpgradeModal();
 });
-document.getElementById('upgrade-modal').addEventListener('click', function(e) { if (e.target === this) closeUpgradeModal(); });
 
 function showVerifyBanner(user) {
   if (user.isVerified) return;
