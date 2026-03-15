@@ -603,24 +603,39 @@ function logout()   { localStorage.removeItem(TOKEN_KEY); location.reload(); }
 async function initDashboard() {
   try {
     const r = await fetch('/api/v1/user/dashboard', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
+    if (!r.ok) {
+      if (r.status === 401) { logout(); return; }
+      throw new Error('Server error ' + r.status);
+    }
     const d = await r.json();
     if (!d.success) { logout(); return; }
-    currentUser = d.user; renderDashboard(d.user, d.stats);
-  } catch { toast('Could not load dashboard', 'error'); }
+    currentUser = d.user;
+    renderDashboard(d.user, d.stats);
+  } catch(err) {
+    console.error('[Dashboard Error]', err);
+    // Don't logout on network error — server may be waking up (Render free tier)
+    setTimeout(() => initDashboard(), 4000);
+    toast('Server starting up... please wait', 'success');
+  }
 }
 
 function renderDashboard(user, stats) {
-  document.getElementById('sb-av').textContent    = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  document.getElementById('sb-name').textContent  = user.fullName;
-  document.getElementById('sb-email').textContent = user.email;
+  try {
+  const el = id => document.getElementById(id);
+  if (el('sb-av')) el('sb-av').textContent = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  if (el('sb-name')) el('sb-name').textContent  = user.fullName;
+  if (el('sb-email')) el('sb-email').textContent = user.email;
   if (user.role === 'admin') document.getElementById('admin-link').style.display = 'flex';
   showVerifyBanner(user);
   if (new URLSearchParams(window.location.search).get('verified') === '1') { toast('Email verified! Welcome to ABATI 🎉'); window.history.replaceState({}, '', '/dashboard.html'); }
   document.getElementById('stat-numbers').textContent = stats.virtualNumbers;
   document.getElementById('stat-sms').textContent     = stats.smsReceived;
   renderNumberPanel(user);
-  document.getElementById('profile-name').value  = user.fullName;
-  document.getElementById('profile-email').value = user.email;
+  const pn = document.getElementById('profile-name');
+  const pe = document.getElementById('profile-email');
+  if (pn) pn.value = user.fullName;
+  if (pe) pe.value = user.email;
+  } catch(e) { console.error('[renderDashboard]', e); }
 }
 
 
