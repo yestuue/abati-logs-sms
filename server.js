@@ -4,13 +4,12 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
-const fs = require('fs');
-const fsPromises = require('fs').promises;
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const cron = require('node-cron');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -32,7 +31,10 @@ app.use(generalLimiter);
 // MONGODB
 // ============================================================
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ MongoDB Connected Successfully'))
+  .then(async () => {
+    console.log('✅ MongoDB Connected Successfully');
+    await seedNumberPool();
+  })
   .catch(err => console.error('❌ MongoDB Connection Error:', err.message));
 
 // ============================================================
@@ -47,6 +49,8 @@ const userSchema = new mongoose.Schema({
   plan:          { type: String, enum: ['free','pro'], default: 'free' },
   planExpiresAt: { type: Date },
   isVerified:    { type: Boolean, default: false },
+  verifyToken:   { type: String },
+  verifyExpires: { type: Date },
   createdAt:     { type: Date, default: Date.now },
   lastLogin:     { type: Date }
 });
@@ -86,6 +90,38 @@ const settingsSchema = new mongoose.Schema({
 });
 
 const Settings = mongoose.model('Settings', settingsSchema);
+
+// ---- WAITLIST MODEL (replaces flat-file storage) ----
+const waitlistSchema = new mongoose.Schema({
+  email:     { type: String, required: true, unique: true, lowercase: true, trim: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Waitlist = mongoose.model('Waitlist', waitlistSchema);
+
+// ---- VIRTUAL NUMBER MODEL ----
+const virtualNumberSchema = new mongoose.Schema({
+  number:      { type: String, required: true, unique: true },
+  network:     { type: String, required: true },
+  type:        { type: String, required: true },
+  status:      { type: String, enum: ['available','assigned','suspended'], default: 'available' },
+  assignedTo:  { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  assignedAt:  { type: Date },
+  termiiId:    { type: String }  // Termii phone ID if using their API
+});
+const VirtualNumber = mongoose.model('VirtualNumber', virtualNumberSchema);
+
+// ---- SMS MESSAGE MODEL ----
+const smsSchema = new mongoose.Schema({
+  userId:    { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  numberId:  { type: mongoose.Schema.Types.ObjectId, ref: 'VirtualNumber', required: true },
+  from:      { type: String, required: true },
+  to:        { type: String, required: true },
+  body:      { type: String, required: true },
+  raw:       { type: mongoose.Schema.Types.Mixed },
+  createdAt: { type: Date, default: Date.now }
+});
+const SMS = mongoose.model('SMS', smsSchema);
 
 // ============================================================
 // HELPERS
@@ -132,6 +168,77 @@ async function setSetting(key, value) {
 
 const otpStore = new Map();
 
+// ============================================================
+// TERMII SMS HELPER
+// ============================================================
+// Termii is a Nigerian SMS provider — sign up at termii.com
+// Add TERMII_API_KEY to your Render environment variables
+// If you prefer Africa's Talking, swap the fetch call below
+
+async function termiiSendSMS(to, message) {
+  if (!process.env.TERMII_API_KEY) {
+    console.log('[SMS] TERMII_API_KEY not set — skipping real SMS send');
+    return { success: false, reason: 'no_key' };
+  }
+  try {
+    const res = await fetch('https://api.ng.termii.com/api/sms/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key:  process.env.TERMII_API_KEY,
+        to,
+        from:     'ABATI',
+        sms:      message,
+        type:     'plain',
+        channel:  'generic'
+      })
+    });
+    const data = await res.json();
+    console.log('[SMS Send]', to, '→', data);
+    return { success: true, data };
+  } catch (err) {
+    console.error('[SMS Error]', err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+// ---- NUMBER POOL SEEDER ----
+// Runs once on startup — populates VirtualNumber collection from liveNumbers array
+// Safe to run repeatedly (upsert by number field)
+async function seedNumberPool() {
+  try {
+    for (const n of liveNumbers) {
+      await VirtualNumber.findOneAndUpdate(
+        { number: n.number },
+        { $setOnInsert: { number: n.number, network: n.network, type: n.type, status: 'available' } },
+        { upsert: true, new: true }
+      );
+    }
+    console.log('[Pool] Virtual number pool seeded/verified ✅');
+  } catch (err) {
+    console.error('[Pool Error]', err.message);
+  }
+}
+
+// ---- ASSIGN NUMBER TO USER ----
+async function assignNumberToUser(userId) {
+  // Find first available number that isn't already assigned
+  const num = await VirtualNumber.findOneAndUpdate(
+    { status: 'available', assignedTo: null },
+    { status: 'assigned', assignedTo: userId, assignedAt: new Date() },
+    { new: true }
+  );
+  return num;  // null if pool is exhausted
+}
+
+// ---- RELEASE NUMBER FROM USER ----
+async function releaseNumberFromUser(userId) {
+  await VirtualNumber.updateMany(
+    { assignedTo: userId },
+    { status: 'available', assignedTo: null, assignedAt: null }
+  );
+}
+
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
@@ -165,15 +272,23 @@ app.get('/api/v1/numbers', (req, res) => {
   }, 300);
 });
 
-app.post('/api/v1/waitlist', (req, res) => {
+// ---- WAITLIST — now persists to MongoDB ----
+app.post('/api/v1/waitlist', async (req, res) => {
   const { email } = req.body;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!email || !emailRegex.test(email))
     return res.status(400).json({ success:false, message:'Please provide a valid email address' });
-  fs.appendFile(path.join(__dirname, 'waitlist.txt'), `${new Date().toISOString()} - ${email}\n`, err => {
-    if (err) console.error('Error saving:', err);
-  });
-  res.status(201).json({ success:true, message:'Successfully added to waitlist!' });
+  try {
+    await Waitlist.create({ email });
+    res.status(201).json({ success:true, message:'Successfully added to waitlist!' });
+  } catch (err) {
+    if (err.code === 11000) {
+      // Already on waitlist — treat as success so we don't leak info
+      return res.status(201).json({ success:true, message:"You're already on the list!" });
+    }
+    console.error('[Waitlist Error]', err.message);
+    res.status(500).json({ success:false, message:'Server error. Please try again.' });
+  }
 });
 
 // Public pricing endpoint
@@ -204,10 +319,36 @@ app.post('/api/v1/auth/register', authLimiter, async (req, res) => {
       return res.status(409).json({ success:false, message:'An account with this email already exists.' });
     const user = await User.create({ fullName, email, password });
     const token = generateToken(user._id);
+
+    // Send verification email (non-blocking — don't fail registration if email fails)
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    user.verifyToken   = verifyToken;
+    user.verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+    await user.save({ validateBeforeSave: false });
+
+    try {
+      const verifyUrl = `${process.env.APP_URL || 'https://abati-logs-sms.onrender.com'}/api/v1/auth/verify-email?token=${verifyToken}&email=${encodeURIComponent(email)}`;
+      await transporter.sendMail({
+        from: `"ABATI LOGS & SMS" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'Verify your ABATI account',
+        html: `<div style="font-family:Arial;background:#1A1A1A;padding:40px;color:#fff;max-width:500px">
+          <h2 style="color:#00E5A0">ABATI LOGS & SMS</h2>
+          <h3>Welcome, ${fullName.split(' ')[0]}! 👋</h3>
+          <p style="color:#ccc;margin-bottom:24px">Click the button below to verify your email address and activate your account.</p>
+          <a href="${verifyUrl}"
+             style="display:inline-block;padding:12px 28px;background:#00E5A0;color:#111;border-radius:8px;text-decoration:none;font-weight:700">
+            Verify Email Address →
+          </a>
+          <p style="color:#555;margin-top:24px;font-size:.82rem">This link expires in 24 hours. If you didn't create an account, ignore this email.</p>
+        </div>`
+      });
+    } catch (emailErr) { console.error('[Verify Email Error]', emailErr.message); }
+
     console.log(`[Register] New user: ${email}`);
     res.status(201).json({
-      success:true, message:'Account created successfully!', token,
-      user:{ id:user._id, fullName:user.fullName, email:user.email, plan:user.plan, role:user.role }
+      success:true, message:'Account created! Please check your email to verify your account.', token,
+      user:{ id:user._id, fullName:user.fullName, email:user.email, plan:user.plan, role:user.role, isVerified:user.isVerified }
     });
   } catch (err) {
     console.error('[Register Error]', err.message);
@@ -296,6 +437,65 @@ app.post('/api/v1/auth/reset-password', async (req, res) => {
   } catch { res.status(500).json({ success:false, message:'Server error.' }); }
 });
 
+// Email verification route — user clicks link in their inbox
+app.get('/api/v1/auth/verify-email', async (req, res) => {
+  try {
+    const { token, email } = req.query;
+    if (!token || !email)
+      return res.redirect('/?verified=invalid');
+
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+      verifyToken: token,
+      verifyExpires: { $gt: new Date() }
+    });
+
+    if (!user) return res.redirect('/?verified=expired');
+
+    user.isVerified    = true;
+    user.verifyToken   = undefined;
+    user.verifyExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    console.log(`[Verify] Email verified: ${email}`);
+    res.redirect('/dashboard.html?verified=1');
+  } catch (err) {
+    console.error('[Verify Email Route Error]', err.message);
+    res.redirect('/?verified=error');
+  }
+});
+
+// Resend verification email
+app.post('/api/v1/auth/resend-verification', protect, authLimiter, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ success:false, message:'User not found.' });
+    if (user.isVerified) return res.json({ success:true, message:'Email already verified.' });
+
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    user.verifyToken   = verifyToken;
+    user.verifyExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save({ validateBeforeSave: false });
+
+    const verifyUrl = `${process.env.APP_URL || 'https://abati-logs-sms.onrender.com'}/api/v1/auth/verify-email?token=${verifyToken}&email=${encodeURIComponent(user.email)}`;
+    await transporter.sendMail({
+      from: `"ABATI LOGS & SMS" <${process.env.EMAIL_USER}>`,
+      to: user.email,
+      subject: 'Verify your ABATI account',
+      html: `<div style="font-family:Arial;background:#1A1A1A;padding:40px;color:#fff;max-width:500px">
+        <h2 style="color:#00E5A0">ABATI LOGS & SMS</h2>
+        <p style="color:#ccc;margin-bottom:24px">Here's your new verification link:</p>
+        <a href="${verifyUrl}" style="display:inline-block;padding:12px 28px;background:#00E5A0;color:#111;border-radius:8px;text-decoration:none;font-weight:700">Verify Email →</a>
+        <p style="color:#555;margin-top:24px;font-size:.82rem">Expires in 24 hours.</p>
+      </div>`
+    });
+    res.json({ success:true, message:'Verification email resent.' });
+  } catch (err) {
+    console.error('[Resend Verify Error]', err.message);
+    res.status(500).json({ success:false, message:'Server error.' });
+  }
+});
+
 // ============================================================
 // USER ROUTES
 // ============================================================
@@ -320,6 +520,45 @@ app.get('/api/v1/user/transactions', protect, async (req, res) => {
     const transactions = await Transaction.find({ userId:req.userId }).sort({ createdAt:-1 });
     res.json({ success:true, data:transactions });
   } catch { res.status(500).json({ success:false, message:'Server error.' }); }
+});
+
+app.patch('/api/v1/user/profile', protect, authLimiter, async (req, res) => {
+  try {
+    const { fullName } = req.body;
+    if (!fullName || !fullName.trim())
+      return res.status(400).json({ success:false, message:'Full name is required.' });
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { fullName: fullName.trim() },
+      { new: true, runValidators: true }
+    ).select('-password');
+    if (!user) return res.status(404).json({ success:false, message:'User not found.' });
+    res.json({ success:true, message:'Profile updated.', user });
+  } catch (err) {
+    console.error('[Profile Update Error]', err.message);
+    res.status(500).json({ success:false, message:'Server error.' });
+  }
+});
+
+app.post('/api/v1/user/change-password', protect, authLimiter, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword)
+      return res.status(400).json({ success:false, message:'Both passwords are required.' });
+    if (newPassword.length < 8)
+      return res.status(400).json({ success:false, message:'New password must be at least 8 characters.' });
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ success:false, message:'User not found.' });
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch)
+      return res.status(401).json({ success:false, message:'Current password is incorrect.' });
+    user.password = newPassword;
+    await user.save();
+    res.json({ success:true, message:'Password changed successfully.' });
+  } catch (err) {
+    console.error('[Change Password Error]', err.message);
+    res.status(500).json({ success:false, message:'Server error.' });
+  }
 });
 
 // ============================================================
@@ -368,6 +607,10 @@ app.post('/api/v1/payments/verify', protect, async (req, res) => {
     expiresAt.setDate(expiresAt.getDate() + proDays);
 
     await User.findByIdAndUpdate(req.userId, { plan:'pro', planExpiresAt:expiresAt });
+
+    // Assign a dedicated number to this user if they don't already have one
+    const existingNum = await VirtualNumber.findOne({ assignedTo: req.userId });
+    if (!existingNum) await assignNumberToUser(req.userId);
     await Transaction.findOneAndUpdate({ reference }, {
       status:'success', channel:paystackData.data.channel, paidAt:new Date(paystackData.data.paid_at)
     });
@@ -419,6 +662,8 @@ app.post('/api/v1/payments/webhook', async (req, res) => {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + proDays);
         await User.findByIdAndUpdate(tx.userId, { plan:'pro', planExpiresAt:expiresAt });
+        const existingNumWh = await VirtualNumber.findOne({ assignedTo: tx.userId });
+        if (!existingNumWh) await assignNumberToUser(tx.userId);
         await Transaction.findOneAndUpdate({ reference:event.data.reference }, {
           status:'success', channel:event.data.channel, paidAt:new Date(event.data.paid_at)
         });
@@ -430,6 +675,66 @@ app.post('/api/v1/payments/webhook', async (req, res) => {
     console.error('[Webhook Error]', err.message);
     res.sendStatus(200);
   }
+});
+
+// ============================================================
+// SMS ROUTES
+// ============================================================
+
+// Termii inbound SMS webhook — add this URL in Termii dashboard → Messaging → Sender IDs → Webhook
+// URL: https://abati-logs-sms.onrender.com/api/v1/sms/inbound
+app.post('/api/v1/sms/inbound', async (req, res) => {
+  try {
+    const { to, from, sms, id } = req.body;
+    if (!to || !from || !sms) return res.sendStatus(200);
+
+    // Find which user owns this number
+    const num = await VirtualNumber.findOne({ number: to });
+    if (!num || !num.assignedTo) {
+      console.log('[SMS Inbound] Unrouted SMS to', to);
+      return res.sendStatus(200);
+    }
+
+    await SMS.create({
+      userId:   num.assignedTo,
+      numberId: num._id,
+      from,
+      to,
+      body:     sms,
+      raw:      req.body
+    });
+
+    console.log(`[SMS Inbound] ${from} → ${to}: ${sms.substring(0,40)}`);
+    res.sendStatus(200);
+  } catch (err) {
+    console.error('[SMS Inbound Error]', err.message);
+    res.sendStatus(200);
+  }
+});
+
+// Get SMS inbox for logged-in Pro user
+app.get('/api/v1/user/sms', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) return res.status(404).json({ success:false, message:'User not found.' });
+    if (user.plan !== 'pro')
+      return res.status(403).json({ success:false, message:'Pro plan required.' });
+
+    const messages = await SMS.find({ userId: req.userId })
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    res.json({ success:true, data: messages });
+  } catch { res.status(500).json({ success:false, message:'Server error.' }); }
+});
+
+// Get assigned number for logged-in user
+app.get('/api/v1/user/number', protect, async (req, res) => {
+  try {
+    const num = await VirtualNumber.findOne({ assignedTo: req.userId });
+    if (!num) return res.json({ success:true, data: null });
+    res.json({ success:true, data: num });
+  } catch { res.status(500).json({ success:false, message:'Server error.' }); }
 });
 
 // ============================================================
@@ -465,6 +770,15 @@ app.patch('/api/v1/admin/users/:id/plan', protect, adminOnly, async (req, res) =
       update.planExpiresAt = null;
     }
     await User.findByIdAndUpdate(req.params.id, update);
+
+    // Assign or release number based on plan change
+    if (plan === 'pro') {
+      const existing = await VirtualNumber.findOne({ assignedTo: req.params.id });
+      if (!existing) await assignNumberToUser(req.params.id);
+    } else {
+      await releaseNumberFromUser(req.params.id);
+    }
+
     res.json({ success:true, message:`User plan updated to ${plan}.` });
   } catch { res.status(500).json({ success:false, message:'Server error.' }); }
 });
@@ -479,9 +793,11 @@ app.get('/api/v1/admin/stats', protect, adminOnly, async (req, res) => {
       { $match:{ status:'success' } },
       { $group:{ _id:null, total:{ $sum:'$amountNaira' } } }
     ]);
+    const waitlistTotal = await Waitlist.countDocuments();
     res.json({ success:true, stats:{
       totalUsers, proUsers, freeUsers:totalUsers-proUsers, newToday,
-      totalRevenue: revenueAgg[0]?.total || 0
+      totalRevenue: revenueAgg[0]?.total || 0,
+      waitlistTotal
     }});
   } catch { res.status(500).json({ success:false, message:'Server error.' }); }
 });
@@ -490,6 +806,45 @@ app.get('/api/v1/admin/transactions', protect, adminOnly, async (req, res) => {
   try {
     const transactions = await Transaction.find().sort({ createdAt:-1 }).limit(200);
     res.json({ success:true, data:transactions });
+  } catch { res.status(500).json({ success:false, message:'Server error.' }); }
+});
+
+// Admin: get full number pool with assignment info
+app.get('/api/v1/admin/numbers', protect, adminOnly, async (req, res) => {
+  try {
+    const numbers = await VirtualNumber.find().populate('assignedTo', 'fullName email').sort({ status: 1, network: 1 });
+    res.json({ success:true, data: numbers });
+  } catch { res.status(500).json({ success:false, message:'Server error.' }); }
+});
+
+// Admin: add a number to the pool
+app.post('/api/v1/admin/numbers', protect, adminOnly, async (req, res) => {
+  try {
+    const { number, network, type } = req.body;
+    if (!number || !network || !type)
+      return res.status(400).json({ success:false, message:'number, network and type are required.' });
+    const num = await VirtualNumber.create({ number, network, type, status:'available' });
+    res.status(201).json({ success:true, data: num });
+  } catch (err) {
+    if (err.code === 11000) return res.status(409).json({ success:false, message:'Number already exists.' });
+    res.status(500).json({ success:false, message:'Server error.' });
+  }
+});
+
+// Admin: delete a number from the pool
+app.delete('/api/v1/admin/numbers/:id', protect, adminOnly, async (req, res) => {
+  try {
+    await VirtualNumber.findByIdAndDelete(req.params.id);
+    res.json({ success:true, message:'Number removed.' });
+  } catch { res.status(500).json({ success:false, message:'Server error.' }); }
+});
+
+// Admin: view all SMS messages
+app.get('/api/v1/admin/sms', protect, adminOnly, async (req, res) => {
+  try {
+    const messages = await SMS.find().sort({ createdAt:-1 }).limit(500)
+      .populate('userId', 'fullName email');
+    res.json({ success:true, data: messages });
   } catch { res.status(500).json({ success:false, message:'Server error.' }); }
 });
 
@@ -512,30 +867,39 @@ app.post('/api/v1/admin/settings', protect, adminOnly, async (req, res) => {
   } catch { res.status(500).json({ success:false, message:'Server error.' }); }
 });
 
+// ---- WAITLIST ADMIN ROUTES — now reads from MongoDB ----
 app.get('/api/v1/admin/waitlist/stats', protect, adminOnly, async (req, res) => {
   try {
-    const data  = await fsPromises.readFile(path.join(__dirname, 'waitlist.txt'), 'utf8');
-    const lines = data.trim().split('\n').filter(l => l.trim());
-    const signups = lines.map(line => {
-      const i = line.indexOf(' - ');
-      return { timestamp:line.substring(0,i), email:line.substring(i+3) };
+    const total   = await Waitlist.countDocuments();
+    const latest  = await Waitlist.find().sort({ createdAt:-1 }).limit(5);
+    const signups = await Waitlist.find().sort({ createdAt:-1 });
+    res.json({
+      success: true,
+      total,
+      latest:  latest.map(w  => ({ email: w.email, timestamp: w.createdAt })),
+      signups: signups.map(w => ({ email: w.email, timestamp: w.createdAt }))
     });
-    res.json({ success:true, total:signups.length, latest:signups.slice(-5).reverse(), signups });
   } catch { res.json({ success:true, total:0, latest:[], signups:[] }); }
 });
 
 app.get('/api/v1/admin/waitlist', protect, adminOnly, async (req, res) => {
   try {
-    const data = await fsPromises.readFile(path.join(__dirname, 'waitlist.txt'), 'utf8');
-    res.json({ success:true, data });
+    const signups = await Waitlist.find().sort({ createdAt:-1 });
+    const data = signups.map(w => `${w.createdAt.toISOString()} - ${w.email}`).join('\n');
+    res.json({ success:true, data: data || '(no waitlist entries yet)' });
   } catch { res.json({ success:true, data:'(no waitlist entries yet)' }); }
 });
 
 // ============================================================
-// FALLBACK
+// FALLBACK — known SPA routes get index.html, unknown routes get 404
 // ============================================================
+const spaRoutes = ['/', '/dashboard.html', '/admin.html'];
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  const knownRoute = spaRoutes.includes(req.path) || req.path.startsWith('/api/');
+  if (knownRoute) {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
 
 app.listen(PORT, () => {
@@ -544,3 +908,23 @@ app.listen(PORT, () => {
   console.log(`Running on http://localhost:${PORT}`);
   console.log(`=================================`);
 });
+
+// ============================================================
+// CRON — Auto-downgrade expired Pro users (runs every hour)
+// ============================================================
+cron.schedule('0 * * * *', async () => {
+  try {
+    const now = new Date();
+    const result = await User.updateMany(
+      { plan: 'pro', planExpiresAt: { $lt: now } },
+      { $set: { plan: 'free', planExpiresAt: null } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`[Cron] Auto-downgraded ${result.modifiedCount} expired Pro user(s) at ${now.toISOString()}`);
+    }
+  } catch (err) {
+    console.error('[Cron Error]', err.message);
+  }
+});
+
+console.log('[Cron] Plan expiry checker scheduled — runs every hour.');

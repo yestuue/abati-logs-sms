@@ -1,62 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ---- THEME TOGGLE ----
-  const themeToggle = document.getElementById('theme-toggle');
-  const body = document.body;
-
-  const savedTheme = localStorage.getItem('abati-theme');
-  if (savedTheme === 'light') {
-    body.classList.add('light-mode');
-    updateToggleIcon(true);
-  }
-
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      const isLight = body.classList.toggle('light-mode');
-      localStorage.setItem('abati-theme', isLight ? 'light' : 'dark');
-      updateToggleIcon(isLight);
-    });
-  }
-
-  function updateToggleIcon(isLight) {
-    if (!themeToggle) return;
-    const thumb = themeToggle.querySelector('.theme-toggle-thumb');
-    if (thumb) thumb.innerHTML = isLight ? '☀️' : '🌙';
-  }
-
-  updateToggleIcon(body.classList.contains('light-mode'));
-
   // ---- NAVBAR SCROLL EFFECT ----
   const navbar = document.getElementById('navbar');
-  window.addEventListener('scroll', () => {
-    navbar.classList.toggle('scrolled', window.scrollY > 50);
-  });
+  if (navbar) {
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 50);
+    });
+  }
 
   // ---- MOBILE MENU TOGGLE ----
   const menuBtn = document.getElementById('mobile-menu-btn');
   const navLinks = document.querySelector('.nav-links');
-  if (menuBtn) {
+  if (menuBtn && navLinks) {
     menuBtn.addEventListener('click', () => {
       navLinks.classList.toggle('mobile-active');
+    });
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!menuBtn.contains(e.target) && !navLinks.contains(e.target)) {
+        navLinks.classList.remove('mobile-active');
+      }
     });
   }
 
   // ---- SCROLL ANIMATIONS ----
   const fadeEls = document.querySelectorAll('.fade-in');
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        entry.target.classList.remove('hidden');
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1 });
-
-  fadeEls.forEach(el => {
-    el.classList.add('hidden');
-    observer.observe(el);
-  });
+  if (fadeEls.length) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    fadeEls.forEach(el => observer.observe(el));
+  }
 
   // ---- FILTER BUTTONS ----
   const filterBtns = document.querySelectorAll('.filter-btn');
@@ -74,28 +53,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!numbersGrid) return;
 
     numbersGrid.innerHTML = `
-      <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">
-        <div class="pulse" style="margin:0 auto 16px;width:12px;height:12px;"></div>
+      <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">
         Loading numbers...
       </div>`;
 
     try {
       const url = network === 'all' ? '/api/v1/numbers' : `/api/v1/numbers?network=${network}`;
-      const res = await fetch(url);
+      const res  = await fetch(url);
       const data = await res.json();
 
       if (data.success && data.data.length > 0) {
         renderNumbers(data.data);
       } else {
         numbersGrid.innerHTML = `
-          <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">
+          <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">
             No numbers available for this network right now.
           </div>`;
       }
     } catch (err) {
       console.error('Failed to fetch numbers:', err);
       numbersGrid.innerHTML = `
-        <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">
+        <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)">
           Could not connect to server.
         </div>`;
     }
@@ -122,30 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ---- WAITLIST CTA ----
-  document.querySelectorAll('.btn-primary').forEach(btn => {
-    if (btn.textContent.trim().includes('Get Started Free')) {
-      btn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const originalHTML = btn.innerHTML;
-        btn.innerHTML = 'Joining...';
-        btn.disabled = true;
-        try {
-          await fetch('/api/v1/waitlist', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: 'visitor@abatisms.com' })
-          });
-          btn.innerHTML = "✓ You're on the list!";
-          setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 3000);
-        } catch {
-          btn.innerHTML = originalHTML;
-          btn.disabled = false;
-        }
-      });
-    }
-  });
-
   fetchNumbers();
 });
 
@@ -155,7 +109,10 @@ function copyToClipboard(text, element) {
     const original = element.innerText;
     element.innerText = 'Copied!';
     element.style.color = 'var(--accent)';
-    setTimeout(() => { element.innerText = original; element.style.color = ''; }, 2000);
+    setTimeout(() => {
+      element.innerText = original;
+      element.style.color = '';
+    }, 2000);
   }).catch(() => {
     const t = document.createElement('textarea');
     t.value = text;

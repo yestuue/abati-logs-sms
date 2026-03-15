@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Page Not Found | ABATI LOGS & SMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #09090d;
+      --bg2: #111118;
+      --border: rgba(255,255,255,0.07);
+      --accent: #00E5A0;
+      --accent-dim: rgba(0,229,160,0.08);
+      --accent-border: rgba(0,229,160,0.2);
+      --text: #F0F0F0;
+      --muted: #5a5a6e;
+      --muted2: #888899;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(0,229,160,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      margin-bottom: 52px;
+      position: relative;
+    }
+    .logo-mark {
+      width: 34px; height: 34px;
+      background: var(--accent);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800; font-size: .9rem;
+      color: #09090d;
+    }
+    .logo-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .9rem; color: var(--text); }
+    .logo-sub  { font-size: .6rem; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+
+    .error-code {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(6rem, 18vw, 11rem);
+      font-weight: 800;
+      line-height: 1;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(0,229,160,0.25);
+      letter-spacing: -4px;
+      position: relative;
+      margin-bottom: 8px;
+      user-select: none;
+    }
+
+    .error-code::after {
+      content: '404';
+      position: absolute;
+      inset: 0;
+      color: transparent;
+      -webkit-text-stroke: 0;
+      background: linear-gradient(135deg, rgba(0,229,160,0.15) 0%, transparent 60%);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 800;
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    p {
+      font-size: 1rem;
+      color: var(--muted2);
+      max-width: 400px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+      position: relative;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      position: relative;
+    }
+
+    .btn-primary {
+      padding: 13px 28px;
+      background: var(--accent);
+      border: none;
+      border-radius: 9px;
+      color: #09090d;
+      font-size: .9rem;
+      font-weight: 700;
+      font-family: 'Syne', sans-serif;
+      cursor: pointer;
+      text-decoration: none;
+      transition: opacity .18s, transform .18s;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+
+    .btn-ghost {
+      padding: 13px 28px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--muted2);
+      font-size: .9rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color .18s, color .18s;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .btn-ghost:hover { border-color: var(--accent-border); color: var(--accent); }
+
+    .helpful-links {
+      margin-top: 52px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .helpful-links span { font-size: .78rem; color: var(--muted); }
+    .helpful-links a {
+      font-size: .78rem;
+      color: var(--muted2);
+      text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      transition: all .18s;
+    }
+    .helpful-links a:hover { border-color: var(--accent-border); color: var(--accent); }
+
+    .countdown {
+      margin-top: 32px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+    .countdown span { color: var(--accent); font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <a href="/" class="logo">
+    <div class="logo-mark">A</div>
+    <div>
+      <div class="logo-name">ABATI</div>
+      <div class="logo-sub">LOGS & SMS</div>
+    </div>
+  </a>
+
+  <div class="error-code">404</div>
+
+  <h1>Page not found</h1>
+  <p>The page you're looking for doesn't exist or may have been moved. Let's get you back on track.</p>
+
+  <div class="actions">
+    <a href="/" class="btn-primary">← Back to Home</a>
+    <a href="/dashboard.html" class="btn-ghost">Go to Dashboard</a>
+  </div>
+
+  <div class="helpful-links">
+    <span>Quick links:</span>
+    <a href="/#numbers">Numbers</a>
+    <a href="/#pricing">Pricing</a>
+    <a href="/#waitlist">Waitlist</a>
+    <a href="/admin.html">Admin</a>
+  </div>
+
+  <div class="countdown">
+    Redirecting to home in <span id="count">10</span>s
+  </div>
+
+  <script>
+    let t = 10;
+    const el = document.getElementById('count');
+    const timer = setInterval(() => {
+      t--;
+      el.textContent = t;
+      if (t <= 0) { clearInterval(timer); window.location.href = '/'; }
+    }, 1000);
+
+    // Cancel redirect if user clicks anything
+    document.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => clearInterval(timer));
+    });
+  </script>
+</body>
+</html>

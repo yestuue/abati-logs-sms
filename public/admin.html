@@ -202,7 +202,8 @@
     <button class="sb-item" data-panel="users"><i class="ph-fill ph-users"></i> Users <span class="sb-badge" id="sb-users">0</span></button>
     <button class="sb-item" data-panel="transactions"><i class="ph-fill ph-receipt"></i> Transactions <span class="sb-badge" id="sb-txns">0</span></button>
     <button class="sb-item" data-panel="waitlist"><i class="ph-fill ph-list-bullets"></i> Waitlist <span class="sb-badge" id="sb-wl">0</span></button>
-    <button class="sb-item" data-panel="numbers"><i class="ph-fill ph-sim-card"></i> Numbers</button>
+    <button class="sb-item" data-panel="numbers"><i class="ph-fill ph-sim-card"></i> Numbers <span class="sb-badge" id="sb-nums">0</span></button>
+    <button class="sb-item" data-panel="sms"><i class="ph-fill ph-chat-dots"></i> SMS Log <span class="sb-badge" id="sb-sms">0</span></button>
 
     <div class="sb-label">Configuration</div>
     <button class="sb-item" data-panel="settings"><i class="ph-fill ph-gear"></i> Settings & Pricing</button>
@@ -313,9 +314,57 @@
 
     <!-- NUMBERS -->
     <div class="panel" id="panel-numbers">
-      <div class="card">
-        <div class="card-head"><div><h3>Virtual Number Pool</h3><p>All active numbers</p></div></div>
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-head">
+          <div><h3>Number Pool</h3><p id="num-pool-lbl">All virtual numbers</p></div>
+        </div>
         <div class="num-grid" id="num-grid"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><div><h3>Add Number to Pool</h3><p>Manually add a Nigerian number</p></div></div>
+        <div class="card-body" style="padding:20px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end">
+            <div>
+              <label class="form-label">Phone Number</label>
+              <input type="text" class="form-input" id="add-num-number" placeholder="+234 812 345 6789">
+            </div>
+            <div>
+              <label class="form-label">Network Name</label>
+              <input type="text" class="form-input" id="add-num-network" placeholder="MTN">
+            </div>
+            <div>
+              <label class="form-label">Network Type</label>
+              <select class="form-input" id="add-num-type" style="cursor:pointer">
+                <option value="mtn">mtn</option>
+                <option value="airtel">airtel</option>
+                <option value="glo">glo</option>
+                <option value="9mobile">9mobile</option>
+              </select>
+            </div>
+            <button class="save-btn" id="add-num-btn" onclick="addNumber()">Add Number</button>
+          </div>
+          <p style="font-size:.75rem;color:var(--muted);margin-top:12px">Numbers added here go into the available pool and get assigned to the next Pro user who upgrades.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- SMS LOG -->
+    <div class="panel" id="panel-sms">
+      <div class="card">
+        <div class="card-head">
+          <div><h3>SMS Log</h3><p id="sms-log-lbl">All received messages</p></div>
+          <button class="save-btn" id="export-sms-btn" style="font-size:.78rem;padding:8px 14px">Export CSV</button>
+        </div>
+        <div class="card-body">
+          <div class="search-bar">
+            <input type="text" class="s-input" id="sms-search" placeholder="Search sender, number or message...">
+          </div>
+          <table class="tbl">
+            <thead><tr><th>User</th><th>From</th><th>To (Number)</th><th>Message</th><th>Time</th></tr></thead>
+            <tbody id="sms-body"><tr><td colspan="5"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></td></tr></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -432,7 +481,8 @@ const panelMeta = {
   users:        ['User Management',         'View, filter and manage all users'],
   transactions: ['Transactions',            'All payment history'],
   waitlist:     ['Waitlist',                'Pre-launch email signups'],
-  numbers:      ['Virtual Number Pool',     'All active numbers'],
+  numbers:      ['Virtual Number Pool',     'Manage numbers available to Pro users'],
+  sms:          ['SMS Log',                 'All messages received across all numbers'],
   settings:     ['Settings & Pricing',      'Configure pricing, Pro perks and webhooks'],
 };
 
@@ -665,16 +715,33 @@ async function loadAll() {
       renderWaitlist(allWaitlist, 'wl-body');
     }
 
-    // Numbers
-    const nr = await fetch('/api/v1/numbers');
+    // Numbers — fetch from admin route for full assignment info
+    const nr = await fetch('/api/v1/admin/numbers', { headers:{'Authorization':'Bearer '+TOKEN} });
     const nd = await nr.json();
     if (nd.success) {
-      document.getElementById('num-grid').innerHTML = nd.data.map(n => `
-        <div class="num-card">
+      const available = nd.data.filter(n => n.status === 'available').length;
+      const assigned  = nd.data.filter(n => n.status === 'assigned').length;
+      document.getElementById('sb-nums').textContent = nd.data.length;
+      document.getElementById('num-pool-lbl').textContent =
+        `${nd.data.length} total · ${available} available · ${assigned} assigned`;
+      document.getElementById('num-grid').innerHTML = nd.data.length ? nd.data.map(n => `
+        <div class="num-card" style="border-color:${n.status==='assigned'?'rgba(0,229,160,.25)':n.status==='suspended'?'rgba(255,92,92,.2)':'rgba(255,255,255,0.07)'}">
           <div class="num-network">${n.network}</div>
           <div class="num-number">${n.number}</div>
-          <div class="num-status">Status: <span style="color:var(--accent)">${n.status}</span></div>
-        </div>`).join('');
+          <div class="num-status">Status: <span style="color:${n.status==='available'?'var(--accent)':n.status==='assigned'?'var(--yellow)':'var(--red)'}">${n.status}</span></div>
+          ${n.assignedTo ? `<div style="font-size:.7rem;color:var(--muted);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${n.assignedTo.email}">&#128100; ${n.assignedTo.fullName||n.assignedTo.email}</div>` : ''}
+          <button onclick="deleteNumber('${n._id}')" class="tbl-btn danger" style="margin-top:10px;width:100%">Remove</button>
+        </div>`).join('') : '<div class="empty" style="grid-column:1/-1"><i class="ph ph-sim-card"></i><p>No numbers in pool yet. Add numbers below.</p></div>';
+    }
+
+    // SMS log
+    const smsr = await fetch('/api/v1/admin/sms', { headers:{'Authorization':'Bearer '+TOKEN} });
+    const smsd = await smsr.json();
+    if (smsd.success) {
+      allSMS = smsd.data || [];
+      document.getElementById('sb-sms').textContent  = allSMS.length;
+      document.getElementById('sms-log-lbl').textContent = allSMS.length + ' message' + (allSMS.length !== 1 ? 's' : '');
+      renderSMSTable(allSMS);
     }
 
     // Settings
@@ -685,6 +752,83 @@ async function loadAll() {
     toast('Failed to load some data','error');
   }
 }
+
+// ADD NUMBER
+async function addNumber() {
+  const number  = document.getElementById('add-num-number').value.trim();
+  const network = document.getElementById('add-num-network').value.trim();
+  const type    = document.getElementById('add-num-type').value;
+  const btn     = document.getElementById('add-num-btn');
+  if (!number || !network) { toast('Fill in number and network name', 'error'); return; }
+  btn.textContent = 'Adding…'; btn.disabled = true;
+  try {
+    const r = await fetch('/api/v1/admin/numbers', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ number, network, type })
+    });
+    const d = await r.json();
+    if (d.success) {
+      toast('Number added to pool ✓');
+      document.getElementById('add-num-number').value = '';
+      document.getElementById('add-num-network').value = '';
+      loadAll();
+    } else { toast(d.message || 'Failed', 'error'); }
+  } catch { toast('Network error', 'error'); }
+  btn.textContent = 'Add Number'; btn.disabled = false;
+}
+
+async function deleteNumber(id) {
+  if (!confirm('Remove this number from the pool?')) return;
+  try {
+    const r = await fetch('/api/v1/admin/numbers/' + id, {
+      method: 'DELETE', headers: { 'Authorization': 'Bearer ' + TOKEN }
+    });
+    const d = await r.json();
+    if (d.success) { toast('Number removed'); loadAll(); }
+    else toast(d.message || 'Failed', 'error');
+  } catch { toast('Network error', 'error'); }
+}
+
+let allSMS = [];
+function renderSMSTable(msgs) {
+  const b = document.getElementById('sms-body');
+  if (!msgs.length) {
+    b.innerHTML = '<tr><td colspan="5"><div class="empty"><i class="ph ph-chat-dots"></i><p>No SMS received yet. Configure Termii webhook to start receiving messages.</p></div></td></tr>';
+    return;
+  }
+  b.innerHTML = msgs.map(m => `<tr>
+    <td style="font-size:.82rem">${m.userId ? (m.userId.fullName || m.userId.email) : '—'}</td>
+    <td style="font-weight:600;font-family:monospace;font-size:.82rem">${m.from}</td>
+    <td style="font-size:.8rem;color:var(--muted)">${m.to}</td>
+    <td style="font-size:.82rem;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${m.body.replace(/"/g,'&quot;')}">${m.body}</td>
+    <td style="color:var(--muted);font-size:.75rem;white-space:nowrap">${new Date(m.createdAt).toLocaleString('en-NG',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+  </tr>`).join('');
+}
+
+document.getElementById('sms-search').addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  renderSMSTable(allSMS.filter(m =>
+    m.from.toLowerCase().includes(q) ||
+    m.to.toLowerCase().includes(q) ||
+    m.body.toLowerCase().includes(q) ||
+    (m.userId && (m.userId.fullName || m.userId.email || '').toLowerCase().includes(q))
+  ));
+});
+
+document.getElementById('export-sms-btn').addEventListener('click', () => {
+  if (!allSMS.length) { toast('No SMS to export', 'error'); return; }
+  const csv = 'User,From,To,Message,Date\n' +
+    allSMS.map(m => {
+      const user = m.userId ? (m.userId.email || '') : '';
+      const body = '"' + m.body.replace(/"/g, '""') + '"';
+      return `${user},${m.from},${m.to},${body},${m.createdAt}`;
+    }).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'abati-sms-log.csv'; a.click();
+  toast('SMS log exported!');
+});
 
 // LOGIN
 async function doLogin() {
