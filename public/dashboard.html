@@ -617,7 +617,7 @@ function renderDashboard(user, stats) {
   showVerifyBanner(user);
   if (new URLSearchParams(window.location.search).get('verified') === '1') { toast('Email verified! Welcome to ABATI 🎉'); window.history.replaceState({}, '', '/dashboard.html'); }
   document.getElementById('stat-numbers').textContent = stats.virtualNumbers;
-  document.getElementById('stat-sms').textContent     = stats.smsReceived; }
+  document.getElementById('stat-sms').textContent     = stats.smsReceived;
   renderNumberPanel(user);
   document.getElementById('profile-name').value  = user.fullName;
   document.getElementById('profile-email').value = user.email;
