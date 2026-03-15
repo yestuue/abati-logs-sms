@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel | ABATI LOGS & SMS</title>
+  <title>Admin Panel | ABATI SMS</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
@@ -91,7 +91,6 @@
     .empty { padding:44px 24px; text-align:center; color:var(--muted); }
     .empty i { font-size:2.2rem; display:block; margin-bottom:10px; opacity:.3; }
     .empty p { font-size:.875rem; }
-    /* Settings */
     .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
     .setting-card { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:24px; }
     .setting-card h3 { font-family:'Syne',sans-serif; font-size:.95rem; margin-bottom:6px; }
@@ -107,12 +106,10 @@
     .price-preview { background:var(--accent-glow); border:1px solid rgba(0,229,160,.2); border-radius:10px; padding:16px; margin-top:16px; text-align:center; }
     .price-preview .amount { font-size:2.2rem; font-family:'Syne',sans-serif; font-weight:800; color:var(--accent); }
     .price-preview .label { font-size:.78rem; color:var(--muted); margin-top:4px; }
-    /* Toast */
     .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:10px 22px; font-size:.875rem; color:var(--text); z-index:999; opacity:0; transition:all .3s; pointer-events:none; }
     .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
     .toast.success { border-color:var(--accent); color:var(--accent); }
     .toast.error { border-color:var(--red); color:var(--red); }
-    /* Modal */
     .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); backdrop-filter:blur(4px); z-index:200; display:none; align-items:center; justify-content:center; }
     .modal-overlay.open { display:flex; }
     .modal { background:var(--bg-card); border:1px solid var(--border); border-radius:16px; padding:26px; width:400px; max-width:95vw; }
@@ -123,7 +120,6 @@
     .btn-ghost { background:var(--bg-hover); color:var(--muted); }
     .btn-danger { background:rgba(255,92,92,.15); color:var(--red); border:1px solid rgba(255,92,92,.2); }
     .btn-danger:hover { background:rgba(255,92,92,.25); }
-    /* Login */
     #login-screen { position:fixed; inset:0; background:var(--bg); display:flex; align-items:center; justify-content:center; z-index:300; }
     .login-box { background:var(--bg-card); border:1px solid var(--border); border-radius:20px; padding:38px; width:380px; max-width:95vw; }
     .login-logo { width:46px; height:46px; background:var(--accent); border-radius:12px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:800; color:#111; font-size:1.1rem; margin-bottom:18px; }
@@ -136,13 +132,13 @@
     .login-btn { width:100%; padding:12px; background:var(--accent); border:none; border-radius:8px; color:#111; font-size:.9rem; font-weight:700; cursor:pointer; font-family:'Syne',sans-serif; transition:opacity .2s; margin-top:6px; }
     .login-btn:hover { opacity:.9; }
     .l-error { background:rgba(255,92,92,.1); border:1px solid rgba(255,92,92,.2); border-radius:8px; padding:9px 13px; font-size:.8rem; color:var(--red); margin-bottom:14px; display:none; }
-    /* Numbers */
     .num-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; padding:14px; }
     .num-card { background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:14px; }
     .num-network { font-size:.68rem; font-weight:700; color:var(--accent); letter-spacing:1px; text-transform:uppercase; }
     .num-number { font-family:'Syne',sans-serif; font-size:.95rem; font-weight:700; margin:4px 0; }
     .num-status { font-size:.73rem; color:var(--muted); }
-    /* Mobile */
+    /* Country flag badges in number cards */
+    .num-flag { font-size:1.1rem; margin-right:4px; }
     @media (max-width:1100px) { .stats-row { grid-template-columns:repeat(3,1fr); } }
     @media (max-width:900px) {
       .stats-row { grid-template-columns:repeat(2,1fr); }
@@ -173,10 +169,8 @@
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- DELETE MODAL -->
 <div class="modal-overlay" id="del-modal">
   <div class="modal">
     <h3>Delete User</h3>
@@ -188,7 +182,6 @@
   </div>
 </div>
 
-<!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <a href="/" class="sb-brand">
     <div class="sb-logo">A</div>
@@ -197,17 +190,14 @@
   <nav class="sb-nav">
     <div class="sb-label">Overview</div>
     <button class="sb-item active" data-panel="overview"><i class="ph-fill ph-squares-four"></i> Dashboard</button>
-
     <div class="sb-label">Management</div>
     <button class="sb-item" data-panel="users"><i class="ph-fill ph-users"></i> Users <span class="sb-badge" id="sb-users">0</span></button>
     <button class="sb-item" data-panel="transactions"><i class="ph-fill ph-receipt"></i> Transactions <span class="sb-badge" id="sb-txns">0</span></button>
     <button class="sb-item" data-panel="waitlist"><i class="ph-fill ph-list-bullets"></i> Waitlist <span class="sb-badge" id="sb-wl">0</span></button>
     <button class="sb-item" data-panel="numbers"><i class="ph-fill ph-sim-card"></i> Numbers <span class="sb-badge" id="sb-nums">0</span></button>
     <button class="sb-item" data-panel="sms"><i class="ph-fill ph-chat-dots"></i> SMS Log <span class="sb-badge" id="sb-sms">0</span></button>
-
     <div class="sb-label">Configuration</div>
     <button class="sb-item" data-panel="settings"><i class="ph-fill ph-gear"></i> Settings & Pricing</button>
-
     <div class="sb-label">Navigate</div>
     <a href="/dashboard.html" class="sb-item"><i class="ph ph-layout"></i> User Dashboard</a>
     <a href="/" class="sb-item"><i class="ph ph-house"></i> Back to Site</a>
@@ -224,7 +214,6 @@
   </div>
 </aside>
 
-<!-- MAIN -->
 <div class="main">
   <div class="topbar">
     <div>
@@ -247,21 +236,13 @@
         <div class="stat"><div class="stat-top"><div class="stat-icon"><i class="ph-fill ph-currency-ngn"></i></div><span class="stat-badge bg">Revenue</span></div><div class="stat-val" id="ov-rev">--</div><div class="stat-lbl">Total Revenue</div></div>
         <div class="stat"><div class="stat-top"><div class="stat-icon"><i class="ph-fill ph-list-bullets"></i></div><span class="stat-badge bg">Waitlist</span></div><div class="stat-val" id="ov-wl">--</div><div class="stat-lbl">Waitlist Signups</div></div>
       </div>
-
       <div class="card">
         <div class="card-head"><div><h3>Recent Users</h3><p>Latest registrations</p></div><button class="tbl-btn" onclick="switchPanel('users')">View All</button></div>
-        <div class="card-body">
-          <table class="tbl"><thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Role</th><th>Joined</th></tr></thead>
-          <tbody id="ov-users"><tr><td colspan="5"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></td></tr></tbody></table>
-        </div>
+        <div class="card-body"><table class="tbl"><thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Role</th><th>Joined</th></tr></thead><tbody id="ov-users"><tr><td colspan="5"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></td></tr></tbody></table></div>
       </div>
-
       <div class="card">
         <div class="card-head"><div><h3>Recent Transactions</h3><p>Latest payments</p></div><button class="tbl-btn" onclick="switchPanel('transactions')">View All</button></div>
-        <div class="card-body">
-          <table class="tbl"><thead><tr><th>User</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
-          <tbody id="ov-txns"><tr><td colspan="4"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></td></tr></tbody></table>
-        </div>
+        <div class="card-body"><table class="tbl"><thead><tr><th>User</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody id="ov-txns"><tr><td colspan="4"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -275,10 +256,7 @@
             <select class="s-select" id="u-role"><option value="all">All Roles</option><option value="admin">Admin</option><option value="user">User</option></select>
             <select class="s-select" id="u-plan"><option value="all">All Plans</option><option value="pro">Pro</option><option value="free">Free</option></select>
           </div>
-          <table class="tbl">
-            <thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Role</th><th>Joined</th><th>Last Login</th><th>Actions</th></tr></thead>
-            <tbody id="users-body"><tr><td colspan="7"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></td></tr></tbody>
-          </table>
+          <table class="tbl"><thead><tr><th>Name</th><th>Email</th><th>Plan</th><th>Role</th><th>Joined</th><th>Last Login</th><th>Actions</th></tr></thead><tbody id="users-body"><tr><td colspan="7"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></td></tr></tbody></table>
         </div>
       </div>
     </div>
@@ -286,18 +264,13 @@
     <!-- TRANSACTIONS -->
     <div class="panel" id="panel-transactions">
       <div class="card">
-        <div class="card-head"><div><h3>All Transactions</h3><p id="txn-lbl">Loading...</p></div>
-          <button class="save-btn" id="export-txn-btn" style="font-size:.78rem;padding:8px 14px">Export CSV</button>
-        </div>
+        <div class="card-head"><div><h3>All Transactions</h3><p id="txn-lbl">Loading...</p></div><button class="save-btn" id="export-txn-btn" style="font-size:.78rem;padding:8px 14px">Export CSV</button></div>
         <div class="card-body">
           <div class="search-bar">
             <input type="text" class="s-input" id="txn-search" placeholder="Search by email or reference...">
             <select class="s-select" id="txn-status"><option value="all">All Status</option><option value="success">Success</option><option value="pending">Pending</option><option value="failed">Failed</option></select>
           </div>
-          <table class="tbl">
-            <thead><tr><th>User</th><th>Email</th><th>Amount</th><th>Reference</th><th>Channel</th><th>Status</th><th>Date</th></tr></thead>
-            <tbody id="txn-body"><tr><td colspan="7"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></td></tr></tbody>
-          </table>
+          <table class="tbl"><thead><tr><th>User</th><th>Email</th><th>Amount</th><th>Reference</th><th>Channel</th><th>Status</th><th>Date</th></tr></thead><tbody id="txn-body"><tr><td colspan="7"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></td></tr></tbody></table>
         </div>
       </div>
     </div>
@@ -305,9 +278,7 @@
     <!-- WAITLIST -->
     <div class="panel" id="panel-waitlist">
       <div class="card">
-        <div class="card-head"><div><h3>Waitlist Signups</h3><p id="wl-lbl">Loading...</p></div>
-          <button class="save-btn" id="export-wl-btn" style="font-size:.78rem;padding:8px 14px">Export CSV</button>
-        </div>
+        <div class="card-head"><div><h3>Waitlist Signups</h3><p id="wl-lbl">Loading...</p></div><button class="save-btn" id="export-wl-btn" style="font-size:.78rem;padding:8px 14px">Export CSV</button></div>
         <div class="card-body" id="wl-body"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></div>
       </div>
     </div>
@@ -315,36 +286,69 @@
     <!-- NUMBERS -->
     <div class="panel" id="panel-numbers">
       <div class="card" style="margin-bottom:18px">
-        <div class="card-head">
-          <div><h3>Number Pool</h3><p id="num-pool-lbl">All virtual numbers</p></div>
-        </div>
+        <div class="card-head"><div><h3>Virtual Number Pool</h3><p id="num-pool-lbl">All active numbers</p></div></div>
         <div class="num-grid" id="num-grid"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></div>
       </div>
 
+      <!-- ★ UPDATED: Add Number form with global network types -->
       <div class="card">
-        <div class="card-head"><div><h3>Add Number to Pool</h3><p>Manually add a Nigerian number</p></div></div>
+        <div class="card-head"><div><h3>Add Number to Pool</h3><p>Add any number from any country worldwide</p></div></div>
         <div class="card-body" style="padding:20px">
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end">
             <div>
               <label class="form-label">Phone Number</label>
-              <input type="text" class="form-input" id="add-num-number" placeholder="+234 812 345 6789">
+              <input type="text" class="form-input" id="add-num-number" placeholder="+13509005908">
             </div>
             <div>
-              <label class="form-label">Network Name</label>
-              <input type="text" class="form-input" id="add-num-network" placeholder="MTN">
+              <label class="form-label">Network / Carrier Name</label>
+              <input type="text" class="form-input" id="add-num-network" placeholder="e.g. T-Mobile, EE, MTN">
             </div>
             <div>
-              <label class="form-label">Network Type</label>
+              <label class="form-label">Country / Type</label>
               <select class="form-input" id="add-num-type" style="cursor:pointer">
-                <option value="mtn">mtn</option>
-                <option value="airtel">airtel</option>
-                <option value="glo">glo</option>
-                <option value="9mobile">9mobile</option>
+                <optgroup label="🌎 Americas">
+                  <option value="us">🇺🇸 United States</option>
+                  <option value="ca">🇨🇦 Canada</option>
+                  <option value="br">🇧🇷 Brazil</option>
+                  <option value="mx">🇲🇽 Mexico</option>
+                </optgroup>
+                <optgroup label="🌍 Europe">
+                  <option value="uk">🇬🇧 United Kingdom</option>
+                  <option value="fr">🇫🇷 France</option>
+                  <option value="de">🇩🇪 Germany</option>
+                  <option value="it">🇮🇹 Italy</option>
+                  <option value="es">🇪🇸 Spain</option>
+                  <option value="nl">🇳🇱 Netherlands</option>
+                  <option value="se">🇸🇪 Sweden</option>
+                  <option value="no">🇳🇴 Norway</option>
+                  <option value="ch">🇨🇭 Switzerland</option>
+                </optgroup>
+                <optgroup label="🌏 Asia & Pacific">
+                  <option value="au">🇦🇺 Australia</option>
+                  <option value="nz">🇳🇿 New Zealand</option>
+                  <option value="in">🇮🇳 India</option>
+                  <option value="jp">🇯🇵 Japan</option>
+                  <option value="sg">🇸🇬 Singapore</option>
+                  <option value="hk">🇭🇰 Hong Kong</option>
+                  <option value="ph">🇵🇭 Philippines</option>
+                </optgroup>
+                <optgroup label="🌍 Africa">
+                  <option value="ng-mtn">🇳🇬 Nigeria — MTN</option>
+                  <option value="ng-airtel">🇳🇬 Nigeria — Airtel</option>
+                  <option value="ng-glo">🇳🇬 Nigeria — Glo</option>
+                  <option value="ng-9mobile">🇳🇬 Nigeria — 9Mobile</option>
+                  <option value="gh">🇬🇭 Ghana</option>
+                  <option value="za">🇿🇦 South Africa</option>
+                  <option value="ke">🇰🇪 Kenya</option>
+                </optgroup>
               </select>
             </div>
             <button class="save-btn" id="add-num-btn" onclick="addNumber()">Add Number</button>
           </div>
-          <p style="font-size:.75rem;color:var(--muted);margin-top:12px">Numbers added here go into the available pool and get assigned to the next Pro user who upgrades.</p>
+          <p style="font-size:.75rem;color:var(--muted);margin-top:12px">
+            Numbers added here go into the available pool and get assigned to the next Pro user who upgrades.
+            For your Twilio number use: Number <strong style="color:var(--accent)">+13509005908</strong>, Network <strong style="color:var(--accent)">T-Mobile US</strong>, Type <strong style="color:var(--accent)">🇺🇸 United States</strong>
+          </p>
         </div>
       </div>
     </div>
@@ -352,18 +356,10 @@
     <!-- SMS LOG -->
     <div class="panel" id="panel-sms">
       <div class="card">
-        <div class="card-head">
-          <div><h3>SMS Log</h3><p id="sms-log-lbl">All received messages</p></div>
-          <button class="save-btn" id="export-sms-btn" style="font-size:.78rem;padding:8px 14px">Export CSV</button>
-        </div>
+        <div class="card-head"><div><h3>SMS Log</h3><p id="sms-log-lbl">All received messages</p></div><button class="save-btn" id="export-sms-btn" style="font-size:.78rem;padding:8px 14px">Export CSV</button></div>
         <div class="card-body">
-          <div class="search-bar">
-            <input type="text" class="s-input" id="sms-search" placeholder="Search sender, number or message...">
-          </div>
-          <table class="tbl">
-            <thead><tr><th>User</th><th>From</th><th>To (Number)</th><th>Message</th><th>Time</th></tr></thead>
-            <tbody id="sms-body"><tr><td colspan="5"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></td></tr></tbody>
-          </table>
+          <div class="search-bar"><input type="text" class="s-input" id="sms-search" placeholder="Search sender, number or message..."></div>
+          <table class="tbl"><thead><tr><th>User</th><th>From</th><th>To (Number)</th><th>Message</th><th>Time</th></tr></thead><tbody id="sms-body"><tr><td colspan="5"><div class="empty"><i class="ph ph-spinner"></i><p>Loading...</p></div></td></tr></tbody></table>
         </div>
       </div>
     </div>
@@ -371,74 +367,50 @@
     <!-- SETTINGS -->
     <div class="panel" id="panel-settings">
       <div class="settings-grid">
-
-        <!-- Pricing -->
         <div class="setting-card">
           <h3>💰 Pro Plan Pricing</h3>
           <p>Set the price users pay to upgrade to Pro. Changes take effect immediately for all new payments.</p>
-          <div class="form-group">
-            <label class="form-label">Price (₦ Naira)</label>
-            <input type="number" class="form-input" id="s-price" placeholder="500" min="100" step="50">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Pro Duration (Days)</label>
-            <input type="number" class="form-input" id="s-days" placeholder="30" min="1" max="365">
-          </div>
+          <div class="form-group"><label class="form-label">Price (₦ Naira)</label><input type="number" class="form-input" id="s-price" placeholder="500" min="100" step="50"></div>
+          <div class="form-group"><label class="form-label">Pro Duration (Days)</label><input type="number" class="form-input" id="s-days" placeholder="30" min="1" max="365"></div>
           <button class="save-btn" id="save-pricing-btn">Save Pricing</button>
-          <div class="price-preview" id="price-preview">
-            <div class="amount" id="preview-amount">₦500</div>
-            <div class="label" id="preview-label">per number · 30 days</div>
-          </div>
+          <div class="price-preview" id="price-preview"><div class="amount" id="preview-amount">₦500</div><div class="label" id="preview-label">per number · 30 days</div></div>
         </div>
-
-        <!-- Pro Perks -->
         <div class="setting-card">
           <h3>⭐ Pro Plan Description</h3>
-          <p>This text appears on the pricing page and payment popup. Make it compelling — this is your sales pitch!</p>
-          <div class="form-group">
-            <label class="form-label">Pro Perks (shown to users)</label>
-            <textarea class="form-textarea" id="s-perks" rows="4" placeholder="Private dedicated number · Instant SMS · 30-day retention..."></textarea>
-          </div>
+          <p>This text appears on the pricing page and payment popup. Separate perks with · (middle dot).</p>
+          <div class="form-group"><label class="form-label">Pro Perks (shown to users)</label><textarea class="form-textarea" id="s-perks" rows="4" placeholder="Private dedicated number · Instant SMS · 30-day retention..."></textarea></div>
           <button class="save-btn" id="save-perks-btn">Save Description</button>
           <div style="margin-top:16px;padding:14px;background:var(--bg);border-radius:10px;border:1px solid var(--border)">
             <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Preview</div>
             <div id="perks-preview" style="font-size:.85rem;color:var(--text);line-height:1.8"></div>
           </div>
         </div>
-
-        <!-- Paystack Info -->
         <div class="setting-card">
           <h3>💳 Paystack Integration</h3>
-          <p>Your Paystack keys are stored securely as environment variables on Render. To update them, go to your Render dashboard → Environment.</p>
+          <p>Your Paystack keys are stored securely as environment variables on Render. To update them, go to Render → Environment.</p>
           <div style="background:var(--bg);border-radius:10px;border:1px solid var(--border);padding:14px">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-              <span style="font-size:.8rem;color:var(--muted)">Public Key</span>
-              <span class="rb bg" style="margin-left:auto">Configured ✓</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px">
-              <span style="font-size:.8rem;color:var(--muted)">Secret Key</span>
-              <span class="rb bg" style="margin-left:auto">Configured ✓</span>
-            </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:.8rem;color:var(--muted)">Public Key</span><span class="rb bg" style="margin-left:auto">Configured ✓</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="font-size:.8rem;color:var(--muted)">Secret Key</span><span class="rb bg" style="margin-left:auto">Configured ✓</span></div>
           </div>
           <div style="margin-top:14px;padding:12px;background:rgba(255,189,46,.05);border:1px solid rgba(255,189,46,.15);border-radius:10px">
             <div style="font-size:.78rem;color:var(--yellow)">⚠️ Currently in Test Mode</div>
-            <div style="font-size:.75rem;color:var(--muted);margin-top:4px">Switch to Live keys on Render when ready to accept real payments.</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:4px">Switch to Live keys on Render when Paystack approves your account.</div>
           </div>
         </div>
-
-        <!-- Webhook -->
         <div class="setting-card">
-          <h3>🔗 Paystack Webhook</h3>
-          <p>Add this URL to your Paystack dashboard under Settings → API → Webhooks. This auto-upgrades users when they pay.</p>
-          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:monospace;font-size:.82rem;color:var(--accent);word-break:break-all" id="webhook-url">
-            https://abati-logs-sms.onrender.com/api/v1/payments/webhook
+          <h3>🔗 Webhooks</h3>
+          <p>Add these URLs to your Paystack and Twilio dashboards.</p>
+          <div style="margin-bottom:12px">
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Paystack Webhook</div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:monospace;font-size:.78rem;color:var(--accent);word-break:break-all">https://abati-logs-sms.onrender.com/api/v1/payments/webhook</div>
+            <button class="save-btn" style="margin-top:8px;font-size:.75rem;padding:7px 14px" onclick="copyText('https://abati-logs-sms.onrender.com/api/v1/payments/webhook')">Copy</button>
           </div>
-          <button class="save-btn" style="margin-top:12px" onclick="copyWebhook()">Copy Webhook URL</button>
-          <div style="margin-top:14px;font-size:.78rem;color:var(--muted);line-height:1.6">
-            In Paystack: Settings → API Keys & Webhooks → Webhook URL → paste the URL above → Save
+          <div>
+            <div style="font-size:.72rem;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Twilio Inbound SMS Webhook</div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-family:monospace;font-size:.78rem;color:var(--accent);word-break:break-all">https://abati-logs-sms.onrender.com/api/v1/sms/inbound</div>
+            <button class="save-btn" style="margin-top:8px;font-size:.75rem;padding:7px 14px" onclick="copyText('https://abati-logs-sms.onrender.com/api/v1/sms/inbound')">Copy</button>
           </div>
         </div>
-
       </div>
     </div>
 
@@ -450,13 +422,17 @@
 <script>
 const TK = 'abati-token';
 let TOKEN = localStorage.getItem(TK);
-let allUsers = [], allTxns = [], allWaitlist = [];
+let allUsers = [], allTxns = [], allWaitlist = [], allSMS = [];
 let delId = null;
 
 function toast(msg, type='success') {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = `toast ${type} show`;
   setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => toast('Copied!')).catch(() => toast('Copy failed','error'));
 }
 
 function openDelModal(id, name) {
@@ -477,13 +453,13 @@ document.getElementById('confirm-del').addEventListener('click', async () => {
 });
 
 const panelMeta = {
-  overview:     ['Dashboard Overview',      'System-wide stats and recent activity'],
-  users:        ['User Management',         'View, filter and manage all users'],
-  transactions: ['Transactions',            'All payment history'],
-  waitlist:     ['Waitlist',                'Pre-launch email signups'],
-  numbers:      ['Virtual Number Pool',     'Manage numbers available to Pro users'],
-  sms:          ['SMS Log',                 'All messages received across all numbers'],
-  settings:     ['Settings & Pricing',      'Configure pricing, Pro perks and webhooks'],
+  overview:     ['Dashboard Overview',   'System-wide stats and recent activity'],
+  users:        ['User Management',      'View, filter and manage all users'],
+  transactions: ['Transactions',         'All payment history'],
+  waitlist:     ['Waitlist',             'Pre-launch email signups'],
+  numbers:      ['Virtual Number Pool',  'Manage numbers available to Pro users'],
+  sms:          ['SMS Log',              'All messages received across all numbers'],
+  settings:     ['Settings & Pricing',   'Configure pricing, perks and webhooks'],
 };
 
 function switchPanel(name) {
@@ -497,7 +473,7 @@ function switchPanel(name) {
 }
 document.querySelectorAll('.sb-item[data-panel]').forEach(b => b.addEventListener('click', () => switchPanel(b.dataset.panel)));
 
-function fd(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'}); }
+function fd(d)  { if (!d) return '—'; return new Date(d).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'}); }
 function fdt(d) { if (!d) return '—'; return new Date(d).toLocaleString('en-NG',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
 function ngn(n) { return '₦'+Number(n).toLocaleString(); }
 
@@ -585,28 +561,17 @@ document.getElementById('export-txn-btn').addEventListener('click', () => {
   if (!allTxns.length) { toast('No transactions to export','error'); return; }
   const csv = 'Name,Email,Amount,Reference,Channel,Status,Date\n' +
     allTxns.map(t => `${t.fullName},${t.email},${t.amountNaira},${t.reference},${t.channel||''},${t.status},${t.paidAt||t.createdAt}`).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download = 'abati-transactions.csv'; a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download = 'abati-transactions.csv'; a.click();
   toast('Transactions exported!');
 });
 
 document.getElementById('export-wl-btn').addEventListener('click', () => {
   if (!allWaitlist.length) { toast('No waitlist data','error'); return; }
   const csv = 'Email,Timestamp\n' + allWaitlist.map(s => `${s.email},${s.timestamp}`).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download = 'abati-waitlist.csv'; a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download = 'abati-waitlist.csv'; a.click();
   toast('Waitlist exported!');
 });
 
-function copyWebhook() {
-  navigator.clipboard.writeText('https://abati-logs-sms.onrender.com/api/v1/payments/webhook')
-    .then(() => toast('Webhook URL copied!'))
-    .catch(() => toast('Copy failed','error'));
-}
-
-// Settings
 async function loadSettings() {
   try {
     const r = await fetch('/api/v1/admin/settings', { headers:{'Authorization':'Bearer '+TOKEN} });
@@ -625,34 +590,23 @@ function updatePricePreview(price, days) {
   document.getElementById('preview-amount').textContent = `₦${Number(price).toLocaleString()}`;
   document.getElementById('preview-label').textContent  = `per number · ${days} days`;
 }
-
 function updatePerksPreview(perks) {
   const items = perks.split('·').map(s => s.trim()).filter(Boolean);
   document.getElementById('perks-preview').innerHTML = items.map(i => `<div>✅ ${i}</div>`).join('');
 }
 
-document.getElementById('s-price').addEventListener('input', () => {
-  updatePricePreview(document.getElementById('s-price').value||0, document.getElementById('s-days').value||30);
-});
-document.getElementById('s-days').addEventListener('input', () => {
-  updatePricePreview(document.getElementById('s-price').value||0, document.getElementById('s-days').value||30);
-});
-document.getElementById('s-perks').addEventListener('input', () => {
-  updatePerksPreview(document.getElementById('s-perks').value);
-});
+document.getElementById('s-price').addEventListener('input', () => updatePricePreview(document.getElementById('s-price').value||0, document.getElementById('s-days').value||30));
+document.getElementById('s-days').addEventListener('input',  () => updatePricePreview(document.getElementById('s-price').value||0, document.getElementById('s-days').value||30));
+document.getElementById('s-perks').addEventListener('input', () => updatePerksPreview(document.getElementById('s-perks').value));
 
 document.getElementById('save-pricing-btn').addEventListener('click', async () => {
   const priceNaira = document.getElementById('s-price').value;
   const proDays    = document.getElementById('s-days').value;
   if (!priceNaira || !proDays) { toast('Fill in price and days','error'); return; }
   try {
-    const r = await fetch('/api/v1/admin/settings', {
-      method:'POST', headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
-      body: JSON.stringify({ priceNaira, proDays })
-    });
+    const r = await fetch('/api/v1/admin/settings', { method:'POST', headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'}, body: JSON.stringify({ priceNaira, proDays }) });
     const d = await r.json();
-    if (d.success) toast('Pricing saved! ✓');
-    else toast(d.message||'Failed','error');
+    if (d.success) toast('Pricing saved! ✓'); else toast(d.message||'Failed','error');
   } catch { toast('Network error','error'); }
 });
 
@@ -660,20 +614,23 @@ document.getElementById('save-perks-btn').addEventListener('click', async () => 
   const proPerks = document.getElementById('s-perks').value;
   if (!proPerks) { toast('Enter Pro perks','error'); return; }
   try {
-    const r = await fetch('/api/v1/admin/settings', {
-      method:'POST', headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},
-      body: JSON.stringify({ proPerks })
-    });
+    const r = await fetch('/api/v1/admin/settings', { method:'POST', headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'}, body: JSON.stringify({ proPerks }) });
     const d = await r.json();
-    if (d.success) toast('Pro description saved! ✓');
-    else toast(d.message||'Failed','error');
+    if (d.success) toast('Pro description saved! ✓'); else toast(d.message||'Failed','error');
   } catch { toast('Network error','error'); }
 });
 
 async function loadAll() {
   try {
-    // Stats
-    const sr = await fetch('/api/v1/admin/stats', { headers:{'Authorization':'Bearer '+TOKEN} });
+    const [sr, ur, tr2, wr, nr, smsr] = await Promise.all([
+      fetch('/api/v1/admin/stats',        { headers:{'Authorization':'Bearer '+TOKEN} }),
+      fetch('/api/v1/admin/users',        { headers:{'Authorization':'Bearer '+TOKEN} }),
+      fetch('/api/v1/admin/transactions', { headers:{'Authorization':'Bearer '+TOKEN} }),
+      fetch('/api/v1/admin/waitlist/stats',{ headers:{'Authorization':'Bearer '+TOKEN} }),
+      fetch('/api/v1/admin/numbers',      { headers:{'Authorization':'Bearer '+TOKEN} }),
+      fetch('/api/v1/admin/sms',          { headers:{'Authorization':'Bearer '+TOKEN} }),
+    ]);
+
     const sd = await sr.json();
     if (sd.success) {
       document.getElementById('ov-total').textContent = sd.stats.totalUsers;
@@ -683,8 +640,6 @@ async function loadAll() {
       document.getElementById('sb-users').textContent = sd.stats.totalUsers;
     }
 
-    // Users
-    const ur = await fetch('/api/v1/admin/users', { headers:{'Authorization':'Bearer '+TOKEN} });
     const ud = await ur.json();
     if (ud.success) {
       allUsers = ud.data;
@@ -693,67 +648,68 @@ async function loadAll() {
       renderUsersTable(allUsers, 'users-body');
     }
 
-    // Transactions
-    const tr2 = await fetch('/api/v1/admin/transactions', { headers:{'Authorization':'Bearer '+TOKEN} });
-    const td  = await tr2.json();
+    const td = await tr2.json();
     if (td.success) {
       allTxns = td.data;
-      document.getElementById('txn-lbl').textContent = `${allTxns.length} transaction${allTxns.length!==1?'s':''}`;
-      document.getElementById('sb-txns').textContent = allTxns.length;
+      document.getElementById('txn-lbl').textContent  = `${allTxns.length} transaction${allTxns.length!==1?'s':''}`;
+      document.getElementById('sb-txns').textContent  = allTxns.length;
       renderTxns(allTxns.slice(0,5), 'ov-txns');
       renderTxns(allTxns, 'txn-body');
     }
 
-    // Waitlist
-    const wr = await fetch('/api/v1/admin/waitlist/stats', { headers:{'Authorization':'Bearer '+TOKEN} });
     const wd = await wr.json();
     if (wd.success) {
       allWaitlist = wd.signups||[];
-      document.getElementById('ov-wl').textContent   = wd.total;
-      document.getElementById('sb-wl').textContent   = wd.total;
-      document.getElementById('wl-lbl').textContent  = `${wd.total} signup${wd.total!==1?'s':''}`;
+      document.getElementById('ov-wl').textContent  = wd.total;
+      document.getElementById('sb-wl').textContent  = wd.total;
+      document.getElementById('wl-lbl').textContent = `${wd.total} signup${wd.total!==1?'s':''}`;
       renderWaitlist(allWaitlist, 'wl-body');
     }
 
-    // Numbers — fetch from admin route for full assignment info
-    const nr = await fetch('/api/v1/admin/numbers', { headers:{'Authorization':'Bearer '+TOKEN} });
     const nd = await nr.json();
     if (nd.success) {
-      const available = nd.data.filter(n => n.status === 'available').length;
-      const assigned  = nd.data.filter(n => n.status === 'assigned').length;
-      document.getElementById('sb-nums').textContent = nd.data.length;
-      document.getElementById('num-pool-lbl').textContent =
-        `${nd.data.length} total · ${available} available · ${assigned} assigned`;
+      const available = nd.data.filter(n => n.status==='available').length;
+      const assigned  = nd.data.filter(n => n.status==='assigned').length;
+      document.getElementById('sb-nums').textContent     = nd.data.length;
+      document.getElementById('num-pool-lbl').textContent = `${nd.data.length} total · ${available} available · ${assigned} assigned`;
       document.getElementById('num-grid').innerHTML = nd.data.length ? nd.data.map(n => `
         <div class="num-card" style="border-color:${n.status==='assigned'?'rgba(0,229,160,.25)':n.status==='suspended'?'rgba(255,92,92,.2)':'rgba(255,255,255,0.07)'}">
-          <div class="num-network">${n.network}</div>
+          <div class="num-network">${getFlag(n.type)} ${n.network}</div>
           <div class="num-number">${n.number}</div>
           <div class="num-status">Status: <span style="color:${n.status==='available'?'var(--accent)':n.status==='assigned'?'var(--yellow)':'var(--red)'}">${n.status}</span></div>
-          ${n.assignedTo ? `<div style="font-size:.7rem;color:var(--muted);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${n.assignedTo.email}">&#128100; ${n.assignedTo.fullName||n.assignedTo.email}</div>` : ''}
+          ${n.assignedTo ? `<div style="font-size:.7rem;color:var(--muted);margin-top:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">👤 ${n.assignedTo.fullName||n.assignedTo.email}</div>` : ''}
           <button onclick="deleteNumber('${n._id}')" class="tbl-btn danger" style="margin-top:10px;width:100%">Remove</button>
         </div>`).join('') : '<div class="empty" style="grid-column:1/-1"><i class="ph ph-sim-card"></i><p>No numbers in pool yet. Add numbers below.</p></div>';
     }
 
-    // SMS log
-    const smsr = await fetch('/api/v1/admin/sms', { headers:{'Authorization':'Bearer '+TOKEN} });
     const smsd = await smsr.json();
     if (smsd.success) {
       allSMS = smsd.data || [];
-      document.getElementById('sb-sms').textContent  = allSMS.length;
-      document.getElementById('sms-log-lbl').textContent = allSMS.length + ' message' + (allSMS.length !== 1 ? 's' : '');
+      document.getElementById('sb-sms').textContent      = allSMS.length;
+      document.getElementById('sms-log-lbl').textContent = allSMS.length + ' message' + (allSMS.length!==1?'s':'');
       renderSMSTable(allSMS);
     }
 
-    // Settings
     await loadSettings();
-
   } catch (err) {
     console.error(err);
     toast('Failed to load some data','error');
   }
 }
 
-// ADD NUMBER
+// Get flag emoji based on network type
+function getFlag(type) {
+  const flags = {
+    'us':'🇺🇸','ca':'🇨🇦','br':'🇧🇷','mx':'🇲🇽',
+    'uk':'🇬🇧','fr':'🇫🇷','de':'🇩🇪','it':'🇮🇹','es':'🇪🇸','nl':'🇳🇱','se':'🇸🇪','no':'🇳🇴','ch':'🇨🇭',
+    'au':'🇦🇺','nz':'🇳🇿','in':'🇮🇳','jp':'🇯🇵','sg':'🇸🇬','hk':'🇭🇰','ph':'🇵🇭',
+    'ng-mtn':'🇳🇬','ng-airtel':'🇳🇬','ng-glo':'🇳🇬','ng-9mobile':'🇳🇬',
+    'mtn':'🇳🇬','airtel':'🇳🇬','glo':'🇳🇬','9mobile':'🇳🇬',
+    'gh':'🇬🇭','za':'🇿🇦','ke':'🇰🇪',
+  };
+  return flags[type] || '🌍';
+}
+
 async function addNumber() {
   const number  = document.getElementById('add-num-number').value.trim();
   const network = document.getElementById('add-num-network').value.trim();
@@ -770,7 +726,7 @@ async function addNumber() {
     const d = await r.json();
     if (d.success) {
       toast('Number added to pool ✓');
-      document.getElementById('add-num-number').value = '';
+      document.getElementById('add-num-number').value  = '';
       document.getElementById('add-num-network').value = '';
       loadAll();
     } else { toast(d.message || 'Failed', 'error'); }
@@ -781,24 +737,18 @@ async function addNumber() {
 async function deleteNumber(id) {
   if (!confirm('Remove this number from the pool?')) return;
   try {
-    const r = await fetch('/api/v1/admin/numbers/' + id, {
-      method: 'DELETE', headers: { 'Authorization': 'Bearer ' + TOKEN }
-    });
+    const r = await fetch('/api/v1/admin/numbers/' + id, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + TOKEN } });
     const d = await r.json();
     if (d.success) { toast('Number removed'); loadAll(); }
     else toast(d.message || 'Failed', 'error');
   } catch { toast('Network error', 'error'); }
 }
 
-let allSMS = [];
 function renderSMSTable(msgs) {
   const b = document.getElementById('sms-body');
-  if (!msgs.length) {
-    b.innerHTML = '<tr><td colspan="5"><div class="empty"><i class="ph ph-chat-dots"></i><p>No SMS received yet. Configure Termii webhook to start receiving messages.</p></div></td></tr>';
-    return;
-  }
+  if (!msgs.length) { b.innerHTML = '<tr><td colspan="5"><div class="empty"><i class="ph ph-chat-dots"></i><p>No SMS received yet. Configure Twilio webhook to start receiving messages.</p></div></td></tr>'; return; }
   b.innerHTML = msgs.map(m => `<tr>
-    <td style="font-size:.82rem">${m.userId ? (m.userId.fullName || m.userId.email) : '—'}</td>
+    <td style="font-size:.82rem">${m.userId?(m.userId.fullName||m.userId.email):'—'}</td>
     <td style="font-weight:600;font-family:monospace;font-size:.82rem">${m.from}</td>
     <td style="font-size:.8rem;color:var(--muted)">${m.to}</td>
     <td style="font-size:.82rem;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${m.body.replace(/"/g,'&quot;')}">${m.body}</td>
@@ -809,45 +759,34 @@ function renderSMSTable(msgs) {
 document.getElementById('sms-search').addEventListener('input', function() {
   const q = this.value.toLowerCase();
   renderSMSTable(allSMS.filter(m =>
-    m.from.toLowerCase().includes(q) ||
-    m.to.toLowerCase().includes(q) ||
-    m.body.toLowerCase().includes(q) ||
-    (m.userId && (m.userId.fullName || m.userId.email || '').toLowerCase().includes(q))
+    m.from.toLowerCase().includes(q) || m.to.toLowerCase().includes(q) || m.body.toLowerCase().includes(q) ||
+    (m.userId && (m.userId.fullName||m.userId.email||'').toLowerCase().includes(q))
   ));
 });
 
 document.getElementById('export-sms-btn').addEventListener('click', () => {
   if (!allSMS.length) { toast('No SMS to export', 'error'); return; }
-  const csv = 'User,From,To,Message,Date\n' +
-    allSMS.map(m => {
-      const user = m.userId ? (m.userId.email || '') : '';
-      const body = '"' + m.body.replace(/"/g, '""') + '"';
-      return `${user},${m.from},${m.to},${body},${m.createdAt}`;
-    }).join('\n');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
-  a.download = 'abati-sms-log.csv'; a.click();
+  const csv = 'User,From,To,Message,Date\n' + allSMS.map(m => {
+    const user = m.userId?(m.userId.email||''):'';
+    const body = '"'+m.body.replace(/"/g,'""')+'"';
+    return `${user},${m.from},${m.to},${body},${m.createdAt}`;
+  }).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download = 'abati-sms-log.csv'; a.click();
   toast('SMS log exported!');
 });
 
-// LOGIN
 async function doLogin() {
   const email = document.getElementById('l-email').value.trim();
   const pass  = document.getElementById('l-pass').value;
   const err   = document.getElementById('l-error');
   const btn   = document.getElementById('login-btn');
-  err.style.display = 'none';
-  btn.textContent = 'Signing in...'; btn.disabled = true;
+  err.style.display = 'none'; btn.textContent = 'Signing in...'; btn.disabled = true;
   try {
-    const r = await fetch('/api/v1/auth/login', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ email, password:pass })
-    });
+    const r = await fetch('/api/v1/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, password:pass }) });
     const d = await r.json();
     if (!d.success) { err.textContent = d.message; err.style.display='block'; btn.textContent='Sign In to Admin Panel'; btn.disabled=false; return; }
     if (d.user.role !== 'admin') { err.textContent='Access denied. Admin only.'; err.style.display='block'; btn.textContent='Sign In to Admin Panel'; btn.disabled=false; return; }
-    localStorage.setItem(TK, d.token);
-    TOKEN = d.token;
+    localStorage.setItem(TK, d.token); TOKEN = d.token;
     setUserUI(d.user);
     document.getElementById('login-screen').style.display = 'none';
     loadAll();
@@ -861,7 +800,7 @@ function setUserUI(user) {
 }
 
 document.getElementById('login-btn').addEventListener('click', doLogin);
-document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('l-pass').addEventListener('keydown',  e => { if(e.key==='Enter') doLogin(); });
 document.getElementById('l-email').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
 document.getElementById('logout-btn').addEventListener('click', () => { localStorage.removeItem(TK); location.reload(); });
 document.getElementById('refresh-btn').addEventListener('click', () => { loadAll(); toast('Refreshed!'); });
@@ -873,12 +812,9 @@ async function init() {
     const r = await fetch('/api/v1/auth/me', { headers:{'Authorization':'Bearer '+TOKEN} });
     const d = await r.json();
     if (!d.success || d.user.role !== 'admin') { localStorage.removeItem(TK); return; }
-    setUserUI(d.user);
-    document.getElementById('login-screen').style.display = 'none';
-    loadAll();
+    setUserUI(d.user); document.getElementById('login-screen').style.display = 'none'; loadAll();
   } catch { localStorage.removeItem(TK); }
 }
-
 init();
 </script>
 </body>

@@ -245,9 +245,10 @@ const transporter = nodemailer.createTransport({
 });
 
 // ============================================================
-// MOCK NUMBERS
+// NUMBERS — Real Twilio number + display pool
 // ============================================================
 const liveNumbers = [
+  { id:0, number:'+13509005908', network:'T-Mobile US', type:'us', status:'Available' },
   { id:1, number:'+234 812 345 6789', network:'MTN',     type:'mtn',     status:'Available' },
   { id:2, number:'+234 902 456 7890', network:'Airtel',  type:'airtel',  status:'Available' },
   { id:3, number:'+234 805 567 8901', network:'Glo',     type:'glo',     status:'Available' },
@@ -681,17 +682,31 @@ app.post('/api/v1/payments/webhook', async (req, res) => {
 // SMS ROUTES
 // ============================================================
 
-// Termii inbound SMS webhook — add this URL in Termii dashboard → Messaging → Sender IDs → Webhook
-// URL: https://abati-logs-sms.onrender.com/api/v1/sms/inbound
+// Inbound SMS webhook — supports both Twilio and Termii
+// Twilio webhook URL: https://abati-logs-sms.onrender.com/api/v1/sms/inbound
+// Twilio sends: Body, From, To (capital letters)
+// Termii sends: sms, from, to (lowercase)
 app.post('/api/v1/sms/inbound', async (req, res) => {
   try {
-    const { to, from, sms, id } = req.body;
-    if (!to || !from || !sms) return res.sendStatus(200);
+    // Support both Twilio (Body/From/To) and Termii (sms/from/to)
+    const from = req.body.From || req.body.from;
+    const to   = req.body.To   || req.body.to;
+    const body = req.body.Body || req.body.sms;
 
-    // Find which user owns this number
-    const num = await VirtualNumber.findOne({ number: to });
+    if (!to || !from || !body) return res.sendStatus(200);
+
+    // Normalize number format — Twilio sends +12345678900, store matches +1 234 567 8900
+    // Try exact match first, then strip spaces for flexible matching
+    let num = await VirtualNumber.findOne({ number: to });
+    if (!num) {
+      // Try matching after stripping spaces and dashes from stored numbers
+      const allNums = await VirtualNumber.find({ assignedTo: { $ne: null } });
+      num = allNums.find(n => n.number.replace(/[\s\-]/g, '') === to.replace(/[\s\-]/g, ''));
+    }
+
     if (!num || !num.assignedTo) {
       console.log('[SMS Inbound] Unrouted SMS to', to);
+      // Still return 200 so Twilio doesn't retry
       return res.sendStatus(200);
     }
 
@@ -700,12 +715,15 @@ app.post('/api/v1/sms/inbound', async (req, res) => {
       numberId: num._id,
       from,
       to,
-      body:     sms,
-      raw:      req.body
+      body,
+      raw: req.body
     });
 
-    console.log(`[SMS Inbound] ${from} → ${to}: ${sms.substring(0,40)}`);
-    res.sendStatus(200);
+    console.log(`[SMS Inbound] ${from} → ${to}: ${body.substring(0, 40)}`);
+
+    // Twilio expects TwiML response (can be empty)
+    res.set('Content-Type', 'text/xml');
+    res.send('<Response></Response>');
   } catch (err) {
     console.error('[SMS Inbound Error]', err.message);
     res.sendStatus(200);
