@@ -245,10 +245,9 @@ const transporter = nodemailer.createTransport({
 });
 
 // ============================================================
-// NUMBERS — Real Twilio number + display pool
+// MOCK NUMBERS
 // ============================================================
 const liveNumbers = [
-  { id:0, number:'+13509005908', network:'T-Mobile US', type:'us', status:'Available' },
   { id:1, number:'+234 812 345 6789', network:'MTN',     type:'mtn',     status:'Available' },
   { id:2, number:'+234 902 456 7890', network:'Airtel',  type:'airtel',  status:'Available' },
   { id:3, number:'+234 805 567 8901', network:'Glo',     type:'glo',     status:'Available' },
@@ -682,31 +681,17 @@ app.post('/api/v1/payments/webhook', async (req, res) => {
 // SMS ROUTES
 // ============================================================
 
-// Inbound SMS webhook — supports both Twilio and Termii
-// Twilio webhook URL: https://abati-logs-sms.onrender.com/api/v1/sms/inbound
-// Twilio sends: Body, From, To (capital letters)
-// Termii sends: sms, from, to (lowercase)
+// Termii inbound SMS webhook — add this URL in Termii dashboard → Messaging → Sender IDs → Webhook
+// URL: https://abati-logs-sms.onrender.com/api/v1/sms/inbound
 app.post('/api/v1/sms/inbound', async (req, res) => {
   try {
-    // Support both Twilio (Body/From/To) and Termii (sms/from/to)
-    const from = req.body.From || req.body.from;
-    const to   = req.body.To   || req.body.to;
-    const body = req.body.Body || req.body.sms;
+    const { to, from, sms, id } = req.body;
+    if (!to || !from || !sms) return res.sendStatus(200);
 
-    if (!to || !from || !body) return res.sendStatus(200);
-
-    // Normalize number format — Twilio sends +12345678900, store matches +1 234 567 8900
-    // Try exact match first, then strip spaces for flexible matching
-    let num = await VirtualNumber.findOne({ number: to });
-    if (!num) {
-      // Try matching after stripping spaces and dashes from stored numbers
-      const allNums = await VirtualNumber.find({ assignedTo: { $ne: null } });
-      num = allNums.find(n => n.number.replace(/[\s\-]/g, '') === to.replace(/[\s\-]/g, ''));
-    }
-
+    // Find which user owns this number
+    const num = await VirtualNumber.findOne({ number: to });
     if (!num || !num.assignedTo) {
       console.log('[SMS Inbound] Unrouted SMS to', to);
-      // Still return 200 so Twilio doesn't retry
       return res.sendStatus(200);
     }
 
@@ -715,15 +700,12 @@ app.post('/api/v1/sms/inbound', async (req, res) => {
       numberId: num._id,
       from,
       to,
-      body,
-      raw: req.body
+      body:     sms,
+      raw:      req.body
     });
 
-    console.log(`[SMS Inbound] ${from} → ${to}: ${body.substring(0, 40)}`);
-
-    // Twilio expects TwiML response (can be empty)
-    res.set('Content-Type', 'text/xml');
-    res.send('<Response></Response>');
+    console.log(`[SMS Inbound] ${from} → ${to}: ${sms.substring(0,40)}`);
+    res.sendStatus(200);
   } catch (err) {
     console.error('[SMS Inbound Error]', err.message);
     res.sendStatus(200);
@@ -911,13 +893,33 @@ app.get('/api/v1/admin/waitlist', protect, adminOnly, async (req, res) => {
 // ============================================================
 // FALLBACK — known SPA routes get index.html, unknown routes get 404
 // ============================================================
-const spaRoutes = ['/', '/dashboard.html', '/admin.html'];
+// Serve static HTML files directly, fallback to index.html for unknown routes
 app.get('*', (req, res) => {
-  const knownRoute = spaRoutes.includes(req.path) || req.path.startsWith('/api/');
-  if (knownRoute) {
-    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  // Skip API routes (already handled above)
+  if (req.path.startsWith('/api/')) return res.status(404).json({ success:false, message:'Not found.' });
+
+  // Known HTML pages — serve directly
+  const htmlPages = ['/', '/dashboard.html', '/admin.html', '/login.html', '/register.html',
+    '/about.html', '/contact.html', '/support.html', '/terms.html', '/privacy.html',
+    '/refunds.html', '/forgot-password.html', '/offline.html'];
+
+  if (htmlPages.includes(req.path)) {
+    // Root gets index.html, others get their own file
+    const file = req.path === '/' ? 'index.html' : req.path.slice(1);
+    const filePath = path.join(__dirname, 'public', file);
+    return res.sendFile(filePath, err => {
+      if (err) res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
   }
-  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+
+  // Static assets (js, css, images, icons, manifest, sw) — let express.static handle,
+  // if we got here it means file not found
+  if (req.path.includes('.')) {
+    return res.status(404).send('Not found');
+  }
+
+  // Unknown routes → index.html
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
