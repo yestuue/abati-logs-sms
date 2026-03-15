@@ -339,61 +339,6 @@
     }
     .feat p { font-size: .83rem; color: var(--muted); line-height: 1.65; }
 
-    /* PRICING */
-    .pricing { padding: 20px 0 100px; text-align: center; }
-    .price-card {
-      max-width: 440px; margin: 48px auto 0;
-      background: var(--bg2);
-      border: 1px solid var(--accent-border);
-      border-radius: 16px; padding: 40px 36px;
-      position: relative;
-    }
-    .price-card::before {
-      content: '';
-      position: absolute; top: -1px; left: 50%;
-      transform: translateX(-50%);
-      width: 180px; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    }
-    .price-label {
-      display: inline-block; padding: 3px 12px;
-      background: var(--accent-dim); border: 1px solid var(--accent-border);
-      border-radius: 100px; font-size: .7rem;
-      color: var(--accent); font-weight: 600;
-      letter-spacing: 0.5px; text-transform: uppercase;
-      margin-bottom: 18px;
-    }
-    .price-amount {
-      font-family: 'Bricolage Grotesque', sans-serif;
-      font-size: 3rem; font-weight: 700; line-height: 1;
-      margin-bottom: 4px; letter-spacing: -1px;
-    }
-    .price-amount sup { font-size: 1.3rem; color: var(--muted); font-weight: 500; }
-    .price-period { font-size: .82rem; color: var(--muted); margin-bottom: 28px; }
-    .price-perks { list-style: none; text-align: left; margin-bottom: 28px; }
-    .price-perks li {
-      display: flex; align-items: center; gap: 10px;
-      padding: 9px 0; border-bottom: 1px solid var(--border);
-      font-size: .85rem; color: var(--muted2);
-    }
-    .price-perks li:last-child { border-bottom: none; }
-    .price-perks li::before {
-      content: '';
-      width: 18px; height: 18px; border-radius: 50%;
-      background: var(--accent-dim); flex-shrink: 0;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2 6l3 3 5-5' stroke='%2300E5A0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-      background-size: 12px; background-position: center; background-repeat: no-repeat;
-    }
-    .price-cta {
-      display: block; width: 100%; padding: 13px;
-      background: var(--accent); border: none; border-radius: var(--radius-sm);
-      color: #08090c; font-size: .9rem; font-weight: 600;
-      font-family: 'Inter', sans-serif; cursor: pointer;
-      text-decoration: none; text-align: center;
-      transition: opacity .15s;
-    }
-    .price-cta:hover { opacity: .88; }
-
     /* CTA SECTION */
     .cta-section { padding: 20px 0 100px; }
     .cta-box {
@@ -495,7 +440,7 @@
   <ul class="nav-links" id="nav-links">
     <li><a href="#how">How it works</a></li>
     <li><a href="#countries">Countries</a></li>
-    <li><a href="#pricing">Pricing</a></li>
+    
   </ul>
   <div class="nav-right">
     <button class="theme-btn theme-toggle" onclick="toggleTheme()" title="Toggle theme"><i class="ph ph-sun"></i></button>
@@ -529,8 +474,6 @@
     <div><div class="stat-num">50+</div><div class="stat-lbl">Countries</div></div>
     <div class="stat-div"></div>
     <div><div class="stat-num">&lt;3s</div><div class="stat-lbl">Delivery time</div></div>
-    <div class="stat-div"></div>
-    <div><div class="stat-num">₦500</div><div class="stat-lbl">Starting price</div></div>
     <div class="stat-div"></div>
     <div><div class="stat-num">100%</div><div class="stat-lbl">Private</div></div>
   </div>
@@ -581,7 +524,7 @@
         <div class="step-num">02</div>
         <div class="step-icon"><i class="ph-fill ph-sim-card"></i></div>
         <h3>Get your number</h3>
-        <p>Upgrade to Pro and receive a dedicated number instantly. Share it anywhere — apps, websites, or with anyone who needs to reach you.</p>
+        <p>Subscribe and receive a dedicated number instantly. Share it anywhere — apps, websites, or with anyone who needs to reach you.</p>
       </div>
       <div class="step fade">
         <div class="step-num">03</div>
@@ -629,45 +572,22 @@
     <div class="features-grid">
       <div class="feat fade"><div class="feat-icon"><i class="ph-fill ph-shield-check"></i></div><h3>Private & dedicated</h3><p>Your number is yours alone for the full duration of your plan. Nobody else sees your messages.</p></div>
       <div class="feat fade"><div class="feat-icon"><i class="ph-fill ph-lightning"></i></div><h3>Instant delivery</h3><p>SMS appears in your dashboard in under 3 seconds. Real-time, no polling required.</p></div>
-      <div class="feat fade"><div class="feat-icon"><i class="ph-fill ph-code"></i></div><h3>REST API access</h3><p>Every Pro account gets full API access. Automate workflows, integrate with any app.</p></div>
+      <div class="feat fade"><div class="feat-icon"><i class="ph-fill ph-code"></i></div><h3>REST API access</h3><p>Every account gets full API access. Automate workflows, integrate with any app.</p></div>
       <div class="feat fade"><div class="feat-icon"><i class="ph-fill ph-globe"></i></div><h3>50+ countries</h3><p>US, UK, Canada, France, Australia, Germany, Nigeria and many more. New ones monthly.</p></div>
-      <div class="feat fade"><div class="feat-icon"><i class="ph-fill ph-archive"></i></div><h3>Message history</h3><p>Every SMS stored and searchable for the life of your plan. Never miss a code again.</p></div>
-      <div class="feat fade"><div class="feat-icon"><i class="ph-fill ph-headset"></i></div><h3>Priority support</h3><p>Real humans, fast responses. No bots or ticket queues for Pro users.</p></div>
+      <div class="feat fade"><div class="feat-icon"><i class="ph-fill ph-archive"></i></div><h3>Message history</h3><p>Every SMS stored and searchable for the life of your subscription. Never miss a code again.</p></div>
+      <div class="feat fade"><div class="feat-icon"><i class="ph-fill ph-headset"></i></div><h3>Priority support</h3><p>Real humans, fast responses. No bots or ticket queues.</p></div>
     </div>
   </div>
 </section>
 
-<!-- PRICING -->
-<section class="pricing" id="pricing">
-  <div class="container">
-    <div class="fade">
-      <span class="section-tag">Pricing</span>
-      <h2 class="section-title">Simple, flat pricing</h2>
-      <p class="section-sub" style="margin:0 auto">One plan. Everything included. No hidden fees or per-message charges.</p>
-    </div>
-    <div class="price-card fade">
-      <span class="price-label">Pro Plan</span>
-      <div class="price-amount"><sup>₦</sup>500</div>
-      <div class="price-period" id="price-period">per month · ~$0.30 USD</div>
-      <ul class="price-perks" id="price-perks">
-        <li>Private number from any country</li>
-        <li>Instant SMS delivery to dashboard</li>
-        <li>30-day message history</li>
-        <li>Full REST API access</li>
-        <li>Priority support</li>
-        <li>50+ countries to choose from</li>
-      </ul>
-      <a href="/register.html" class="price-cta">Get started for ₦500 →</a>
-    </div>
-  </div>
-</section>
+
 
 <!-- CTA -->
 <section class="cta-section">
   <div class="container">
     <div class="cta-box fade">
       <h2>Ready to get your number?</h2>
-      <p>Join users who trust ABATI SMS for their virtual number needs.</p>
+      <p>Join thousands of users who trust ABATI SMS for their virtual number needs.</p>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
         <a href="/register.html" class="btn-primary" style="font-size:.9rem;padding:12px 26px">Create free account →</a>
         <a href="/login.html" class="btn-secondary" style="font-size:.9rem;padding:12px 22px">Sign in</a>
@@ -705,19 +625,7 @@ function showToast(msg, type='success') {
   clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-(async () => {
-  try {
-    const r = await fetch('/api/v1/pricing');
-    const d = await r.json();
-    if (d.success) {
-      document.getElementById('price-period').textContent = `per number · ${d.proDays} days`;
-      if (d.proPerks) {
-        const items = d.proPerks.split('·').map(s => s.trim()).filter(Boolean);
-        document.getElementById('price-perks').innerHTML = items.map(i => `<li>${i}</li>`).join('');
-      }
-    }
-  } catch {}
-})();
+
 </script>
 </body>
 </html>
