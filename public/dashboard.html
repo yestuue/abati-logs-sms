@@ -1,926 +1,1283 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-  <script>
-    // Force dark mode immediately — before any CSS loads
-    (function(){ 
-      var t = localStorage.getItem('abati-theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', t);
-    })();
-  </script>
-  <meta charset="UTF-8">
-  <!-- PWA -->
-  <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#00E5A0">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="ABATI SMS">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard | ABATI LOGS & SMS</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #0c0c0f; --bg-card: #131318; --bg-hover: #1a1a22; --bg-input: #0e0e14;
-      --border: rgba(255,255,255,0.07); --border-hover: rgba(255,255,255,0.13);
-      --accent: #00E5A0; --accent-dim: rgba(0,229,160,0.08); --accent-border: rgba(0,229,160,0.2); --accent-glow: 0 0 30px rgba(0,229,160,0.15);
-      --yellow: #F5B820; --yellow-dim: rgba(245,184,32,0.08);
-      --red: #FF5C5C; --red-dim: rgba(255,92,92,0.08);
-      --wa: #25D366; --wa-dim: rgba(37,211,102,0.08); --wa-border: rgba(37,211,102,0.22);
-      --tg: #29A8E8; --tg-dim: rgba(41,168,232,0.08); --tg-border: rgba(41,168,232,0.22);
-      --text: #EFEFEF; --muted: #5a5a6e; --muted2: #3a3a4a;
-      --sidebar-w: 256px; --radius: 14px; --radius-sm: 8px;
-    }
-    /* Always dark unless explicitly toggled */
-    html { color-scheme: dark; }
-    html:not([data-theme="light"]) {
-      --bg: #0c0c0f; --bg-card: #131318; --bg-hover: #1a1a22; --bg-input: #0e0e14;
-      --border: rgba(255,255,255,0.07); --text: #EFEFEF; --muted: #5a5a6e;
-    }
-    /* Light mode overrides */
-    html[data-theme="light"] {
-      --bg: #f5f6f8; --bg-card: #ffffff; --bg-hover: #f0f2f5; --bg-input: #f8f9fb;
-      --border: rgba(0,0,0,0.08); --border-hover: rgba(0,0,0,0.15);
-      --text: #111318; --muted: #6b7280; --muted2: #9ca3af;
-      --accent: #00b37a; --accent-dim: rgba(0,179,122,0.08); --accent-border: rgba(0,179,122,0.22);
-      color-scheme: light;
-    }
-    html[data-theme="light"] body { background: #f5f6f8; color: #111318; }
-    html[data-theme="light"] .sidebar { background: #ffffff; border-color: rgba(0,0,0,0.08); }
-    html[data-theme="light"] .topbar { background: rgba(245,246,248,0.95); }
-    html[data-theme="light"] .sb-item { color: #6b7280; }
-    html[data-theme="light"] .sb-section { color: #9ca3af; }
-    html[data-theme="light"] .card, html[data-theme="light"] .stat-tile,
-    html[data-theme="light"] .profile-card, html[data-theme="light"] .auth-box { background: #ffffff; }
-    html[data-theme="light"] #auth-screen { background: #f5f6f8; }
-    html[data-theme="light"] input, html[data-theme="light"] select,
-    html[data-theme="light"] textarea { background: #f8f9fb; color: #111318; border-color: rgba(0,0,0,0.1); }
-    html[data-theme="light"] .tbl td, html[data-theme="light"] .tbl th { color: #111318; }
-    html, body { max-width: 100%; overflow-x: hidden; }
-    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ABATI SMS — Dashboard</title>
+<script>(function(){var t=localStorage.getItem('abati-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#00E5A0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ABATI SMS">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c10;
+  --bg2:#131318;
+  --bg3:#1a1a22;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --accent:#00E5A0;
+  --accent-d:rgba(0,229,160,0.09);
+  --accent-b:rgba(0,229,160,0.22);
+  --red:#ff5c5c;
+  --red-d:rgba(255,92,92,0.09);
+  --yellow:#f5b820;
+  --yellow-d:rgba(245,184,32,0.09);
+  --wa:#25D366;
+  --wa-d:rgba(37,211,102,0.09);
+  --wa-b:rgba(37,211,102,0.22);
+  --text:#f0f0f0;
+  --muted:#6b7280;
+  --muted2:#4b5563;
+  --r:12px;
+  --r-sm:8px;
+  --nav:56px;
+  --sidebar:240px;
+}
+html[data-theme="light"]{
+  --bg:#f5f6f8;
+  --bg2:#ffffff;
+  --bg3:#eef0f3;
+  --border:rgba(0,0,0,0.08);
+  --border2:rgba(0,0,0,0.13);
+  --accent:#00a870;
+  --accent-d:rgba(0,168,112,0.08);
+  --accent-b:rgba(0,168,112,0.22);
+  --text:#111318;
+  --muted:#6b7280;
+  --muted2:#9ca3af;
+}
+html,body{height:100%;overflow-x:hidden}
+body{
+  font-family:'Inter',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+}
 
-    /* SIDEBAR */
-    .sidebar { width: var(--sidebar-w); background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; transition: transform .3s cubic-bezier(.4,0,.2,1); overflow: hidden; }
-    .sb-brand { padding: 22px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 11px; text-decoration: none; overflow: hidden; }
-    .sb-logo { width: 34px; height: 34px; background: var(--accent); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: .9rem; color: #0c0c0f; flex-shrink: 0; }
-    .sb-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .9rem; color: var(--text); }
-    .sb-tag  { font-size: .62rem; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
-    .sb-nav { flex: 1; padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; overflow-x: hidden; }
-    .sb-section { font-size: .62rem; font-weight: 700; letter-spacing: 2px; color: var(--muted); padding: 14px 10px 5px; text-transform: uppercase; white-space: nowrap; }
-    .sb-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); color: var(--muted); font-size: .875rem; font-weight: 500; cursor: pointer; transition: all .18s; border: none; background: none; width: 100%; max-width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-sizing: border-box; }
-    .sb-item:hover { background: var(--bg-hover); color: var(--text); }
-    .sb-item.active { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
-    .sb-item i { font-size: 1.05rem; flex-shrink: 0; }
-    .sb-footer { padding: 12px; border-top: 1px solid var(--border); overflow: hidden; }
-    .sb-user { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); background: rgba(255,255,255,.03); border: 1px solid var(--border); overflow: hidden; min-width: 0; }
-    .sb-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #0c0c0f; font-weight: 800; font-size: .8rem; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; flex-shrink: 0; }
-    .sb-uname  { font-size: .82rem; font-weight: 600; color: var(--text); line-height: 1.2; }
-    .sb-uemail { font-size: .7rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
-    .sb-logout { margin-left: auto; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; display: flex; padding: 4px; transition: color .18s; flex-shrink: 0; }
-    .sb-logout:hover { color: var(--red); }
+/* =====================
+   AUTH SCREEN
+===================== */
+#auth{
+  position:fixed;inset:0;
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:center;
+  z-index:500;padding:16px;
+}
+.auth-box{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:32px 28px;
+  width:100%;max-width:400px;
+}
+.auth-logo{
+  width:44px;height:44px;
+  background:var(--accent);
+  border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.95rem;
+  color:#0c0c10;margin-bottom:20px;
+}
+.auth-box h2{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;margin-bottom:6px}
+.auth-box>p{font-size:.85rem;color:var(--muted);margin-bottom:22px;line-height:1.5}
+.auth-tabs{display:flex;gap:3px;background:var(--bg3);border-radius:9px;padding:3px;margin-bottom:20px}
+.auth-tab{flex:1;padding:8px;border-radius:7px;border:none;background:none;color:var(--muted);font-size:.83rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+.auth-tab.on{background:var(--bg2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.auth-form{display:none}
+.auth-form.on{display:block}
+.fl{margin-bottom:13px}
+.fl label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.fi{
+  width:100%;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--r-sm);
+  padding:10px 12px;
+  color:var(--text);
+  font-size:.88rem;
+  font-family:'Inter',sans-serif;
+  outline:none;
+  transition:border-color .15s;
+}
+.fi:focus{border-color:var(--accent-b)}
+.fi::placeholder{color:var(--muted2)}
+.auth-err{background:var(--red-d);border:1px solid rgba(255,92,92,.2);border-radius:var(--r-sm);padding:9px 12px;font-size:.78rem;color:var(--red);margin-bottom:12px;display:none}
+.auth-btn{
+  width:100%;padding:12px;
+  background:var(--accent);border:none;border-radius:var(--r-sm);
+  color:#0c0c10;font-size:.88rem;font-weight:700;
+  cursor:pointer;font-family:'Syne',sans-serif;
+  transition:opacity .15s;margin-top:6px;
+}
+.auth-btn:hover{opacity:.88}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed}
+.forgot-link{font-size:.78rem;color:var(--muted);cursor:pointer;text-align:right;display:block;margin-top:4px}
+.forgot-link:hover{color:var(--accent)}
+.auth-div{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--muted);font-size:.75rem}
+.auth-div::before,.auth-div::after{content:'';flex:1;height:1px;background:var(--border)}
 
-    /* MAIN */
-    .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
-    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 16px 28px; border-bottom: 1px solid var(--border); background: rgba(12,12,15,.85); backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 50; }
-    .topbar-left h1 { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; }
-    .topbar-left p  { font-size: .78rem; color: var(--muted); margin-top: 2px; }
-    .topbar-right { display: flex; align-items: center; gap: 10px; }
-    .mob-menu-btn { display: none; background: none; border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-sm); padding: 8px 10px; cursor: pointer; font-size: 1.1rem; }
+/* =====================
+   LAYOUT
+===================== */
+#app{display:none;height:100vh;overflow:hidden}
 
-    /* CONTENT */
-    .content { padding: 26px 28px; flex: 1; }
-    .panel { display: none; }
-    .panel.active { display: block; }
+/* Sidebar — desktop */
+.sidebar{
+  position:fixed;top:0;left:0;
+  width:var(--sidebar);height:100vh;
+  background:var(--bg2);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  z-index:100;
+  overflow:hidden;
+}
+.sb-top{
+  padding:18px 14px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+  text-decoration:none;flex-shrink:0;
+}
+.sb-logo-mark{
+  width:32px;height:32px;
+  background:var(--accent);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:.85rem;
+  color:#0c0c10;flex-shrink:0;
+}
+.sb-logo-text{font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem;color:var(--text)}
+.sb-logo-sub{font-size:.58rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.sb-nav{flex:1;padding:10px 8px;overflow-y:auto;overflow-x:hidden}
+.sb-section{font-size:.6rem;font-weight:700;letter-spacing:2px;color:var(--muted2);padding:12px 8px 4px;text-transform:uppercase}
+.sb-item{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 10px;border-radius:var(--r-sm);
+  color:var(--muted);font-size:.83rem;font-weight:500;
+  cursor:pointer;transition:all .15s;
+  border:none;background:none;width:100%;text-align:left;
+  font-family:'Inter',sans-serif;text-decoration:none;
+  white-space:nowrap;overflow:hidden;flex-shrink:0;
+}
+.sb-item i{font-size:.95rem;flex-shrink:0;width:18px}
+.sb-item:hover{background:var(--bg3);color:var(--text)}
+.sb-item.on{background:var(--accent-d);color:var(--accent);border:1px solid var(--accent-b)}
+.sb-foot{
+  padding:10px;border-top:1px solid var(--border);flex-shrink:0;
+}
+.sb-user{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 10px;border-radius:var(--r-sm);
+  background:var(--bg3);border:1px solid var(--border);
+  overflow:hidden;
+}
+.sb-av{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--accent);color:#0c0c10;
+  font-weight:700;font-size:.75rem;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Syne',sans-serif;flex-shrink:0;
+}
+.sb-uname{font-size:.78rem;font-weight:600;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-uemail{font-size:.67rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-logout{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem;display:flex;padding:4px;transition:color .15s;flex-shrink:0}
+.sb-logout:hover{color:var(--red)}
 
-    /* ---- COMMUNITY BUTTONS (NEW) ---- */
-    .community-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 22px;
-    }
-    .comm-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      padding: 14px 18px;
-      border-radius: var(--radius-sm);
-      font-size: .88rem;
-      font-weight: 700;
-      font-family: 'Syne', sans-serif;
-      cursor: pointer;
-      text-decoration: none;
-      transition: all .2s;
-      border: 1px solid transparent;
-    }
-    .comm-btn svg { width: 20px; height: 20px; flex-shrink: 0; }
-    .comm-wa  { background: var(--tg-dim); border-color: var(--tg-border); color: var(--tg); }
-    .comm-wa:hover  { background: rgba(41,168,232,0.16); transform: translateY(-1px); }
-    .comm-wa  { background: var(--wa-dim); border-color: var(--wa-border); color: var(--wa); }
-    .comm-wa:hover  { background: rgba(37,211,102,0.16); transform: translateY(-1px); }
+/* Main content */
+.main{
+  margin-left:var(--sidebar);
+  height:100vh;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 22px;
+  border-bottom:1px solid var(--border);
+  background:var(--bg2);
+  flex-shrink:0;
+  position:sticky;top:0;z-index:50;
+}
+.topbar h1{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700}
+.topbar p{font-size:.72rem;color:var(--muted);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.icon-btn{
+  width:34px;height:34px;
+  border-radius:var(--r-sm);
+  border:1px solid var(--border);
+  background:none;color:var(--muted);
+  cursor:pointer;font-size:.95rem;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.icon-btn:hover{color:var(--text);border-color:var(--border2)}
+.content{flex:1;overflow-y:auto;padding:18px 22px;padding-bottom:80px}
 
-    /* STATS */
-    .stats-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 22px; }
-    .stat-tile { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; display: flex; flex-direction: column; gap: 12px; transition: border-color .2s, transform .2s; position: relative; overflow: hidden; }
-    .stat-tile:hover { border-color: var(--border-hover); transform: translateY(-2px); }
-    .stat-tile-top { display: flex; justify-content: space-between; align-items: flex-start; }
-    .stat-icon { width: 38px; height: 38px; border-radius: 10px; background: var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.05rem; }
-    .stat-icon.yellow { background: var(--yellow-dim); color: var(--yellow); }
-    .stat-icon.red    { background: var(--red-dim);    color: var(--red);    }
-    .stat-val { font-size: 1.85rem; font-family: 'Syne', sans-serif; font-weight: 800; line-height: 1; }
-    .stat-lbl { font-size: .78rem; color: var(--muted); }
+/* =====================
+   BOTTOM NAV (mobile)
+===================== */
+.bottom-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--bg2);
+  border-top:1px solid var(--border);
+  z-index:100;
+  padding:0;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.bn-inner{
+  display:flex;
+  height:var(--nav);
+}
+.bn-item{
+  flex:1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;
+  background:none;border:none;
+  color:var(--muted);font-size:.58rem;font-weight:600;
+  cursor:pointer;font-family:'Inter',sans-serif;
+  transition:color .15s;padding:6px 2px;
+  text-decoration:none;
+}
+.bn-item i{font-size:1.2rem;transition:color .15s}
+.bn-item.on{color:var(--accent)}
+.bn-item.on i{color:var(--accent)}
 
-    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 18px; }
-    .card-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); }
-    .card-head h2 { font-family: 'Syne', sans-serif; font-size: .95rem; }
-    .card-head p  { font-size: .76rem; color: var(--muted); margin-top: 2px; }
-    .card-body { padding: 10px; }
+/* =====================
+   PANELS
+===================== */
+.panel{display:none}
+.panel.on{display:block}
 
-    /* NUMBER DISPLAY */
-    .number-display { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 44px 20px; text-align: center; }
-    .number-display .nd-label  { font-size: .72rem; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
-    .number-display .nd-number { font-family: 'Syne', sans-serif; font-size: 2.4rem; font-weight: 800; color: var(--accent); letter-spacing: 2px; margin-bottom: 6px; }
-    .number-display .nd-network { font-size: .8rem; color: var(--muted); margin-bottom: 22px; }
-    .copy-btn { display: flex; align-items: center; gap: 7px; padding: 10px 22px; background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: var(--radius-sm); color: var(--accent); font-size: .83rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .18s; }
-    .copy-btn:hover { background: rgba(0,229,160,.15); }
+/* =====================
+   CARDS & COMPONENTS
+===================== */
+.card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  overflow:hidden;
+  margin-bottom:14px;
+}
+.card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:15px 18px;
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;gap:8px;
+}
+.card-head h2{font-family:'Syne',sans-serif;font-size:.9rem;font-weight:700}
+.card-head p{font-size:.73rem;color:var(--muted);margin-top:2px}
+.card-body{padding:8px}
 
-    /* SMS */
-    .sms-empty { display: flex; flex-direction: column; align-items: center; padding: 52px 24px; text-align: center; gap: 12px; color: var(--muted); }
-    .sms-empty i { font-size: 2.4rem; opacity: .25; }
-    .sms-empty h3 { font-size: .95rem; color: var(--text); }
-    .sms-empty p  { font-size: .82rem; line-height: 1.6; max-width: 300px; }
-    .sms-item { display: flex; gap: 14px; padding: 16px 18px; border-bottom: 1px solid var(--border); transition: background .15s; }
-    .sms-item:last-child { border-bottom: none; }
-    .sms-item:hover { background: var(--bg-hover); }
-    .sms-icon-wrap { width: 38px; height: 38px; border-radius: 10px; background: var(--accent-dim); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
-    .sms-from { font-size: .85rem; font-weight: 600; }
-    .sms-body { font-size: .82rem; color: var(--muted); margin-top: 3px; line-height: 1.5; }
-    .sms-time { font-size: .72rem; color: var(--muted2); margin-top: 5px; }
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.stat-icon-wrap{
+  width:36px;height:36px;border-radius:9px;
+  background:var(--accent-d);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;font-size:1rem;
+}
+.stat-val{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800;line-height:1}
+.stat-lbl{font-size:.72rem;color:var(--muted)}
 
-    /* TABLE */
-    .tbl-wrap { overflow-x: auto; }
-    .tbl { width: 100%; border-collapse: collapse; min-width: 540px; }
-    .tbl th { text-align: left; font-size: .67rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 10px 16px; border-bottom: 1px solid var(--border); }
-    .tbl td { padding: 13px 16px; font-size: .84rem; border-bottom: 1px solid rgba(255,255,255,.03); }
-    .tbl tr:last-child td { border-bottom: none; }
-    .tbl tr:hover td { background: rgba(255,255,255,.02); }
-    .rb { display: inline-flex; align-items: center; font-size: .7rem; font-weight: 700; padding: 3px 9px; border-radius: 100px; }
-    .t-success { background: rgba(0,229,160,.1); color: var(--accent); }
-    .t-pending { background: rgba(245,184,32,.1); color: var(--yellow); }
-    .t-failed  { background: rgba(255,92,92,.1);  color: var(--red); }
-    .tbl-empty { padding: 44px; text-align: center; color: var(--muted); font-size: .85rem; }
+/* Community buttons */
+.comm-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.comm-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  padding:13px;border-radius:var(--r-sm);
+  font-size:.82rem;font-weight:700;font-family:'Syne',sans-serif;
+  cursor:pointer;text-decoration:none;transition:all .2s;
+  border:1px solid transparent;
+}
+.comm-wa{background:var(--wa-d);border-color:var(--wa-b);color:var(--wa)}
+.comm-wa:hover{background:rgba(37,211,102,.16)}
+.comm-btn svg{width:18px;height:18px;fill:currentColor;flex-shrink:0}
 
-    /* PROFILE */
-    .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; }
-    .profile-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; min-width: 0; }
-    .profile-card h3 { font-family: 'Syne', sans-serif; font-size: .95rem; margin-bottom: 18px; display: flex; align-items: center; gap: 8px; }
-    .form-group { margin-bottom: 16px; }
-    .form-label { display: block; font-size: .74rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; letter-spacing: .4px; text-transform: uppercase; }
-    .form-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 13px; color: var(--text); font-size: .875rem; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color .18s; }
-    .form-input:focus { border-color: var(--accent-border); }
-    .form-input:disabled { opacity: .5; cursor: not-allowed; }
-    .form-input::placeholder { color: var(--muted); }
-    .save-btn { padding: 10px 22px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: #0c0c0f; font-size: .85rem; font-weight: 700; cursor: pointer; font-family: 'Syne', sans-serif; transition: opacity .18s; }
-    .save-btn:hover { opacity: .9; }
-    .save-btn:disabled { opacity: .5; cursor: not-allowed; }
+/* Verify banner */
+.verify-banner{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:rgba(245,184,32,.07);
+  border:1px solid rgba(245,184,32,.22);
+  border-radius:var(--r-sm);
+  padding:11px 14px;
+  margin-bottom:14px;
+  font-size:.82rem;
+}
+.verify-banner i{color:var(--yellow);font-size:1rem;flex-shrink:0}
+.verify-banner strong{color:var(--yellow)}
+.verify-banner p{flex:1;line-height:1.4}
+.resend-btn{
+  padding:5px 12px;background:none;
+  border:1px solid rgba(245,184,32,.4);
+  border-radius:6px;color:var(--yellow);
+  font-size:.75rem;font-weight:600;cursor:pointer;
+  font-family:'Inter',sans-serif;white-space:nowrap;
+  transition:all .15s;flex-shrink:0;
+}
+.resend-btn:hover{background:rgba(245,184,32,.1)}
 
-    /* MODAL */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.8); backdrop-filter: blur(6px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
-    .modal-overlay.open { display: flex; }
-    .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: 18px; padding: 32px; width: 440px; max-width: 100%; position: relative; }
-    .modal-close { position: absolute; top: 16px; right: 16px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted); font-size: .9rem; transition: all .18s; }
-    .modal-close:hover { color: var(--text); border-color: var(--border-hover); }
-    .modal h2 { font-family: 'Syne', sans-serif; font-size: 1.3rem; margin-bottom: 6px; }
-    .modal > p { font-size: .875rem; color: var(--muted); margin-bottom: 22px; line-height: 1.6; }
-    .pricing-amount { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; color: var(--accent); }
-    .pricing-period { font-size: .78rem; color: var(--muted); margin-top: 2px; }
-    .perk-item { display: flex; align-items: center; gap: 9px; padding: 8px 0; font-size: .85rem; color: var(--text); border-bottom: 1px solid var(--border); }
-    .perk-item:last-child { border-bottom: none; }
-    .perk-item i { color: var(--accent); font-size: 1rem; flex-shrink: 0; }
-    .secure-note { text-align: center; font-size: .73rem; color: var(--muted); margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 5px; }
+/* SMS items */
+.sms-item{
+  display:flex;gap:11px;
+  padding:13px 16px;
+  border-bottom:1px solid var(--border);
+  transition:background .15s;
+}
+.sms-item:last-child{border-bottom:none}
+.sms-item:hover{background:var(--bg3)}
+.sms-ic{
+  width:36px;height:36px;border-radius:9px;
+  background:var(--accent-d);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.9rem;flex-shrink:0;
+}
+.sms-from{font-size:.82rem;font-weight:600}
+.sms-body{font-size:.78rem;color:var(--muted);margin-top:2px;line-height:1.4}
+.sms-time{font-size:.68rem;color:var(--muted2);margin-top:3px}
+.copy-small{
+  background:none;border:1px solid var(--border);
+  border-radius:6px;padding:4px 9px;
+  color:var(--muted);font-size:.68rem;cursor:pointer;
+  font-family:'Inter',sans-serif;white-space:nowrap;
+  transition:all .15s;align-self:flex-start;flex-shrink:0;
+}
+.copy-small:hover{border-color:var(--accent-b);color:var(--accent)}
 
-    /* TOAST */
-    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(12px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 11px 24px; font-size: .875rem; color: var(--text); z-index: 999; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; }
-    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    .toast.success { border-color: var(--accent); color: var(--accent); }
-    .toast.error   { border-color: var(--red);    color: var(--red); }
+/* Empty state */
+.empty{
+  display:flex;flex-direction:column;align-items:center;
+  padding:40px 20px;text-align:center;gap:10px;color:var(--muted);
+}
+.empty i{font-size:2rem;opacity:.25}
+.empty h3{font-size:.9rem;color:var(--text)}
+.empty p{font-size:.78rem;line-height:1.5;max-width:260px}
 
-    /* AUTH */
-    #auth-screen { position: fixed; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 400; padding: 20px; }
-    .auth-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 400px; max-width: 100%; }
-    .auth-logo { width: 46px; height: 46px; background: var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; color: #0c0c0f; font-size: 1.1rem; margin-bottom: 20px; }
-    .auth-box h2 { font-family: 'Syne', sans-serif; font-size: 1.4rem; margin-bottom: 6px; }
-    .auth-box > p { font-size: .875rem; color: var(--muted); margin-bottom: 26px; line-height: 1.6; }
-    .auth-tabs { display: flex; gap: 4px; background: var(--bg-hover); border-radius: var(--radius-sm); padding: 4px; margin-bottom: 22px; }
-    .auth-tab { flex: 1; padding: 9px; border-radius: 6px; border: none; background: none; color: var(--muted); font-size: .85rem; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .18s; }
-    .auth-tab.active { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
-    .auth-form { display: none; }
-    .auth-form.active { display: block; }
-    .auth-input { width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 11px 13px; color: var(--text); font-size: .9rem; font-family: 'DM Sans', sans-serif; outline: none; transition: border-color .18s; margin-top: 6px; }
-    .auth-input:focus { border-color: var(--accent-border); }
-    .auth-label { font-size: .75rem; font-weight: 600; color: var(--muted); display: block; }
-    .auth-group { margin-bottom: 14px; }
-    .auth-btn { width: 100%; padding: 13px; background: var(--accent); border: none; border-radius: var(--radius-sm); color: #0c0c0f; font-size: .92rem; font-weight: 700; cursor: pointer; font-family: 'Syne', sans-serif; transition: opacity .18s; margin-top: 8px; }
-    .auth-btn:hover { opacity: .9; }
-    .auth-btn:disabled { opacity: .6; cursor: not-allowed; }
-    .auth-error { background: var(--red-dim); border: 1px solid rgba(255,92,92,.2); border-radius: var(--radius-sm); padding: 10px 13px; font-size: .8rem; color: var(--red); margin-bottom: 14px; display: none; }
-    .auth-divider { display: flex; align-items: center; gap: 10px; margin: 16px 0; color: var(--muted); font-size: .78rem; }
-    .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-    .forgot-link { font-size: .8rem; color: var(--muted); cursor: pointer; text-align: right; margin-top: 4px; display: block; }
-    .forgot-link:hover { color: var(--accent); }
+/* Number display */
+.number-display{
+  text-align:center;padding:36px 20px;
+}
+.nd-label{font-size:.68rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.nd-number{
+  font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;
+  color:var(--accent);letter-spacing:1px;margin-bottom:5px;
+  word-break:break-all;
+}
+.nd-meta{font-size:.75rem;color:var(--muted);margin-bottom:18px}
 
-    /* RESPONSIVE */
-    @media (max-width: 480px) { .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; } .content { padding: 12px 10px; } .topbar { padding: 12px 14px; } }
-.topbar-left h1 { font-size: .85rem; }
-      #services-grid { grid-template-columns: 1fr 1fr !important; }
-      .auth-box { margin: 10px; width: calc(100% - 20px); }
-    }
-    @media (max-width: 440px) {
-      .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; }
-      .stat-val { font-size: 1.4rem; }
-      .community-row { grid-template-columns: 1fr; }
-      .comm-btn { padding: 12px 14px; font-size: .82rem; }
-      .content { padding: 12px 10px; }
-    }
-    @media (max-width: 440px) { .stats-row { grid-template-columns: 1fr 1fr; } .modal { padding: 24px; } .community-row { grid-template-columns: 1fr; } }
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 18px;border-radius:var(--r-sm);
+  font-size:.82rem;font-weight:600;
+  font-family:'Inter',sans-serif;cursor:pointer;
+  transition:all .15s;text-decoration:none;border:none;
+}
+.btn-accent{background:var(--accent);color:#0c0c10}
+.btn-accent:hover{opacity:.88}
+.btn-ghost{background:none;border:1px solid var(--border2);color:var(--muted)}
+.btn-ghost:hover{color:var(--text);border-color:var(--border2)}
+.btn-outline-accent{background:var(--accent-d);border:1px solid var(--accent-b);color:var(--accent)}
+.btn-outline-accent:hover{background:rgba(0,229,160,.15)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-block{width:100%;justify-content:center}
 
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-thumb { background: #2a2a38; border-radius: 3px; }
-    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); position: relative; }
-    .pulse-dot::after { content: ''; position: absolute; inset: -3px; border-radius: 50%; background: rgba(0,229,160,.3); animation: pulse 2s ease-out infinite; }
-    @keyframes pulse { 0%,100%{transform:scale(1);opacity:.8} 50%{transform:scale(1.8);opacity:0} }
-    .status-row { display: flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--muted); }
+/* Tags/badges */
+.badge{
+  display:inline-flex;align-items:center;
+  font-size:.68rem;font-weight:700;
+  padding:3px 8px;border-radius:100px;
+}
+.badge-green{background:var(--accent-d);color:var(--accent)}
+.badge-yellow{background:var(--yellow-d);color:var(--yellow)}
+.badge-red{background:var(--red-d);color:var(--red)}
+.badge-gray{background:rgba(255,255,255,.06);color:var(--muted)}
 
-    /* ========================================
-       RESPONSIVE — CLEAN REBUILD
-    ======================================== */
+/* Form inputs */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.form-input{
+  width:100%;
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:10px 12px;
+  color:var(--text);font-size:.85rem;
+  font-family:'Inter',sans-serif;outline:none;
+  transition:border-color .15s;
+}
+.form-input:focus{border-color:var(--accent-b)}
+.form-input:disabled{opacity:.5;cursor:not-allowed}
+.form-input::placeholder{color:var(--muted2)}
 
-    /* Tablet */
-    @media (max-width: 960px) {
-      .stats-row { grid-template-columns: 1fr 1fr; }
-      .profile-grid { grid-template-columns: 1fr; }
-    }
+/* Table */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl{width:100%;border-collapse:collapse;min-width:480px}
+.tbl th{text-align:left;font-size:.63rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:9px 13px;border-bottom:1px solid var(--border)}
+.tbl td{padding:11px 13px;font-size:.8rem;border-bottom:1px solid rgba(255,255,255,.03)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.tbl-empty{text-align:center;padding:36px;color:var(--muted);font-size:.82rem}
 
-    /* Mobile */
-    @media (max-width: 768px) {
-      html, body { overflow-x: hidden; }
+/* Services grid */
+.services-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:11px;padding:14px;
+}
+.service-card{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px 12px;
+  text-align:center;cursor:pointer;
+  transition:all .2s;position:relative;
+}
+.service-card:hover{border-color:var(--accent-b);transform:translateY(-2px)}
+.service-icon{
+  width:42px;height:42px;border-radius:50%;
+  background:var(--accent-d);color:var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.2rem;margin:0 auto 9px;
+}
+.service-name{font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;margin-bottom:4px}
+.service-price{font-size:.8rem;color:var(--accent);font-weight:700}
+.service-popular{
+  position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+  background:var(--accent);color:#0c0c10;
+  font-size:.58rem;font-weight:700;padding:2px 9px;
+  border-radius:100px;white-space:nowrap;
+}
 
-      /* Sidebar: hidden off-screen by default on mobile */
-      .sidebar {
-        position: fixed;
-        top: 0; left: 0;
-        height: 100vh;
-        width: min(260px, 85vw);
-        transform: translateX(-100%);
-        transition: transform .25s ease;
-        z-index: 300;
-        box-shadow: none;
-        overflow: hidden;
-      }
-      .sidebar.open {
-        transform: translateX(0);
-        box-shadow: 4px 0 30px rgba(0,0,0,.7);
-      }
+/* Active number + OTP */
+.otp-box{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:var(--r);padding:20px;text-align:center;
+  margin-top:14px;
+}
+.otp-label{font-size:.65rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.otp-code{
+  font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;
+  letter-spacing:6px;color:var(--text);margin-bottom:4px;
+}
+.otp-from{font-size:.72rem;color:var(--muted)}
 
-      /* Overlay behind sidebar */
-      .sidebar-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,.55);
-        z-index: 299;
-        backdrop-filter: blur(2px);
-      }
-      .sidebar-overlay.show { display: block; }
+/* Toast */
+.toast{
+  position:fixed;bottom:80px;left:50%;
+  transform:translateX(-50%) translateY(10px);
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:9px;padding:9px 20px;
+  font-size:.8rem;color:var(--text);
+  z-index:999;opacity:0;transition:all .25s;
+  pointer-events:none;white-space:nowrap;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{border-color:var(--accent-b);color:var(--accent)}
+.toast.err{border-color:rgba(255,92,92,.3);color:var(--red)}
 
-      /* Main: full width, no left margin */
-      .main {
-        margin-left: 0 !important;
-        width: 100% !important;
-        min-width: 0;
-      }
+/* Profile cards */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.profile-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px}
+.profile-card h3{font-family:'Syne',sans-serif;font-size:.88rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:7px}
 
-      /* Topbar */
-      .topbar { padding: 11px 14px; gap: 8px; }
-      .topbar-left h1 { font-size: .9rem; }
-      .topbar-left p { font-size: .7rem; margin-top: 1px; }
-      .mob-menu-btn { display: flex !important; }
+/* Pulse dot */
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--accent);position:relative;flex-shrink:0}
+.pulse::after{content:'';position:absolute;inset:-3px;border-radius:50%;background:rgba(0,229,160,.3);animation:pulse-a 2s infinite}
+@keyframes pulse-a{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.8);opacity:0}}
 
-      /* Content */
-      .content { padding: 12px 10px; overflow-x: hidden; }
-
-      /* Stats */
-      .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-      .stat-tile { padding: 14px; }
-      .stat-val { font-size: 1.4rem; }
-      .stat-lbl { font-size: .7rem; }
-      .stat-icon { width: 32px; height: 32px; font-size: .9rem; }
-
-      /* Community buttons */
-      .community-row { grid-template-columns: 1fr; gap: 8px; }
-      .comm-btn { padding: 12px 16px; font-size: .85rem; }
-
-      /* Cards */
-      .card { margin-bottom: 12px; }
-      .card-head { padding: 13px 14px; flex-wrap: wrap; gap: 8px; }
-      .card-head h2 { font-size: .88rem; }
-      .card-body { padding: 6px; }
-
-      /* Tables: scroll horizontally */
-      .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-      .card-body { overflow-x: auto; }
-      .tbl { min-width: 500px; font-size: .78rem; }
-      .tbl th, .tbl td { padding: 9px 10px; white-space: nowrap; }
-
-      /* Profile */
-      .profile-grid { grid-template-columns: 1fr !important; }
-      .profile-card { padding: 18px; }
-
-      /* Number display */
-      .number-display { padding: 28px 14px; }
-      .number-display .nd-number { font-size: 1.4rem; letter-spacing: 1px; }
-
-      /* Auth box */
-      .auth-box { padding: 28px 20px; width: calc(100vw - 32px); }
-
-      /* Services grid */
-      #services-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
-
-      /* Modal */
-      .modal { padding: 22px; width: calc(100vw - 32px); }
-    }
-
-    /* Small phones */
-    @media (max-width: 400px) {
-      .topbar-left h1 { font-size: .82rem; }
-      .stats-row { gap: 6px; }
-      .stat-val { font-size: 1.2rem; }
-      .comm-btn { font-size: .78rem; }
-      #services-grid { grid-template-columns: repeat(2, 1fr) !important; }
-    }
-  </style>
-  <script src="/pwa-theme.js"></script>
+/* =====================
+   RESPONSIVE
+===================== */
+@media(min-width:769px){
+  .bottom-nav{display:none!important}
+  .mob-menu-btn{display:none!important}
+  .content{padding-bottom:18px}
+}
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{margin-left:0!important;width:100%}
+  .bottom-nav{display:block}
+  .topbar{padding:11px 14px}
+  .topbar h1{font-size:.9rem}
+  .topbar p{font-size:.68rem}
+  .content{padding:12px 12px 70px}
+  .stats-grid{gap:8px}
+  .stat-card{padding:13px}
+  .stat-val{font-size:1.4rem}
+  .comm-row{grid-template-columns:1fr;gap:8px}
+  .services-grid{grid-template-columns:repeat(2,1fr);gap:9px;padding:10px}
+  .profile-grid{grid-template-columns:1fr}
+  .card-head{padding:12px 14px}
+  .number-display{padding:24px 16px}
+  .nd-number{font-size:1.4rem}
+  .toast{bottom:70px}
+}
+@media(max-width:380px){
+  .services-grid{grid-template-columns:repeat(2,1fr)}
+  .stats-grid{grid-template-columns:1fr 1fr;gap:6px}
+}
+</style>
 </head>
 <body>
-
-<!-- AUTH SCREEN -->
-<div id="auth-screen">
-  <div class="auth-box">
-    <div class="auth-logo">A</div>
-    <h2>Welcome to ABATI</h2>
-    <p>Sign in to your account or create a new one to get started with global virtual numbers.</p>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
-      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Create Account</button>
-    </div>
-    <div class="auth-form active" id="form-login">
-      <div class="auth-error" id="login-error"></div>
-      <div class="auth-group"><label class="auth-label">Email Address</label><input type="email" class="auth-input" id="login-email" placeholder="you@example.com"></div>
-      <div class="auth-group"><label class="auth-label">Password</label><input type="password" class="auth-input" id="login-pass" placeholder="••••••••"><a class="forgot-link" onclick="showForgot()">Forgot password?</a></div>
-      <button class="auth-btn" id="login-btn" onclick="doLogin()">Sign In</button>
-    </div>
-    <div class="auth-form" id="form-register">
-      <div class="auth-error" id="register-error"></div>
-      <div class="auth-group"><label class="auth-label">Full Name</label><input type="text" class="auth-input" id="reg-name" placeholder="John Doe"></div>
-      <div class="auth-group"><label class="auth-label">Email Address</label><input type="email" class="auth-input" id="reg-email" placeholder="you@example.com"></div>
-      <div class="auth-group"><label class="auth-label">Password <span style="color:var(--muted);font-weight:400">(min. 8 chars)</span></label><input type="password" class="auth-input" id="reg-pass" placeholder="Choose a strong password"></div>
-      <button class="auth-btn" id="register-btn" onclick="doRegister()">Create Account</button>
-    </div>
-    <div class="auth-form" id="form-forgot">
-      <div class="auth-error" id="forgot-error"></div>
-      <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px">Enter your email and we'll send you a reset code.</p>
-      <div class="auth-group"><label class="auth-label">Email Address</label><input type="email" class="auth-input" id="forgot-email" placeholder="you@example.com"></div>
-      <button class="auth-btn" id="forgot-btn" onclick="doForgot()">Send Reset Code</button>
-      <div class="auth-divider">or</div>
-      <div id="otp-section" style="display:none">
-        <div class="auth-group"><label class="auth-label">Enter 6-digit Code</label><input type="text" class="auth-input" id="otp-input" placeholder="123456" maxlength="6"></div>
-        <div class="auth-group"><label class="auth-label">New Password</label><input type="password" class="auth-input" id="new-pass" placeholder="Min. 8 characters"></div>
-        <button class="auth-btn" onclick="doReset()">Reset Password</button>
-      </div>
-      <button onclick="switchTab('login')" style="width:100%;padding:10px;margin-top:8px;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);cursor:pointer;font-size:.85rem;font-family:'DM Sans',sans-serif">← Back to Sign In</button>
-    </div>
-  </div>
-</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-  <a href="/" class="sb-brand">
-    <div class="sb-logo">A</div>
-    <div><div class="sb-name">ABATI</div><div class="sb-tag">GLOBAL SMS</div></div>
-  </a>
-  <nav class="sb-nav">
-    <div class="sb-section">Main</div>
-    <button class="sb-item active" data-panel="overview"><i class="ph-fill ph-squares-four"></i> Overview</button>
-    <button class="sb-item" data-panel="number"><i class="ph-fill ph-sim-card"></i> My Number</button>
-    <button class="sb-item" data-panel="sms"><i class="ph-fill ph-chat-dots"></i> SMS Inbox</button>
-    <button class="sb-item" data-panel="marketplace"><i class="ph-fill ph-storefront"></i> Buy Numbers</button>
-    <div class="sb-section">Account</div>
-    <button class="sb-item" data-panel="transactions"><i class="ph-fill ph-receipt"></i> Billing</button>
-    <button class="sb-item" data-panel="profile"><i class="ph-fill ph-user"></i> Profile</button>
-    <div class="sb-section">Quick Links</div>
-    <a href="/" class="sb-item"><i class="ph ph-house"></i> Back to Site</a>
-    <a href="/admin.html" class="sb-item" id="admin-link" style="display:none"><i class="ph ph-shield-check"></i> Admin Panel</a>
-  </nav>
-  <div class="sb-footer">
-    <div class="sb-user">
-      <div class="sb-avatar" id="sb-av">--</div>
-      <div style="flex:1;min-width:0">
-        <div class="sb-uname" id="sb-name">Loading...</div>
-        <div class="sb-uemail" id="sb-email">—</div>
-      </div>
-      <button class="sb-logout" onclick="logout()" title="Sign out"><i class="ph ph-sign-out"></i></button>
-    </div>
-  </div>
-</aside>
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
-
-<!-- MAIN -->
-<div class="main">
-  <div class="topbar">
-    <div class="topbar-left">
-      <h1 id="panel-title">Overview</h1>
-      <p id="panel-sub">Welcome back</p>
-    </div>
-    <div class="topbar-right">
-      <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" style="background:none;border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);cursor:pointer;font-size:1rem;display:flex;align-items:center;transition:all .2s;"><i class="ph ph-sun"></i></button>
-      <button class="pwa-install-btn" onclick="installPWA()" style="display:none;align-items:center;gap:6px;padding:8px 14px;background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:8px;color:var(--accent);font-size:.8rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;"><i class="ph ph-download-simple"></i> Install</button>
-      <button class="mob-menu-btn" onclick="toggleSidebar()"><i class="ph ph-list"></i></button>
-    </div>
+<!-- =====================
+     AUTH SCREEN
+===================== -->
+<div id="auth">
+<div class="auth-box">
+  <div class="auth-logo">A</div>
+  <h2>Welcome to ABATI</h2>
+  <p>Sign in or create an account to get started with global virtual numbers.</p>
+  <div class="auth-tabs">
+    <button class="auth-tab on" id="tab-login" onclick="authTab('login')">Sign In</button>
+    <button class="auth-tab" id="tab-reg" onclick="authTab('reg')">Create Account</button>
   </div>
 
-  <div class="content">
+  <!-- LOGIN -->
+  <div class="auth-form on" id="form-login">
+    <div class="auth-err" id="login-err"></div>
+    <div class="fl"><label>Email</label><input type="email" class="fi" id="login-email" placeholder="you@example.com"></div>
+    <div class="fl"><label>Password</label><input type="password" class="fi" id="login-pass" placeholder="••••••••"><a class="forgot-link" onclick="authTab('forgot')">Forgot password?</a></div>
+    <button class="auth-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+  </div>
 
-    <!-- OVERVIEW PANEL -->
-    <div class="panel active" id="panel-overview">
+  <!-- REGISTER -->
+  <div class="auth-form" id="form-reg">
+    <div class="auth-err" id="reg-err"></div>
+    <div class="fl"><label>Full Name</label><input type="text" class="fi" id="reg-name" placeholder="John Doe"></div>
+    <div class="fl"><label>Email</label><input type="email" class="fi" id="reg-email" placeholder="you@example.com"></div>
+    <div class="fl"><label>Password <span style="color:var(--muted);font-weight:400;text-transform:none">(min 8 chars)</span></label><input type="password" class="fi" id="reg-pass" placeholder="Choose a strong password"></div>
+    <button class="auth-btn" id="reg-btn" onclick="doReg()">Create Account</button>
+  </div>
 
-      <!-- ★ COMMUNITY BUTTONS (NEW) -->
-      <div class="community-row">
-        <a href="https://wa.me/message/X4ZLHUGQ5TZGO1" target="_blank" class="comm-btn comm-wa">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Chat on WhatsApp
-        </a>
-        <a href="https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL" target="_blank" class="comm-btn comm-wa">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          WhatsApp Group
-        </a>
-      </div>
-
-      <div class="stats-row">
-        
-      </div>
-
-      
-
-      <div class="card">
-        <div class="card-head">
-          <div><h2>Recent Messages</h2><p>Latest SMS received</p></div>
-          <button class="copy-btn" style="font-size:.78rem;padding:7px 14px" onclick="switchPanel('sms')"><i class="ph ph-arrow-right"></i> View All</button>
-        </div>
-        <div id="overview-sms-list">
-          <div class="sms-empty"><i class="ph ph-chat-dots"></i><h3>No messages yet</h3><p>SMS sent to your number will appear here in real-time.</p></div>
-        </div>
-      </div>
+  <!-- FORGOT -->
+  <div class="auth-form" id="form-forgot">
+    <div class="auth-err" id="forgot-err"></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px">Enter your email and we'll send you a reset code.</p>
+    <div class="fl"><label>Email</label><input type="email" class="fi" id="forgot-email" placeholder="you@example.com"></div>
+    <button class="auth-btn" id="forgot-btn" onclick="doForgot()">Send Reset Code</button>
+    <div class="auth-div">or</div>
+    <div id="otp-section" style="display:none">
+      <div class="fl"><label>6-digit Code</label><input type="text" class="fi" id="otp-input" placeholder="123456" maxlength="6"></div>
+      <div class="fl"><label>New Password</label><input type="password" class="fi" id="new-pass" placeholder="Min 8 characters"></div>
+      <button class="auth-btn" onclick="doReset()">Reset Password</button>
     </div>
-
-    <!-- NUMBER PANEL -->
-    <div class="panel" id="panel-number">
-      <div class="card">
-        <div class="card-head">
-          <div><h2>My Virtual Number</h2><p>Your dedicated global phone number</p></div>
-          <div class="status-row">
-            <div class="pulse-dot" id="num-pulse" style="display:none"></div>
-            <span id="num-status-text" style="display:none">Active</span>
-          </div>
-        </div>
-        <div id="number-panel-content"></div>
-      </div>
-      <div class="card" id="how-it-works" style="display:none">
-        <div class="card-head"><div><h2>How it works</h2><p>Using your virtual number</p></div></div>
-        <div class="card-body" style="padding:20px 22px">
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center">
-            <div style="padding:16px"><div style="font-size:1.6rem;margin-bottom:10px">📋</div><div style="font-size:.85rem;font-weight:600;margin-bottom:5px">Copy Number</div><div style="font-size:.78rem;color:var(--muted);line-height:1.5">Copy your dedicated number from above</div></div>
-            <div style="padding:16px"><div style="font-size:1.6rem;margin-bottom:10px">📱</div><div style="font-size:.85rem;font-weight:600;margin-bottom:5px">Register with Services</div><div style="font-size:.78rem;color:var(--muted);line-height:1.5">Use it anywhere that needs a phone number</div></div>
-            <div style="padding:16px"><div style="font-size:1.6rem;margin-bottom:10px">💬</div><div style="font-size:.85rem;font-weight:600;margin-bottom:5px">Receive SMS Here</div><div style="font-size:.78rem;color:var(--muted);line-height:1.5">All messages land in your SMS Inbox instantly</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SMS PANEL -->
-    <div class="panel" id="panel-sms">
-      <div class="card">
-        <div class="card-head">
-          <div><h2>SMS Inbox</h2><p id="sms-count-lbl">All received messages</p></div>
-          <button class="copy-btn" style="font-size:.78rem;padding:7px 14px" onclick="loadSMS()"><i class="ph ph-arrow-clockwise"></i> Refresh</button>
-        </div>
-        <div id="sms-list"><div class="sms-empty"><i class="ph ph-chat-dots"></i><h3>No messages yet</h3><p>SMS sent to your virtual number will appear here.</p></div></div>
-      </div>
-    </div>
-
-    <!-- TRANSACTIONS PANEL -->
-    <div class="panel" id="panel-transactions">
-      <div class="card">
-        <div class="card-head"><div><h2>Billing History</h2><p id="txn-count-lbl">All your payments</p></div></div>
-        <div class="card-body tbl-wrap">
-          <table class="tbl">
-            <thead><tr><th>Plan</th><th>Amount</th><th>Reference</th><th>Status</th><th>Date</th></tr></thead>
-            <tbody id="txn-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- PROFILE PANEL -->
-    <div class="panel" id="panel-profile">
-      <div class="profile-grid">
-        <div class="profile-card">
-          <h3><i class="ph-fill ph-user" style="color:var(--accent)"></i> Account Info</h3>
-          <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="profile-name" placeholder="Your name"></div>
-          <div class="form-group"><label class="form-label">Email Address</label><input type="email" class="form-input" id="profile-email" disabled></div>
-          <button class="save-btn" id="save-profile-btn" onclick="saveProfile()">Save Changes</button>
-        </div>
-        <div class="profile-card">
-          <h3><i class="ph-fill ph-key" style="color:var(--accent)"></i> Change Password</h3>
-          <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-input" id="cur-pass" placeholder="••••••••"></div>
-          <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-input" id="new-pass-profile" placeholder="Min. 8 characters"></div>
-          <div class="form-group"><label class="form-label">Confirm New Password</label><input type="password" class="form-input" id="conf-pass" placeholder="Repeat new password"></div>
-          <button class="save-btn" id="change-pass-btn" onclick="changePassword()">Update Password</button>
-        </div>
-        <div class="profile-card">
-          <h3><i class="ph-fill ph-star" style="color:var(--yellow)"></i> Subscription</h3>
-        </div>
-        <div class="profile-card">
-          <h3><i class="ph-fill ph-sign-out" style="color:var(--red)"></i> Session</h3>
-          <p style="font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:18px">Sign out of your account on this device. Your data and numbers will remain safe.</p>
-          <button onclick="logout()" style="padding:10px 22px;background:var(--red-dim);border:1px solid rgba(255,92,92,.2);border-radius:var(--radius-sm);color:var(--red);font-size:.85rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .18s" onmouseover="this.style.background='rgba(255,92,92,.2)'" onmouseout="this.style.background='var(--red-dim)'">Sign Out</button>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- MARKETPLACE PANEL -->
-    <div class="panel" id="panel-marketplace">
-      <div class="card" id="market-catalogue-card">
-        <div class="card-head">
-          <div><h2>🇺🇸 Buy a US Number</h2><p>Select a service below — your US number is assigned instantly</p></div>
-
-        </div>
-        <div class="card-body" style="padding:18px">
-          <div id="services-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px">
-            <div style="grid-column:1/-1;text-align:center;padding:32px;color:var(--muted)">Loading services...</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card" id="active-number-card" style="display:none">
-        <div class="card-head">
-          <div><h2 id="active-service-name">Your Number</h2><p id="active-order-type-lbl">Active</p></div>
-          <button onclick="closeActiveNumber()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);font-size:.78rem;cursor:pointer;font-family:'DM Sans',sans-serif">✕ Close</button>
-        </div>
-        <div class="card-body" style="padding:28px">
-          <div style="text-align:center;margin-bottom:28px">
-            <div style="font-size:.7rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Your US Number</div>
-            <div id="active-number-display" style="font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--accent);letter-spacing:2px;margin-bottom:6px">+1 000 000 0000</div>
-            <div id="active-number-meta" style="font-size:.8rem;color:var(--muted);margin-bottom:20px">Active</div>
-            <button onclick="copyActiveNumber()" id="copy-num-btn" style="display:inline-flex;align-items:center;gap:7px;padding:10px 22px;background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:8px;color:var(--accent);font-size:.83rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">
-              <i class="ph ph-copy"></i> Copy Number
-            </button>
-          </div>
-          <div style="background:var(--bg-hover);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center">
-            <div style="font-size:.72rem;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px">Waiting for SMS / OTP</div>
-            <div id="otp-display" style="font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:800;letter-spacing:8px;color:var(--text);margin-bottom:6px">— — — —</div>
-            <div id="otp-from" style="font-size:.75rem;color:var(--muted)">No messages yet — send an SMS to your number</div>
-            <div id="otp-time" style="font-size:.72rem;color:var(--muted2);margin-top:4px"></div>
-            <button onclick="refreshOTP()" style="margin-top:14px;display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);border-radius:7px;padding:6px 14px;color:var(--muted);font-size:.75rem;cursor:pointer;font-family:'DM Sans',sans-serif" onmouseover="this.style.borderColor='var(--accent-border)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
-              <i class="ph ph-arrow-clockwise"></i> Refresh
-            </button>
-          </div>
-          <div id="order-sms-list" style="margin-top:18px"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head">
-          <div><h2>Purchase History</h2><p id="orders-count-lbl">Your number orders</p></div>
-          <button onclick="loadOrders()" style="display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:8px;color:var(--accent);font-size:.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif"><i class="ph ph-arrow-clockwise"></i> Refresh</button>
-        </div>
-        <div class="card-body" style="overflow-x:auto">
-          <table class="tbl">
-            <thead><tr><th>Number</th><th>Service</th><th>Type</th><th>Price</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
-            <tbody id="orders-body"><tr><td colspan="7" class="tbl-empty">No orders yet. Buy your first number above!</td></tr></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
+    <button onclick="authTab('login')" style="width:100%;padding:9px;margin-top:8px;background:none;border:1px solid var(--border);border-radius:var(--r-sm);color:var(--muted);cursor:pointer;font-size:.82rem;font-family:'Inter',sans-serif">← Back to Sign In</button>
   </div>
 </div>
+</div>
+
+<!-- =====================
+     MAIN APP
+===================== -->
+<div id="app">
+
+  <!-- SIDEBAR (desktop) -->
+  <aside class="sidebar">
+    <a href="/" class="sb-top">
+      <div class="sb-logo-mark">A</div>
+      <div><div class="sb-logo-text">ABATI SMS</div><div class="sb-logo-sub">Dashboard</div></div>
+    </a>
+    <nav class="sb-nav">
+      <div class="sb-section">Main</div>
+      <button class="sb-item on" data-panel="overview"><i class="ph-fill ph-squares-four"></i> Overview</button>
+      <button class="sb-item" data-panel="buy"><i class="ph-fill ph-storefront"></i> Buy Numbers</button>
+      <button class="sb-item" data-panel="sms"><i class="ph-fill ph-chat-dots"></i> SMS Inbox</button>
+      <button class="sb-item" data-panel="number"><i class="ph-fill ph-sim-card"></i> My Number</button>
+      <div class="sb-section">Account</div>
+      <button class="sb-item" data-panel="billing"><i class="ph-fill ph-receipt"></i> Billing</button>
+      <button class="sb-item" data-panel="profile"><i class="ph-fill ph-user"></i> Profile</button>
+      <div class="sb-section">Links</div>
+      <a href="/" class="sb-item"><i class="ph ph-house"></i> Back to Site</a>
+      <a href="/admin.html" class="sb-item" id="admin-link" style="display:none"><i class="ph ph-shield-check"></i> Admin Panel</a>
+    </nav>
+    <div class="sb-foot">
+      <div class="sb-user">
+        <div class="sb-av" id="sb-av">--</div>
+        <div style="flex:1;min-width:0">
+          <div class="sb-uname" id="sb-name">Loading...</div>
+          <div class="sb-uemail" id="sb-email">—</div>
+        </div>
+        <button class="sb-logout" onclick="logout()" title="Sign out"><i class="ph ph-sign-out"></i></button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div>
+        <h1 id="page-title">Overview</h1>
+        <p id="page-sub">Welcome back</p>
+      </div>
+      <div class="topbar-right">
+        <button class="icon-btn" onclick="toggleTheme()" id="theme-btn" title="Toggle theme"><i class="ph ph-sun"></i></button>
+        <button class="icon-btn mob-menu-btn" style="display:none" title="Menu"><i class="ph ph-list"></i></button>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <div class="panel on" id="panel-overview">
+        <div id="verify-wrap"></div>
+        <div class="comm-row">
+          <a href="https://wa.me/message/X4ZLHUGQ5TZGO1" target="_blank" class="comm-btn comm-wa">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Chat with Us
+          </a>
+          <a href="https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL" target="_blank" class="comm-btn comm-wa">
+            <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            WhatsApp Group
+          </a>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrap"><i class="ph-fill ph-sim-card"></i></div>
+            <div class="stat-val" id="stat-nums">0</div>
+            <div class="stat-lbl">Virtual Numbers</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap"><i class="ph-fill ph-chat-dots"></i></div>
+            <div class="stat-val" id="stat-sms">0</div>
+            <div class="stat-lbl">SMS Received</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <div><h2>Recent Messages</h2><p>Latest SMS received</p></div>
+            <button class="btn btn-ghost" style="font-size:.75rem;padding:6px 12px" onclick="go('sms')"><i class="ph ph-arrow-right"></i> View All</button>
+          </div>
+          <div id="overview-sms"></div>
+        </div>
+      </div>
+
+      <!-- BUY NUMBERS -->
+      <div class="panel" id="panel-buy">
+        <div class="card">
+          <div class="card-head">
+            <div><h2>🇺🇸 Buy a US Number</h2><p>Select a service — number assigned instantly</p></div>
+          </div>
+          <div class="services-grid" id="services-grid">
+            <div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted);font-size:.82rem">Loading services...</div>
+          </div>
+        </div>
+
+        <!-- Active number after purchase -->
+        <div class="card" id="active-card" style="display:none">
+          <div class="card-head">
+            <div><h2 id="active-title">Your Number</h2><p>Ready to use</p></div>
+            <button class="btn btn-ghost" style="font-size:.75rem;padding:6px 12px" onclick="closeActive()">✕ Close</button>
+          </div>
+          <div class="card-body" style="padding:16px">
+            <div class="number-display">
+              <div class="nd-label">Your US Number</div>
+              <div class="nd-number" id="active-num">+1 000 000 0000</div>
+              <div class="nd-meta" id="active-meta">Active</div>
+              <button class="btn btn-outline-accent" id="copy-num-btn" onclick="copyActiveNum()"><i class="ph ph-copy"></i> Copy Number</button>
+            </div>
+            <div class="otp-box">
+              <div class="otp-label">Waiting for SMS / OTP</div>
+              <div class="otp-code" id="otp-code">— — — —</div>
+              <div class="otp-from" id="otp-from">No messages yet</div>
+              <div style="font-size:.65rem;color:var(--muted2);margin-top:2px" id="otp-time"></div>
+              <button class="btn btn-ghost" style="margin-top:10px;font-size:.75rem;padding:6px 12px" onclick="refreshOTP()"><i class="ph ph-arrow-clockwise"></i> Refresh</button>
+            </div>
+            <div id="order-sms" style="margin-top:12px"></div>
+          </div>
+        </div>
+
+        <!-- Purchase history -->
+        <div class="card">
+          <div class="card-head">
+            <div><h2>Purchase History</h2><p id="orders-lbl">Your orders</p></div>
+            <button class="btn btn-ghost" style="font-size:.75rem;padding:6px 12px" onclick="loadOrders()"><i class="ph ph-arrow-clockwise"></i></button>
+          </div>
+          <div class="tbl-wrap card-body">
+            <table class="tbl">
+              <thead><tr><th>Number</th><th>Service</th><th>Price</th><th>Status</th><th>Date</th><th></th></tr></thead>
+              <tbody id="orders-body"><tr><td colspan="6" class="tbl-empty">No orders yet</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SMS INBOX -->
+      <div class="panel" id="panel-sms">
+        <div class="card">
+          <div class="card-head">
+            <div><h2>SMS Inbox</h2><p id="sms-lbl">All messages</p></div>
+            <button class="btn btn-ghost" style="font-size:.75rem;padding:6px 12px" onclick="loadSMS()"><i class="ph ph-arrow-clockwise"></i> Refresh</button>
+          </div>
+          <div id="sms-list"><div class="empty"><i class="ph ph-chat-dots"></i><h3>No messages yet</h3><p>SMS sent to your number will appear here.</p></div></div>
+        </div>
+      </div>
+
+      <!-- MY NUMBER -->
+      <div class="panel" id="panel-number">
+        <div class="card">
+          <div class="card-head">
+            <div><h2>My Virtual Number</h2><p>Your dedicated number</p></div>
+            <div style="display:flex;align-items:center;gap:6px" id="num-status-wrap" style="display:none">
+              <div class="pulse"></div>
+              <span style="font-size:.72rem;color:var(--muted)">Active</span>
+            </div>
+          </div>
+          <div id="number-content"></div>
+        </div>
+        <div class="card" id="how-card" style="display:none">
+          <div class="card-head"><div><h2>How to use</h2><p>3 simple steps</p></div></div>
+          <div class="card-body" style="padding:16px">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
+              <div><div style="font-size:1.4rem;margin-bottom:7px">📋</div><div style="font-size:.78rem;font-weight:600;margin-bottom:3px">Copy Number</div><div style="font-size:.72rem;color:var(--muted)">Copy your dedicated number</div></div>
+              <div><div style="font-size:1.4rem;margin-bottom:7px">📱</div><div style="font-size:.78rem;font-weight:600;margin-bottom:3px">Register</div><div style="font-size:.72rem;color:var(--muted)">Use it anywhere that needs a number</div></div>
+              <div><div style="font-size:1.4rem;margin-bottom:7px">💬</div><div style="font-size:.78rem;font-weight:600;margin-bottom:3px">Receive SMS</div><div style="font-size:.72rem;color:var(--muted)">Messages arrive instantly</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BILLING -->
+      <div class="panel" id="panel-billing">
+        <div class="card">
+          <div class="card-head">
+            <div><h2>Billing History</h2><p id="billing-lbl">All payments</p></div>
+          </div>
+          <div class="tbl-wrap card-body">
+            <table class="tbl">
+              <thead><tr><th>Plan</th><th>Amount</th><th>Reference</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody id="billing-body"><tr><td colspan="5" class="tbl-empty">No payments yet</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="panel" id="panel-profile">
+        <div class="profile-grid">
+          <div class="profile-card">
+            <h3><i class="ph-fill ph-user" style="color:var(--accent)"></i> Account Info</h3>
+            <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="p-name" placeholder="Your name"></div>
+            <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="p-email" disabled></div>
+            <button class="btn btn-accent" id="save-profile-btn" onclick="saveProfile()">Save Changes</button>
+          </div>
+          <div class="profile-card">
+            <h3><i class="ph-fill ph-key" style="color:var(--accent)"></i> Change Password</h3>
+            <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-input" id="cur-pass" placeholder="••••••••"></div>
+            <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-input" id="new-pass-p" placeholder="Min 8 characters"></div>
+            <div class="form-group"><label class="form-label">Confirm New Password</label><input type="password" class="form-input" id="conf-pass" placeholder="Repeat new password"></div>
+            <button class="btn btn-accent" id="change-pass-btn" onclick="changePass()">Update Password</button>
+          </div>
+          <div class="profile-card">
+            <h3><i class="ph-fill ph-sign-out" style="color:var(--red)"></i> Session</h3>
+            <p style="font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:16px">Sign out of your account. Your data stays safe.</p>
+            <button onclick="logout()" class="btn" style="background:var(--red-d);border:1px solid rgba(255,92,92,.2);color:var(--red)">Sign Out</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+
+  <!-- BOTTOM NAV (mobile) -->
+  <nav class="bottom-nav">
+    <div class="bn-inner">
+      <button class="bn-item on" data-panel="overview"><i class="ph-fill ph-squares-four"></i>Home</button>
+      <button class="bn-item" data-panel="buy"><i class="ph-fill ph-storefront"></i>Buy</button>
+      <button class="bn-item" data-panel="sms"><i class="ph-fill ph-chat-dots"></i>SMS</button>
+      <button class="bn-item" data-panel="number"><i class="ph-fill ph-sim-card"></i>Number</button>
+      <button class="bn-item" data-panel="profile"><i class="ph-fill ph-user"></i>Profile</button>
+    </div>
+  </nav>
+
+</div><!-- /app -->
 
 <script>
-const TOKEN_KEY = 'abati-token';
-let TOKEN = localStorage.getItem(TOKEN_KEY);
-let currentUser = null;
+const TK='abati-token';
+let TOKEN=localStorage.getItem(TK);
+let ME=null, activeOrder=null, otpTimer=null;
 
-const panelMeta = {
-  overview:     ['Overview',          'Your dashboard at a glance'],
-  number:       ['My Virtual Number', 'Your dedicated global number'],
-  sms:          ['SMS Inbox',         'Messages received on your number'],
-  transactions: ['Billing History',   'All your payments and upgrades'],
-  marketplace:  ['Buy a Number',       'Get a US number for any service instantly'],
-  profile:      ['Profile & Account', 'Manage your account details'],
+// ---- TOAST ----
+function toast(msg,type='ok'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast on '+type;
+  clearTimeout(t._t);t._t=setTimeout(()=>t.className='toast',2800);
+}
+
+// ---- THEME ----
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme')||'dark';
+  const next=cur==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('abati-theme',next);
+  document.getElementById('theme-btn').innerHTML=next==='dark'?'<i class="ph ph-sun"></i>':'<i class="ph ph-moon"></i>';
+}
+// Set correct icon on load
+(function(){
+  const t=document.documentElement.getAttribute('data-theme')||'dark';
+  const btn=document.getElementById('theme-btn');
+  if(btn)btn.innerHTML=t==='dark'?'<i class="ph ph-sun"></i>':'<i class="ph ph-moon"></i>';
+})();
+
+// ---- PANEL NAVIGATION ----
+const panelMeta={
+  overview:['Overview','Welcome back'],
+  buy:['Buy Numbers','Get a US number instantly'],
+  sms:['SMS Inbox','All received messages'],
+  number:['My Number','Your dedicated number'],
+  billing:['Billing','Payment history'],
+  profile:['Profile','Account settings'],
 };
 
-function toast(msg, type = 'success') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = `toast ${type} show`;
-  clearTimeout(t._timer); t._timer = setTimeout(() => t.classList.remove('show'), 3200);
+function go(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sb-item[data-panel],.bn-item[data-panel]').forEach(b=>b.classList.remove('on'));
+  document.getElementById('panel-'+name).classList.add('on');
+  document.querySelectorAll('[data-panel="'+name+'"]').forEach(b=>b.classList.add('on'));
+  const m=panelMeta[name]||[name,''];
+  document.getElementById('page-title').textContent=m[0];
+  document.getElementById('page-sub').textContent=m[1];
+  if(name==='sms')loadSMS();
+  if(name==='billing')loadBilling();
+  if(name==='buy'){loadServices();loadOrders();}
+  if(name==='number')renderNumber();
+  window.scrollTo&&window.scrollTo(0,0);
+  document.querySelector('.content').scrollTop=0;
 }
 
-function switchPanel(name) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.sb-item[data-panel]').forEach(b => b.classList.remove('active'));
-  document.getElementById('panel-' + name).classList.add('active');
-  document.querySelector(`[data-panel="${name}"]`)?.classList.add('active');
-  document.getElementById('panel-title').textContent = panelMeta[name][0];
-  document.getElementById('panel-sub').textContent   = panelMeta[name][1];
-  document.getElementById('sidebar').classList.remove('open');
-  if (name === 'sms') loadSMS();
-  if (name === 'transactions') loadTransactions();
-  if (name === 'marketplace') { loadServices(); loadOrders(); }
+document.querySelectorAll('[data-panel]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.panel)));
+
+// ---- AUTH ----
+function authTab(tab){
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('on'));
+  document.getElementById('tab-'+tab)?.classList.add('on');
+  document.getElementById('form-'+tab)?.classList.add('on');
 }
 
-document.querySelectorAll('.sb-item[data-panel]').forEach(b =>
-  b.addEventListener('click', () => switchPanel(b.dataset.panel))
-);
-
-function toggleSidebar() {
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('sidebar-overlay');
-  sidebar.classList.toggle('open');
-  if (overlay) overlay.classList.toggle('show');
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  const err=document.getElementById('login-err');
+  const btn=document.getElementById('login-btn');
+  err.style.display='none';btn.textContent='Signing in…';btn.disabled=true;
+  try{
+    const r=await fetch('/api/v1/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const d=await r.json();
+    if(!d.success){err.textContent=d.message;err.style.display='block';btn.textContent='Sign In';btn.disabled=false;return;}
+    localStorage.setItem(TK,d.token);TOKEN=d.token;ME=d.user;
+    showApp();toast('Welcome back, '+d.user.fullName.split(' ')[0]+'! 👋');
+  }catch{err.textContent='Network error. Try again.';err.style.display='block';btn.textContent='Sign In';btn.disabled=false;}
 }
 
-function switchTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-  document.getElementById('tab-' + tab)?.classList.add('active');
-  document.getElementById('form-' + tab)?.classList.add('active');
+async function doReg(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const err=document.getElementById('reg-err');
+  const btn=document.getElementById('reg-btn');
+  err.style.display='none';
+  if(!name||!email||!pass){err.textContent='All fields required.';err.style.display='block';return;}
+  btn.textContent='Creating…';btn.disabled=true;
+  try{
+    const r=await fetch('/api/v1/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fullName:name,email,password:pass})});
+    const d=await r.json();
+    if(!d.success){err.textContent=d.message;err.style.display='block';btn.textContent='Create Account';btn.disabled=false;return;}
+    localStorage.setItem(TK,d.token);TOKEN=d.token;ME=d.user;
+    showApp();toast('Welcome to ABATI! 🎉');
+  }catch{err.textContent='Network error.';err.style.display='block';btn.textContent='Create Account';btn.disabled=false;}
 }
 
-function showForgot() {
-  document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-  document.getElementById('form-forgot').classList.add('active');
+async function doForgot(){
+  const email=document.getElementById('forgot-email').value.trim();
+  const err=document.getElementById('forgot-err');
+  const btn=document.getElementById('forgot-btn');
+  err.style.display='none';
+  if(!email){err.textContent='Email required.';err.style.display='block';return;}
+  btn.textContent='Sending…';btn.disabled=true;
+  try{
+    await fetch('/api/v1/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    document.getElementById('otp-section').style.display='block';
+    btn.textContent='Resend Code';btn.disabled=false;
+    toast('Reset code sent!');
+  }catch{err.textContent='Network error.';err.style.display='block';btn.textContent='Send Reset Code';btn.disabled=false;}
 }
 
-async function doLogin() {
-  const email = document.getElementById('login-email').value.trim();
-  const pass  = document.getElementById('login-pass').value;
-  const errEl = document.getElementById('login-error');
-  const btn   = document.getElementById('login-btn');
-  errEl.style.display = 'none'; btn.textContent = 'Signing in…'; btn.disabled = true;
-  try {
-    const r = await fetch('/api/v1/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass }) });
-    const d = await r.json();
-    if (!d.success) { errEl.textContent = d.message; errEl.style.display = 'block'; btn.textContent = 'Sign In'; btn.disabled = false; return; }
-    localStorage.setItem(TOKEN_KEY, d.token); TOKEN = d.token; currentUser = d.user;
-    hideAuth(); initDashboard(); toast('Welcome back, ' + d.user.fullName.split(' ')[0] + '! 👋');
-  } catch { errEl.textContent = 'Network error. Try again.'; errEl.style.display = 'block'; btn.textContent = 'Sign In'; btn.disabled = false; }
+async function doReset(){
+  const email=document.getElementById('forgot-email').value.trim();
+  const otp=document.getElementById('otp-input').value.trim();
+  const pass=document.getElementById('new-pass').value;
+  const err=document.getElementById('forgot-err');
+  err.style.display='none';
+  if(!otp||!pass){err.textContent='Enter code and new password.';err.style.display='block';return;}
+  try{
+    const vr=await fetch('/api/v1/auth/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,otp})});
+    const vd=await vr.json();
+    if(!vd.success){err.textContent=vd.message;err.style.display='block';return;}
+    const rr=await fetch('/api/v1/auth/reset-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    const rd=await rr.json();
+    if(!rd.success){err.textContent=rd.message;err.style.display='block';return;}
+    toast('Password reset! Please sign in.');authTab('login');
+  }catch{err.textContent='Network error.';err.style.display='block';}
 }
 
-async function doRegister() {
-  const name  = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const pass  = document.getElementById('reg-pass').value;
-  const errEl = document.getElementById('register-error');
-  const btn   = document.getElementById('register-btn');
-  errEl.style.display = 'none';
-  if (!name || !email || !pass) { errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return; }
-  btn.textContent = 'Creating account…'; btn.disabled = true;
-  try {
-    const r = await fetch('/api/v1/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName: name, email, password: pass }) });
-    const d = await r.json();
-    if (!d.success) { errEl.textContent = d.message; errEl.style.display = 'block'; btn.textContent = 'Create Account'; btn.disabled = false; return; }
-    localStorage.setItem(TOKEN_KEY, d.token); TOKEN = d.token; currentUser = d.user;
-    hideAuth(); initDashboard(); toast('Account created! Welcome to ABATI 🎉');
-  } catch { errEl.textContent = 'Network error. Try again.'; errEl.style.display = 'block'; btn.textContent = 'Create Account'; btn.disabled = false; }
+function logout(){localStorage.removeItem(TK);location.reload();}
+
+// ---- SHOW APP ----
+function showApp(){
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').style.display='block';
+  initDashboard();
 }
 
-async function doForgot() {
-  const email = document.getElementById('forgot-email').value.trim();
-  const errEl = document.getElementById('forgot-error');
-  const btn   = document.getElementById('forgot-btn');
-  errEl.style.display = 'none';
-  if (!email) { errEl.textContent = 'Email is required.'; errEl.style.display = 'block'; return; }
-  btn.textContent = 'Sending…'; btn.disabled = true;
-  try {
-    await fetch('/api/v1/auth/forgot-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email }) });
-    document.getElementById('otp-section').style.display = 'block';
-    btn.textContent = 'Resend Code'; btn.disabled = false;
-    toast('Reset code sent if account exists');
-  } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; btn.textContent = 'Send Reset Code'; btn.disabled = false; }
-}
-
-async function doReset() {
-  const email = document.getElementById('forgot-email').value.trim();
-  const otp   = document.getElementById('otp-input').value.trim();
-  const pass  = document.getElementById('new-pass').value;
-  const errEl = document.getElementById('forgot-error');
-  errEl.style.display = 'none';
-  if (!otp || !pass) { errEl.textContent = 'Enter code and new password.'; errEl.style.display = 'block'; return; }
-  try {
-    const vr = await fetch('/api/v1/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, otp }) });
-    const vd = await vr.json();
-    if (!vd.success) { errEl.textContent = vd.message; errEl.style.display = 'block'; return; }
-    const rr = await fetch('/api/v1/auth/reset-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password: pass }) });
-    const rd = await rr.json();
-    if (!rd.success) { errEl.textContent = rd.message; errEl.style.display = 'block'; return; }
-    toast('Password reset! Please sign in.'); switchTab('login');
-  } catch { errEl.textContent = 'Network error.'; errEl.style.display = 'block'; }
-}
-
-function hideAuth() { document.getElementById('auth-screen').style.display = 'none'; }
-function logout()   { localStorage.removeItem(TOKEN_KEY); location.reload(); }
-
-async function initDashboard() {
-  try {
-    const r = await fetch('/api/v1/user/dashboard', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
-    if (!r.ok) {
-      if (r.status === 401) { logout(); return; }
-      throw new Error('Server error ' + r.status);
-    }
-    const d = await r.json();
-    if (!d.success) { logout(); return; }
-    currentUser = d.user;
-    renderDashboard(d.user, d.stats);
-  } catch(err) {
-    console.error('[Dashboard Error]', err);
-    // Don't logout on network error — server may be waking up (Render free tier)
-    setTimeout(() => initDashboard(), 4000);
-    toast('Server starting up... please wait', 'success');
+// ---- DASHBOARD INIT ----
+async function initDashboard(){
+  try{
+    const r=await fetch('/api/v1/user/dashboard',{headers:{'Authorization':'Bearer '+TOKEN}});
+    if(!r.ok){if(r.status===401)logout();return;}
+    const d=await r.json();
+    if(!d.success){logout();return;}
+    ME=d.user;
+    renderUser(d.user);
+    renderOverview(d.user,d.stats);
+    renderNumber();
+  }catch(e){
+    console.error(e);
+    setTimeout(initDashboard,4000);
+    toast('Connecting...','ok');
   }
 }
 
-function renderDashboard(user, stats) {
-  try {
-  const el = id => document.getElementById(id);
-  if (el('sb-av')) el('sb-av').textContent = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  if (el('sb-name')) el('sb-name').textContent  = user.fullName;
-  if (el('sb-email')) el('sb-email').textContent = user.email;
-  if (user.role === 'admin') document.getElementById('admin-link').style.display = 'flex';
-  showVerifyBanner(user);
-  if (new URLSearchParams(window.location.search).get('verified') === '1') { toast('Email verified! Welcome to ABATI 🎉'); window.history.replaceState({}, '', '/dashboard.html'); }
-  document.getElementById('stat-numbers').textContent = stats.virtualNumbers;
-  document.getElementById('stat-sms').textContent     = stats.smsReceived;
-  renderNumberPanel(user);
-  const pn = document.getElementById('profile-name');
-  const pe = document.getElementById('profile-email');
-  if (pn) pn.value = user.fullName;
-  if (pe) pe.value = user.email;
-  } catch(e) { console.error('[renderDashboard]', e); }
+function renderUser(u){
+  const initials=u.fullName.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('sb-av').textContent=initials;
+  document.getElementById('sb-name').textContent=u.fullName;
+  document.getElementById('sb-email').textContent=u.email;
+  if(u.role==='admin')document.getElementById('admin-link').style.display='flex';
+  // Verify banner
+  if(!u.isVerified){
+    document.getElementById('verify-wrap').innerHTML=`
+      <div class="verify-banner">
+        <i class="ph-fill ph-envelope-simple"></i>
+        <p><strong>Verify your email</strong> — Check your inbox for a verification link.</p>
+        <button class="resend-btn" id="resend-btn" onclick="resendVerify()">Resend Email</button>
+      </div>`;
+  }
+  // Profile fields
+  const pn=document.getElementById('p-name');const pe=document.getElementById('p-email');
+  if(pn)pn.value=u.fullName;if(pe)pe.value=u.email;
+  // Check verified query param
+  if(new URLSearchParams(location.search).get('verified')==='1'){
+    toast('Email verified! Welcome 🎉');history.replaceState({},'','/dashboard.html');
+  }
 }
 
+function renderOverview(u,stats){
+  document.getElementById('stat-nums').textContent=stats.virtualNumbers||0;
+  document.getElementById('stat-sms').textContent=stats.smsReceived||0;
+  // Load recent SMS preview
+  if(u.plan==='pro')loadRecentSMS();
+}
 
-
-async function renderNumberPanel(user) {
-  const content = document.getElementById('number-panel-content');
-  const pulse   = document.getElementById('num-pulse');
-  const statusT = document.getElementById('num-status-text');
-
-  content.innerHTML = '<div style="padding:52px;text-align:center;color:var(--muted)">Loading your number...</div>';
-  try {
-    const r = await fetch('/api/v1/user/number', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
-    const d = await r.json();
-    if (d.success && d.data) {
-      const num = d.data;
-      pulse.style.display = 'block'; statusT.style.display = 'block';
-      document.getElementById('how-it-works').style.display = 'block';
-      const expiry = user.planExpiresAt ? new Date(user.planExpiresAt).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'}) : '—';
-      content.innerHTML = `<div class="number-display"><div class="nd-label">Your Dedicated Number</div><div class="nd-number">${num.number}</div><div class="nd-network">${num.network} · Active · Expires ${expiry}</div><button class="copy-btn" onclick="copyNumber('${num.number}', this)"><i class="ph ph-copy"></i> Copy Number</button></div>`;
-    } else {
-      content.innerHTML = `<div class="locked-number"><div class="lock-icon"><i class="ph ph-warning"></i></div><h3>Number being assigned</h3><p>Your Pro plan is active. A dedicated number is being assigned to you — this usually takes under a minute. Refresh to check.</p><button onclick="renderNumberPanel(currentUser)" style="padding:10px 22px;background:var(--accent-dim);border:1px solid var(--accent-border);border-radius:var(--radius-sm);color:var(--accent);font-size:.85rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px"><i class="ph ph-arrow-clockwise"></i> Check Again</button></div>`;
+async function loadRecentSMS(){
+  try{
+    const r=await fetch('/api/v1/user/sms',{headers:{'Authorization':'Bearer '+TOKEN}});
+    const d=await r.json();
+    const el=document.getElementById('overview-sms');
+    if(!d.success||!d.data.length){
+      el.innerHTML='<div class="empty"><i class="ph ph-chat-dots"></i><h3>No messages yet</h3><p>SMS sent to your number appears here.</p></div>';
+      return;
     }
-  } catch { content.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">Could not load number. Try refreshing.</div>'; }
+    el.innerHTML=d.data.slice(0,3).map(m=>smsItemHTML(m)).join('');
+  }catch{}
 }
 
-
-
-async function loadTransactions() {
-  const tbody = document.getElementById('txn-body');
-  tbody.innerHTML = '<tr><td colspan="5" class="tbl-empty">Loading...</td></tr>';
-  try {
-    const r = await fetch('/api/v1/user/transactions', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
-    const d = await r.json();
-    if (!d.success) { tbody.innerHTML = '<tr><td colspan="5" class="tbl-empty">Could not load transactions.</td></tr>'; return; }
-    const txns = d.data;
-    document.getElementById('txn-count-lbl').textContent = txns.length + ' transaction' + (txns.length !== 1 ? 's' : '');
-    tbody.innerHTML = txns.map(t => `<tr><td style="font-weight:600;text-transform:capitalize">${t.plan}</td><td style="color:var(--accent);font-weight:700">₦${Number(t.amountNaira).toLocaleString()}</td><td style="font-family:monospace;font-size:.75rem;color:var(--muted)">${t.reference}</td><td><span class="rb ${t.status === 'success' ? 't-success' : t.status === 'pending' ? 't-pending' : 't-failed'}">${t.status}</span></td><td style="color:var(--muted);font-size:.78rem">${new Date(t.paidAt || t.createdAt).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'})}</td></tr>`).join('');
-  } catch { tbody.innerHTML = '<tr><td colspan="5" class="tbl-empty">Network error.</td></tr>'; }
+// ---- SMS ----
+function smsItemHTML(m){
+  return`<div class="sms-item">
+    <div class="sms-ic"><i class="ph-fill ph-chat-dots"></i></div>
+    <div style="flex:1;min-width:0">
+      <div class="sms-from">${esc(m.from)}</div>
+      <div class="sms-body">${esc(m.body)}</div>
+      <div class="sms-time">${timeAgo(m.createdAt)}</div>
+    </div>
+    <button class="copy-small" onclick="copyTxt('${esc(m.body).replace(/'/g,"\\'")}',this)">Copy</button>
+  </div>`;
 }
 
-
-
-async function loadSMS() {
-  const list  = document.getElementById('sms-list');
-  const isPro = currentUser?.plan === 'pro';
-  list.innerHTML = '<div style="padding:44px;text-align:center;color:var(--muted)">Loading messages...</div>';
-  try {
-    const r = await fetch('/api/v1/user/sms', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
-    const d = await r.json();
-    if (!d.success) throw new Error(d.message);
-    const msgs = d.data;
-    document.getElementById('sms-count-lbl').textContent = msgs.length + ' message' + (msgs.length !== 1 ? 's' : '');
-    document.getElementById('stat-sms').textContent = msgs.length;
-    if (!msgs.length) { list.innerHTML = `<div class="sms-empty"><i class="ph ph-chat-dots"></i><h3>Inbox is empty</h3><p>Messages sent to your number will appear here. Share your number with any service and their SMS will land here.</p></div>`; return; }
-    list.innerHTML = msgs.map(m => `<div class="sms-item"><div class="sms-icon-wrap"><i class="ph-fill ph-chat-dots"></i></div><div style="flex:1;min-width:0"><div class="sms-from">${escHtml(m.from)}</div><div class="sms-body">${escHtml(m.body)}</div><div class="sms-time">${fmtDate(m.createdAt)}</div></div><button onclick="copyText('${escHtml(m.body).replace(/'/g,"\\'")}', this)" style="flex-shrink:0;background:none;border:1px solid var(--border);border-radius:6px;padding:5px 10px;color:var(--muted);font-size:.72rem;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .18s" onmouseover="this.style.borderColor='var(--accent-border)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Copy</button></div>`).join('');
-    updateOverviewSMS(msgs.slice(0, 3));
-  } catch { list.innerHTML = '<div style="padding:44px;text-align:center;color:var(--muted)">Could not load messages.</div>'; }
+async function loadSMS(){
+  const list=document.getElementById('sms-list');
+  list.innerHTML='<div class="empty"><i class="ph ph-spinner"></i><h3>Loading...</h3></div>';
+  try{
+    const r=await fetch('/api/v1/user/sms',{headers:{'Authorization':'Bearer '+TOKEN}});
+    const d=await r.json();
+    const lbl=document.getElementById('sms-lbl');
+    if(!d.success||!d.data.length){
+      list.innerHTML='<div class="empty"><i class="ph ph-chat-dots"></i><h3>Inbox is empty</h3><p>Share your number with any service and messages will appear here instantly.</p></div>';
+      if(lbl)lbl.textContent='No messages yet';
+      return;
+    }
+    if(lbl)lbl.textContent=d.data.length+' message'+(d.data.length!==1?'s':'');
+    list.innerHTML=d.data.map(m=>smsItemHTML(m)).join('');
+    document.getElementById('stat-sms').textContent=d.data.length;
+  }catch{list.innerHTML='<div class="empty"><i class="ph ph-warning"></i><h3>Could not load</h3><p>Network error. Try again.</p></div>';}
 }
 
-function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function fmtDate(d) { const dt = new Date(d); const now = new Date(); const diff = Math.floor((now - dt) / 1000); if (diff < 60) return 'Just now'; if (diff < 3600) return Math.floor(diff/60) + 'm ago'; if (diff < 86400) return Math.floor(diff/3600) + 'h ago'; return dt.toLocaleDateString('en-NG',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}); }
-function copyText(text, btn) { navigator.clipboard.writeText(text).then(() => { const orig = btn.textContent; btn.textContent = 'Copied!'; btn.style.color = 'var(--accent)'; setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000); }); }
-function updateOverviewSMS(msgs) { const el = document.getElementById('overview-sms-list'); if (!msgs.length) return; el.innerHTML = msgs.map(m => `<div class="sms-item"><div class="sms-icon-wrap"><i class="ph-fill ph-chat-dots"></i></div><div><div class="sms-from">${escHtml(m.from)}</div><div class="sms-body">${escHtml(m.body)}</div><div class="sms-time">${fmtDate(m.createdAt)}</div></div></div>`).join(''); }
-function copyNumber(num, btn) { navigator.clipboard.writeText(num).then(() => { const orig = btn.innerHTML; btn.innerHTML = '<i class="ph ph-check"></i> Copied!'; setTimeout(() => { btn.innerHTML = orig; }, 2000); toast('Number copied to clipboard!'); }).catch(() => toast('Copy failed', 'error')); }
-
-
-
-
-
-
-async function saveProfile() {
-  const name = document.getElementById('profile-name').value.trim();
-  const btn  = document.getElementById('save-profile-btn');
-  if (!name) { toast('Name cannot be empty', 'error'); return; }
-  btn.textContent = 'Saving…'; btn.disabled = true;
-  try {
-    const r = await fetch('/api/v1/user/profile', { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName: name }) });
-    const d = await r.json();
-    if (d.success) { toast('Profile updated ✓'); currentUser = d.user; document.getElementById('sb-name').textContent = d.user.fullName; document.getElementById('sb-av').textContent = d.user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2); }
-    else { toast(d.message || 'Update failed', 'error'); }
-  } catch { toast('Network error', 'error'); }
-  btn.textContent = 'Save Changes'; btn.disabled = false;
+// ---- MY NUMBER ----
+async function renderNumber(){
+  const el=document.getElementById('number-content');
+  el.innerHTML='<div class="empty"><i class="ph ph-spinner"></i><h3>Loading...</h3></div>';
+  try{
+    const r=await fetch('/api/v1/user/number',{headers:{'Authorization':'Bearer '+TOKEN}});
+    const d=await r.json();
+    if(d.success&&d.data){
+      const num=d.data;
+      document.getElementById('num-status-wrap').style.display='flex';
+      document.getElementById('how-card').style.display='block';
+      const exp=ME?.planExpiresAt?new Date(ME.planExpiresAt).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'}):'—';
+      el.innerHTML=`<div class="number-display">
+        <div class="nd-label">Your Dedicated Number</div>
+        <div class="nd-number">${num.number}</div>
+        <div class="nd-meta">${num.network} · Active · Expires ${exp}</div>
+        <button class="btn btn-outline-accent" onclick="copyTxt('${num.number}',this)"><i class="ph ph-copy"></i> Copy Number</button>
+      </div>`;
+    }else{
+      el.innerHTML=`<div class="empty">
+        <i class="ph ph-sim-card"></i>
+        <h3>No number yet</h3>
+        <p>Go to Buy Numbers to get a US number for any service.</p>
+        <button class="btn btn-accent" style="margin-top:8px" onclick="go('buy')"><i class="ph ph-storefront"></i> Buy a Number</button>
+      </div>`;
+    }
+  }catch{el.innerHTML='<div class="empty"><i class="ph ph-warning"></i><h3>Could not load</h3></div>';}
 }
 
-async function changePassword() {
-  const cur  = document.getElementById('cur-pass').value;
-  const nw   = document.getElementById('new-pass-profile').value;
-  const conf = document.getElementById('conf-pass').value;
-  const btn  = document.getElementById('change-pass-btn');
-  if (!cur || !nw || !conf) { toast('Fill in all password fields', 'error'); return; }
-  if (nw !== conf)           { toast('New passwords do not match', 'error'); return; }
-  if (nw.length < 8)         { toast('Password must be at least 8 characters', 'error'); return; }
-  btn.textContent = 'Updating…'; btn.disabled = true;
-  try {
-    const r = await fetch('/api/v1/user/change-password', { method: 'POST', headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' }, body: JSON.stringify({ currentPassword: cur, newPassword: nw }) });
-    const d = await r.json();
-    if (d.success) { toast('Password changed ✓'); document.getElementById('cur-pass').value = ''; document.getElementById('new-pass-profile').value = ''; document.getElementById('conf-pass').value = ''; }
-    else { toast(d.message || 'Change failed', 'error'); }
-  } catch { toast('Network error', 'error'); }
-  btn.textContent = 'Update Password'; btn.disabled = false;
+// ---- BILLING ----
+async function loadBilling(){
+  const body=document.getElementById('billing-body');
+  const lbl=document.getElementById('billing-lbl');
+  body.innerHTML='<tr><td colspan="5" class="tbl-empty">Loading...</td></tr>';
+  try{
+    const r=await fetch('/api/v1/user/transactions',{headers:{'Authorization':'Bearer '+TOKEN}});
+    const d=await r.json();
+    if(!d.success||!d.data.length){body.innerHTML='<tr><td colspan="5" class="tbl-empty">No payments yet.</td></tr>';return;}
+    lbl.textContent=d.data.length+' transaction'+(d.data.length!==1?'s':'');
+    body.innerHTML=d.data.map(t=>`<tr>
+      <td style="font-weight:600;text-transform:capitalize">${t.plan}</td>
+      <td style="color:var(--accent);font-weight:700">₦${Number(t.amountNaira).toLocaleString()}</td>
+      <td style="font-family:monospace;font-size:.72rem;color:var(--muted)">${t.reference}</td>
+      <td><span class="badge ${t.status==='success'?'badge-green':t.status==='pending'?'badge-yellow':'badge-red'}">${t.status}</span></td>
+      <td style="color:var(--muted);font-size:.75rem">${new Date(t.paidAt||t.createdAt).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'})}</td>
+    </tr>`).join('');
+  }catch{body.innerHTML='<tr><td colspan="5" class="tbl-empty">Network error.</td></tr>';}
 }
 
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter') { const active = document.querySelector('.auth-form.active'); if (!active) return; if (active.id === 'form-login') doLogin(); if (active.id === 'form-register') doRegister(); }
-  if (e.key === 'Escape') closeUpgradeModal();
+// ---- MARKETPLACE ----
+const SICONS={whatsapp:'ph-whatsapp-logo',telegram:'ph-telegram-logo',google_voice:'ph-google-logo',facebook:'ph-facebook-logo',instagram:'ph-instagram-logo',twitter:'ph-twitter-logo',tinder:'ph-heart',uber:'ph-car',any:'ph-star'};
+let activeOrderId=null;
+
+async function loadServices(){
+  const grid=document.getElementById('services-grid');
+  if(!grid)return;
+  try{
+    const r=await fetch('/api/v1/marketplace/services');
+    const d=await r.json();
+    if(!d.success)return;
+    grid.innerHTML=d.data.map(s=>{
+      const ic=SICONS[s.id]||'ph-star';
+      return`<div class="service-card" onclick="buyNum('${s.id}','${s.label}')">
+        ${s.popular?'<div class="service-popular">POPULAR</div>':''}
+        <div class="service-icon"><i class="ph-fill ${ic}"></i></div>
+        <div class="service-name">${s.label}</div>
+        <div class="service-price">₦${s.priceOne.toLocaleString()}</div>
+        <button class="btn btn-accent btn-block" style="margin-top:10px;font-size:.75rem;padding:7px">Get Number →</button>
+      </div>`;
+    }).join('');
+  }catch{if(grid)grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted)">Could not load services.</div>';}
+}
+
+async function buyNum(serviceId,serviceLabel){
+  toast('Getting your number...');
+  try{
+    const r=await fetch('/api/v1/marketplace/buy',{method:'POST',headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},body:JSON.stringify({serviceId,orderType:'one_time'})});
+    const d=await r.json();
+    if(!d.success){toast(d.message||'Failed','err');return;}
+    activeOrder=d.order;
+    showActiveNum(d.order,serviceLabel);
+    loadOrders();
+    toast('Number assigned! Copy and use it now.');
+  }catch{toast('Network error','err');}
+}
+
+function showActiveNum(order,label){
+  document.getElementById('active-card').style.display='block';
+  document.getElementById('active-title').textContent=(label||order.serviceLabel)+' Number';
+  document.getElementById('active-num').textContent=order.number;
+  document.getElementById('active-meta').textContent='Active · '+new Date(order.createdAt).toLocaleString('en-NG',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+  document.getElementById('otp-code').textContent='— — — —';
+  document.getElementById('otp-code').style.color='var(--text)';
+  document.getElementById('otp-from').textContent='No messages yet — send an SMS to your number';
+  document.getElementById('otp-time').textContent='';
+  document.getElementById('order-sms').innerHTML='';
+  document.getElementById('active-card').scrollIntoView({behavior:'smooth',block:'start'});
+  if(otpTimer)clearInterval(otpTimer);
+  otpTimer=setInterval(refreshOTP,5000);
+  refreshOTP();
+}
+
+async function refreshOTP(){
+  if(!activeOrder)return;
+  try{
+    const r=await fetch('/api/v1/marketplace/orders/'+activeOrder._id+'/sms',{headers:{'Authorization':'Bearer '+TOKEN}});
+    const d=await r.json();
+    if(!d.success||!d.data.length)return;
+    const latest=d.data[0];
+    const m=latest.body.match(/\b(\d{4,8})\b/);
+    const oc=document.getElementById('otp-code');
+    if(m){oc.textContent=m[1].split('').join('  ');oc.style.color='var(--accent)';}
+    else{oc.textContent='SMS';oc.style.fontSize='1rem';}
+    document.getElementById('otp-from').textContent='From: '+latest.from;
+    document.getElementById('otp-time').textContent=timeAgo(latest.createdAt);
+    document.getElementById('order-sms').innerHTML='<div style="font-size:.68rem;font-weight:600;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;padding:0 2px">All Messages</div>'+d.data.map(m=>smsItemHTML(m)).join('');
+  }catch{}
+}
+
+function copyActiveNum(){
+  if(!activeOrder)return;
+  navigator.clipboard.writeText(activeOrder.number).then(()=>{
+    const b=document.getElementById('copy-num-btn');
+    b.innerHTML='<i class="ph ph-check"></i> Copied!';
+    setTimeout(()=>{b.innerHTML='<i class="ph ph-copy"></i> Copy Number';},2000);
+    toast('Number copied!');
+  });
+}
+
+function closeActive(){
+  document.getElementById('active-card').style.display='none';
+  activeOrder=null;if(otpTimer){clearInterval(otpTimer);otpTimer=null;}
+}
+
+async function loadOrders(){
+  const body=document.getElementById('orders-body');
+  const lbl=document.getElementById('orders-lbl');
+  if(!body)return;
+  try{
+    const r=await fetch('/api/v1/marketplace/orders',{headers:{'Authorization':'Bearer '+TOKEN}});
+    const d=await r.json();
+    if(!d.success||!d.data.length){body.innerHTML='<tr><td colspan="6" class="tbl-empty">No orders yet. Buy your first number above!</td></tr>';return;}
+    lbl.textContent=d.data.length+' order'+(d.data.length!==1?'s':'');
+    body.innerHTML=d.data.map(o=>`<tr>
+      <td style="font-family:monospace;font-size:.78rem;font-weight:600">${o.number}</td>
+      <td style="font-size:.8rem">${o.serviceLabel||o.service}</td>
+      <td style="color:var(--accent);font-weight:700">₦${Number(o.priceNaira).toLocaleString()}</td>
+      <td><span class="badge ${o.status==='active'?'badge-green':'badge-red'}">${o.status}</span></td>
+      <td style="color:var(--muted);font-size:.72rem">${new Date(o.createdAt).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'})}</td>
+      <td><button onclick="viewOrder('${o._id}','${o.number}','${o.serviceLabel||o.service}')" class="copy-small">SMS</button></td>
+    </tr>`).join('');
+  }catch{body.innerHTML='<tr><td colspan="6" class="tbl-empty">Network error.</td></tr>';}
+}
+
+async function viewOrder(id,num,label){
+  activeOrder={_id:id,number:num};
+  document.getElementById('active-card').style.display='block';
+  document.getElementById('active-title').textContent=label+' Number';
+  document.getElementById('active-num').textContent=num;
+  document.getElementById('active-meta').textContent='Viewing history';
+  document.getElementById('active-card').scrollIntoView({behavior:'smooth',block:'start'});
+  await refreshOTP();
+}
+
+// ---- PROFILE ----
+async function saveProfile(){
+  const name=document.getElementById('p-name').value.trim();
+  const btn=document.getElementById('save-profile-btn');
+  if(!name){toast('Name required','err');return;}
+  btn.textContent='Saving…';btn.disabled=true;
+  try{
+    const r=await fetch('/api/v1/user/profile',{method:'PATCH',headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},body:JSON.stringify({fullName:name})});
+    const d=await r.json();
+    if(d.success){toast('Profile updated ✓');ME=d.user;document.getElementById('sb-name').textContent=d.user.fullName;document.getElementById('sb-av').textContent=d.user.fullName.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);}
+    else toast(d.message||'Failed','err');
+  }catch{toast('Network error','err');}
+  btn.textContent='Save Changes';btn.disabled=false;
+}
+
+async function changePass(){
+  const cur=document.getElementById('cur-pass').value;
+  const nw=document.getElementById('new-pass-p').value;
+  const conf=document.getElementById('conf-pass').value;
+  const btn=document.getElementById('change-pass-btn');
+  if(!cur||!nw||!conf){toast('Fill all password fields','err');return;}
+  if(nw!==conf){toast('Passwords do not match','err');return;}
+  if(nw.length<8){toast('Min 8 characters','err');return;}
+  btn.textContent='Updating…';btn.disabled=true;
+  try{
+    const r=await fetch('/api/v1/user/change-password',{method:'POST',headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},body:JSON.stringify({currentPassword:cur,newPassword:nw})});
+    const d=await r.json();
+    if(d.success){toast('Password changed ✓');document.getElementById('cur-pass').value='';document.getElementById('new-pass-p').value='';document.getElementById('conf-pass').value='';}
+    else toast(d.message||'Failed','err');
+  }catch{toast('Network error','err');}
+  btn.textContent='Update Password';btn.disabled=false;
+}
+
+async function resendVerify(){
+  const btn=document.getElementById('resend-btn');
+  btn.textContent='Sending…';btn.disabled=true;
+  try{
+    const r=await fetch('/api/v1/auth/resend-verification',{method:'POST',headers:{'Authorization':'Bearer '+TOKEN}});
+    const d=await r.json();
+    toast(d.success?'Verification email sent!':d.message,d.success?'ok':'err');
+    if(d.success){btn.textContent='✓ Sent!';setTimeout(()=>{btn.textContent='Resend Email';btn.disabled=false;},4000);}
+    else{btn.textContent='Resend Email';btn.disabled=false;}
+  }catch{toast('Network error','err');btn.textContent='Resend Email';btn.disabled=false;}
+}
+
+// ---- UTILS ----
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function timeAgo(d){
+  const s=Math.floor((new Date()-new Date(d))/1000);
+  if(s<60)return'Just now';if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';
+  return new Date(d).toLocaleDateString('en-NG',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+function copyTxt(text,btn){
+  navigator.clipboard.writeText(text).then(()=>{
+    const orig=btn.textContent;btn.textContent='✓';
+    setTimeout(()=>{btn.textContent=orig;},1800);
+    toast('Copied!');
+  });
+}
+
+// ---- KEYBOARD SHORTCUTS ----
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    const af=document.querySelector('.auth-form.on');
+    if(!af)return;
+    if(af.id==='form-login')doLogin();
+    if(af.id==='form-reg')doReg();
+  }
 });
 
-function showVerifyBanner(user) {
-  if (user.isVerified) return;
-  if (document.getElementById('verify-banner')) return;
-  const banner = document.createElement('div');
-  banner.id = 'verify-banner';
-  banner.style.cssText = 'background:rgba(245,184,32,.08);border:1px solid rgba(245,184,32,.25);border-radius:10px;padding:12px 18px;display:flex;align-items:center;gap:12px;margin-bottom:18px;font-size:.85rem;';
-  banner.innerHTML = `<i class="ph-fill ph-envelope-simple" style="color:var(--yellow);font-size:1.1rem;flex-shrink:0"></i><div style="flex:1;color:var(--text)"><strong style="color:var(--yellow)">Verify your email</strong> — Check your inbox for a verification link.</div><button id="resend-verify-btn" onclick="resendVerification()" style="padding:6px 14px;background:none;border:1px solid rgba(245,184,32,.4);border-radius:6px;color:var(--yellow);font-size:.78rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">Resend Email</button>`;
-  const content = document.querySelector('.content');
-  content.insertBefore(banner, content.firstChild);
-}
-
-async function resendVerification() {
-  const btn = document.getElementById('resend-verify-btn');
-  btn.textContent = 'Sending…'; btn.disabled = true;
-  try {
-    const r = await fetch('/api/v1/auth/resend-verification', { method: 'POST', headers: { 'Authorization': 'Bearer ' + TOKEN } });
-    const d = await r.json();
-    toast(d.success ? 'Verification email sent! Check your inbox.' : d.message, d.success ? 'success' : 'error');
-    if (d.success) { btn.textContent = '✓ Sent!'; setTimeout(() => { btn.textContent = 'Resend Email'; btn.disabled = false; }, 4000); }
-    else { btn.textContent = 'Resend Email'; btn.disabled = false; }
-  } catch { toast('Network error', 'error'); btn.textContent = 'Resend Email'; btn.disabled = false; }
-}
-
-async function boot() {
-  if (!TOKEN) return;
-  try {
-    const r = await fetch('/api/v1/auth/me', { headers: { 'Authorization': 'Bearer ' + TOKEN } });
-    const d = await r.json();
-    if (!d.success) { localStorage.removeItem(TOKEN_KEY); return; }
-    currentUser = d.user; hideAuth(); initDashboard();
-  } catch { localStorage.removeItem(TOKEN_KEY); }
+// ---- BOOT ----
+async function boot(){
+  if(!TOKEN)return;
+  try{
+    const r=await fetch('/api/v1/auth/me',{headers:{'Authorization':'Bearer '+TOKEN}});
+    const d=await r.json();
+    if(!d.success){localStorage.removeItem(TK);return;}
+    ME=d.user;showApp();
+  }catch{localStorage.removeItem(TK);}
 }
 boot();
 </script>
