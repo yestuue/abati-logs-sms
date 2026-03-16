@@ -406,25 +406,64 @@
     [data-theme="light"] .price-card { background: #ffffff; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
 
     /* MOBILE */
+    /* Hide on desktop, show in mobile menu */
+    .mob-only { display: none; }
+    /* Hide on mobile */
+    .desk-only { display: flex; }
+
     @media (max-width: 768px) {
+      /* Nav */
       .nav-links { display: none; }
       #mob-nav-btn { display: flex; }
+      .desk-only { display: none !important; }
+      .nav-right { gap: 6px; }
+
+      /* Mobile nav dropdown */
       .nav-links.mob-open {
         display: flex; flex-direction: column;
         position: fixed; top: 60px; left: 0; right: 0;
         background: rgba(8,9,12,0.97);
         border-bottom: 1px solid var(--border);
-        padding: 16px 5%; gap: 4px;
+        padding: 12px 5%; gap: 2px;
+        z-index: 99;
       }
+      .nav-links.mob-open li { display: block; }
+      .nav-links.mob-open a {
+        display: block; padding: 11px 12px;
+        border-radius: var(--radius-sm);
+        font-size: .88rem; color: var(--muted2);
+      }
+      .nav-links.mob-open a:hover { background: rgba(255,255,255,.05); color: var(--text); }
+      .mob-only { display: block; }
+      .mob-only a { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 14px !important; }
+
+      /* Nav button — show only Get started on mobile */
+      .nav-btn.nav-solid { padding: 7px 14px; font-size: .8rem; }
+
+      /* Sections */
       .steps { grid-template-columns: 1fr; }
       .features-grid { grid-template-columns: 1fr; }
       .country-grid { grid-template-columns: repeat(2,1fr); }
-      .cta-box { padding: 40px 24px; }
+      .cta-box { padding: 36px 20px; }
       footer { flex-direction: column; text-align: center; }
+
+      /* Hero */
+      .hero { padding: 80px 5% 60px; }
+      .hero-stats { gap: 20px; padding-top: 22px; }
+      .stat-div { display: none; }
+      .flag-strip { gap: 5px; }
+      .flag-pill { font-size: .7rem; padding: 3px 9px; }
+
+      /* Sections spacing */
+      .how, .countries, .features, .cta-section { padding-top: 60px; padding-bottom: 60px; }
     }
+
     @media (max-width: 480px) {
       .hero-cta { flex-direction: column; align-items: stretch; }
       .btn-primary, .btn-secondary { justify-content: center; }
+      .country-grid { grid-template-columns: repeat(2,1fr); }
+      .section-title { letter-spacing: -.5px; }
+      h1 { letter-spacing: -.8px; }
     }
   </style>
 </head>
@@ -441,13 +480,13 @@
   <ul class="nav-links" id="nav-links">
     <li><a href="#how">How it works</a></li>
     <li><a href="#countries">Countries</a></li>
-    
+    <li class="mob-only"><a href="/dashboard.html">Sign in</a></li>
   </ul>
   <div class="nav-right">
-    <button class="theme-btn theme-toggle" onclick="toggleTheme()" title="Toggle theme"><i class="ph ph-sun"></i></button>
-    <a href="/dashboard.html" class="nav-btn nav-ghost">Sign in →</a>
-    <a href="/dashboard.html" class="nav-btn nav-solid">Get started →</a>
-    <button id="mob-nav-btn" onclick="document.getElementById('nav-links').classList.toggle('mob-open')"><i class="ph ph-list"></i></button>
+    <button class="theme-btn theme-toggle desk-only" onclick="toggleTheme()" title="Toggle theme"><i class="ph ph-sun"></i></button>
+    <a href="/dashboard.html" class="nav-btn nav-ghost desk-only">Sign in</a>
+    <a href="/dashboard.html" class="nav-btn nav-solid">Get started</a>
+    <button id="mob-nav-btn" onclick="toggleMobNav()"><i class="ph ph-list"></i></button>
   </div>
 </nav>
 
@@ -611,9 +650,28 @@
 </footer>
 
 <script>
+function toggleMobNav() {
+  const nav = document.getElementById('nav-links');
+  nav.classList.toggle('mob-open');
+}
+// Close mobile nav when a link is clicked
+document.querySelectorAll('#nav-links a').forEach(a => {
+  a.addEventListener('click', () => {
+    document.getElementById('nav-links').classList.remove('mob-open');
+  });
+});
+
 window.addEventListener('scroll', () => {
   document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 20);
 });
+
+// Set correct theme icon on load
+(function(){
+  const t = localStorage.getItem('abati-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+  const btns = document.querySelectorAll('.theme-toggle');
+  btns.forEach(b => b.innerHTML = t === 'dark' ? '<i class="ph ph-sun"></i>' : '<i class="ph ph-moon"></i>');
+})();
 
 const obs = new IntersectionObserver(entries => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
