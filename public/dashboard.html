@@ -591,7 +591,6 @@ body{
       <button class="sb-item on" data-panel="overview"><i class="ph-fill ph-squares-four"></i> Overview</button>
       <button class="sb-item" data-panel="buy"><i class="ph-fill ph-storefront"></i> Buy Numbers</button>
       <button class="sb-item" data-panel="sms"><i class="ph-fill ph-chat-dots"></i> SMS Inbox</button>
-      <button class="sb-item" data-panel="number"><i class="ph-fill ph-sim-card"></i> My Number</button>
       <div class="sb-section">Account</div>
       <button class="sb-item" data-panel="billing"><i class="ph-fill ph-receipt"></i> Billing</button>
       <button class="sb-item" data-panel="profile"><i class="ph-fill ph-user"></i> Profile</button>
@@ -687,12 +686,34 @@ body{
               <div class="nd-meta" id="active-meta">Active</div>
               <button class="btn btn-outline-accent" id="copy-num-btn" onclick="copyActiveNum()"><i class="ph ph-copy"></i> Copy Number</button>
             </div>
+            <!-- Step instructions -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;text-align:center">
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 8px">
+                <div style="font-size:1.3rem;margin-bottom:5px">1️⃣</div>
+                <div style="font-size:.72rem;font-weight:600;margin-bottom:3px">Copy Number</div>
+                <div style="font-size:.68rem;color:var(--muted)">Tap Copy above</div>
+              </div>
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 8px">
+                <div style="font-size:1.3rem;margin-bottom:5px">2️⃣</div>
+                <div style="font-size:.72rem;font-weight:600;margin-bottom:3px">Use It</div>
+                <div style="font-size:.68rem;color:var(--muted)">Paste in app signup</div>
+              </div>
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px 8px">
+                <div style="font-size:1.3rem;margin-bottom:5px">3️⃣</div>
+                <div style="font-size:.72rem;font-weight:600;margin-bottom:3px">Get Code</div>
+                <div style="font-size:.68rem;color:var(--muted)">OTP appears below</div>
+              </div>
+            </div>
+
             <div class="otp-box">
-              <div class="otp-label">Waiting for SMS / OTP</div>
-              <div class="otp-code" id="otp-code">— — — —</div>
-              <div class="otp-from" id="otp-from">No messages yet</div>
+              <div class="otp-label">OTP / Verification Code</div>
+              <div class="otp-code" id="otp-code" style="font-size:2.4rem;letter-spacing:8px">— — — —</div>
+              <div class="otp-from" id="otp-from" style="margin-top:4px">Waiting for SMS...</div>
               <div style="font-size:.65rem;color:var(--muted2);margin-top:2px" id="otp-time"></div>
-              <button class="btn btn-ghost" style="margin-top:10px;font-size:.75rem;padding:6px 12px" onclick="refreshOTP()"><i class="ph ph-arrow-clockwise"></i> Refresh</button>
+              <div style="display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap">
+                <button class="btn btn-ghost" style="font-size:.75rem;padding:6px 14px" onclick="refreshOTP()"><i class="ph ph-arrow-clockwise"></i> Refresh</button>
+                <button class="btn btn-outline-accent" style="font-size:.75rem;padding:6px 14px" id="copy-otp-btn" onclick="copyOTP()" style="display:none"><i class="ph ph-copy"></i> Copy Code</button>
+              </div>
             </div>
             <div id="order-sms" style="margin-top:12px"></div>
           </div>
@@ -725,29 +746,6 @@ body{
       </div>
 
       <!-- MY NUMBER -->
-      <div class="panel" id="panel-number">
-        <div class="card">
-          <div class="card-head">
-            <div><h2>My Virtual Number</h2><p>Your dedicated number</p></div>
-            <div style="display:flex;align-items:center;gap:6px" id="num-status-wrap" style="display:none">
-              <div class="pulse"></div>
-              <span style="font-size:.72rem;color:var(--muted)">Active</span>
-            </div>
-          </div>
-          <div id="number-content"></div>
-        </div>
-        <div class="card" id="how-card" style="display:none">
-          <div class="card-head"><div><h2>How to use</h2><p>3 simple steps</p></div></div>
-          <div class="card-body" style="padding:16px">
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center">
-              <div><div style="font-size:1.4rem;margin-bottom:7px">📋</div><div style="font-size:.78rem;font-weight:600;margin-bottom:3px">Copy Number</div><div style="font-size:.72rem;color:var(--muted)">Copy your dedicated number</div></div>
-              <div><div style="font-size:1.4rem;margin-bottom:7px">📱</div><div style="font-size:.78rem;font-weight:600;margin-bottom:3px">Register</div><div style="font-size:.72rem;color:var(--muted)">Use it anywhere that needs a number</div></div>
-              <div><div style="font-size:1.4rem;margin-bottom:7px">💬</div><div style="font-size:.78rem;font-weight:600;margin-bottom:3px">Receive SMS</div><div style="font-size:.72rem;color:var(--muted)">Messages arrive instantly</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- BILLING -->
       <div class="panel" id="panel-billing">
         <div class="card">
@@ -796,7 +794,6 @@ body{
       <button class="bn-item on" data-panel="overview"><i class="ph-fill ph-squares-four"></i>Home</button>
       <button class="bn-item" data-panel="buy"><i class="ph-fill ph-storefront"></i>Buy</button>
       <button class="bn-item" data-panel="sms"><i class="ph-fill ph-chat-dots"></i>SMS</button>
-      <button class="bn-item" data-panel="number"><i class="ph-fill ph-sim-card"></i>Number</button>
       <button class="bn-item" data-panel="profile"><i class="ph-fill ph-user"></i>Profile</button>
     </div>
   </nav>
@@ -835,7 +832,6 @@ const panelMeta={
   overview:['Overview','Welcome back'],
   buy:['Buy Numbers','Get a US number instantly'],
   sms:['SMS Inbox','All received messages'],
-  number:['My Number','Your dedicated number'],
   billing:['Billing','Payment history'],
   profile:['Profile','Account settings'],
 };
@@ -851,7 +847,6 @@ function go(name){
   if(name==='sms')loadSMS();
   if(name==='billing')loadBilling();
   if(name==='buy'){loadServices();loadOrders();}
-  if(name==='number')renderNumber();
   window.scrollTo&&window.scrollTo(0,0);
   document.querySelector('.content').scrollTop=0;
 }
@@ -951,7 +946,6 @@ async function initDashboard(){
     ME=d.user;
     renderUser(d.user);
     renderOverview(d.user,d.stats);
-    renderNumber();
   }catch(e){
     console.error(e);
     setTimeout(initDashboard,4000);
@@ -1034,34 +1028,7 @@ async function loadSMS(){
   }catch{list.innerHTML='<div class="empty"><i class="ph ph-warning"></i><h3>Could not load</h3><p>Network error. Try again.</p></div>';}
 }
 
-// ---- MY NUMBER ----
-async function renderNumber(){
-  const el=document.getElementById('number-content');
-  el.innerHTML='<div class="empty"><i class="ph ph-spinner"></i><h3>Loading...</h3></div>';
-  try{
-    const r=await fetch('/api/v1/user/number',{headers:{'Authorization':'Bearer '+TOKEN}});
-    const d=await r.json();
-    if(d.success&&d.data){
-      const num=d.data;
-      document.getElementById('num-status-wrap').style.display='flex';
-      document.getElementById('how-card').style.display='block';
-      const exp=ME?.planExpiresAt?new Date(ME.planExpiresAt).toLocaleDateString('en-NG',{day:'2-digit',month:'short',year:'numeric'}):'—';
-      el.innerHTML=`<div class="number-display">
-        <div class="nd-label">Your Dedicated Number</div>
-        <div class="nd-number">${num.number}</div>
-        <div class="nd-meta">${num.network} · Active · Expires ${exp}</div>
-        <button class="btn btn-outline-accent" onclick="copyTxt('${num.number}',this)"><i class="ph ph-copy"></i> Copy Number</button>
-      </div>`;
-    }else{
-      el.innerHTML=`<div class="empty">
-        <i class="ph ph-sim-card"></i>
-        <h3>No number yet</h3>
-        <p>Go to Buy Numbers to get a US number for any service.</p>
-        <button class="btn btn-accent" style="margin-top:8px" onclick="go('buy')"><i class="ph ph-storefront"></i> Buy a Number</button>
-      </div>`;
-    }
-  }catch{el.innerHTML='<div class="empty"><i class="ph ph-warning"></i><h3>Could not load</h3></div>';}
-}
+
 
 // ---- BILLING ----
 async function loadBilling(){
@@ -1145,7 +1112,13 @@ async function refreshOTP(){
     const latest=d.data[0];
     const m=latest.body.match(/\b(\d{4,8})\b/);
     const oc=document.getElementById('otp-code');
-    if(m){oc.textContent=m[1].split('').join('  ');oc.style.color='var(--accent)';}
+    if(m){
+      oc.textContent=m[1].split('').join('  ');
+      oc.style.color='var(--accent)';
+      oc.style.fontSize='2.4rem';
+      const cb=document.getElementById('copy-otp-btn');
+      if(cb)cb.style.display='flex';
+    }
     else{oc.textContent='SMS';oc.style.fontSize='1rem';}
     document.getElementById('otp-from').textContent='From: '+latest.from;
     document.getElementById('otp-time').textContent=timeAgo(latest.createdAt);
@@ -1153,6 +1126,15 @@ async function refreshOTP(){
   }catch{}
 }
 
+function copyOTP(){
+  const code = document.getElementById('otp-code').textContent.replace(/\s/g,'');
+  if(!code || code.includes('—')) return;
+  navigator.clipboard.writeText(code).then(()=>{
+    toast('OTP copied!');
+    const btn = document.getElementById('copy-otp-btn');
+    if(btn){btn.innerHTML='<i class="ph ph-check"></i> Copied!';setTimeout(()=>{btn.innerHTML='<i class="ph ph-copy"></i> Copy Code';},2000);}
+  });
+}
 function copyActiveNum(){
   if(!activeOrder)return;
   navigator.clipboard.writeText(activeOrder.number).then(()=>{
