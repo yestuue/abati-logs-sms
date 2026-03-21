@@ -40,7 +40,12 @@ export async function POST(req: Request) {
       name: user.name,
       email: user.email,
     });
-  } catch {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[POST /api/auth/register] Unhandled error:", message, err);
+    return NextResponse.json(
+      { error: "Server error", detail: process.env.NODE_ENV === "development" ? message : undefined },
+      { status: 500 }
+    );
   }
 }
