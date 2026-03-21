@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand Colors */
+  --color-brand-50: oklch(0.97 0.02 250);
+  --color-brand-100: oklch(0.93 0.05 250);
+  --color-brand-200: oklch(0.86 0.09 250);
+  --color-brand-300: oklch(0.76 0.14 250);
+  --color-brand-400: oklch(0.64 0.18 250);
+  --color-brand-500: oklch(0.55 0.22 250);
+  --color-brand-600: oklch(0.47 0.22 250);
+  --color-brand-700: oklch(0.40 0.20 250);
+  --color-brand-800: oklch(0.33 0.16 250);
+  --color-brand-900: oklch(0.27 0.12 250);
+  --color-brand-950: oklch(0.18 0.08 250);
+
+  /* Fonts */
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+/* ─── CSS Variables for shadcn/ui ──────────────────────────── */
+:root {
+  --background: oklch(0.08 0.01 250);
+  --foreground: oklch(0.97 0.005 250);
+  --card: oklch(0.11 0.012 250);
+  --card-foreground: oklch(0.97 0.005 250);
+  --popover: oklch(0.11 0.012 250);
+  --popover-foreground: oklch(0.97 0.005 250);
+  --primary: oklch(0.55 0.22 250);
+  --primary-foreground: oklch(0.98 0.002 250);
+  --secondary: oklch(0.15 0.015 250);
+  --secondary-foreground: oklch(0.97 0.005 250);
+  --muted: oklch(0.15 0.015 250);
+  --muted-foreground: oklch(0.55 0.02 250);
+  --accent: oklch(0.18 0.02 250);
+  --accent-foreground: oklch(0.97 0.005 250);
+  --destructive: oklch(0.53 0.22 27);
+  --destructive-foreground: oklch(0.98 0.002 27);
+  --border: oklch(0.22 0.02 250);
+  --input: oklch(0.18 0.018 250);
+  --ring: oklch(0.55 0.22 250);
+  --radius: 0.75rem;
+  --sidebar-width: 240px;
+}
+
+/* ─── Base ─────────────────────────────────────────────────── */
+* {
+  border-color: var(--border);
+  outline-color: var(--ring);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.28 0.02 250);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.38 0.04 250);
+}
+
+/* ─── Glow Effect ────────────────────────────────────────────── */
+.glow-brand {
+  box-shadow: 0 0 20px oklch(0.55 0.22 250 / 0.25);
+}
+
+/* ─── Glass Card ─────────────────────────────────────────────── */
+.glass-card {
+  background: oklch(0.12 0.012 250 / 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid oklch(0.25 0.025 250 / 0.5);
+}
+
+/* ─── Sidebar ─────────────────────────────────────────────────── */
+.sidebar-gradient {
+  background: linear-gradient(
+    180deg,
+    oklch(0.10 0.012 250) 0%,
+    oklch(0.08 0.01 250) 100%
+  );
+}
+
+/* ─── Status badges ─────────────────────────────────────────────── */
+.badge-online {
+  background: oklch(0.45 0.15 145 / 0.15);
+  color: oklch(0.72 0.18 145);
+  border: 1px solid oklch(0.45 0.15 145 / 0.3);
+}
+.badge-offline {
+  background: oklch(0.45 0.15 27 / 0.15);
+  color: oklch(0.72 0.18 27);
+  border: 1px solid oklch(0.45 0.15 27 / 0.3);
+}
+.badge-pending {
+  background: oklch(0.55 0.15 80 / 0.15);
+  color: oklch(0.80 0.15 80);
+  border: 1px solid oklch(0.55 0.15 80 / 0.3);
+}
+
+/* ─── Animations ─────────────────────────────────────────────────── */
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 oklch(0.55 0.22 250 / 0.4); }
+  70% { box-shadow: 0 0 0 8px oklch(0.55 0.22 250 / 0); }
+  100% { box-shadow: 0 0 0 0 oklch(0.55 0.22 250 / 0); }
+}
+.animate-pulse-ring {
+  animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.15 0.015 250) 25%,
+    oklch(0.20 0.02 250) 50%,
+    oklch(0.15 0.015 250) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

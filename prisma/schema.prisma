@@ -1,0 +1,201 @@
+// Prisma 5 Schema — Abati Logs & SMS
+// Enhanced for Next.js 15, NextAuth v5, and Multi-Server SMS Logistics
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Currency {
+  NGN
+  USD
+}
+
+enum ServerType {
+  SERVER1 // USA numbers only
+  SERVER2 // Global numbers
+}
+
+enum NumberStatus {
+  AVAILABLE
+  ASSIGNED
+  EXPIRED
+  SUSPENDED
+}
+
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REVERSED
+}
+
+enum TransactionType {
+  WALLET_TOPUP    // Paystack/Manual deposit
+  NUMBER_PURCHASE // Buying a log
+  NUMBER_RENEWAL  // Extending time
+  ADMIN_ADJUST    // Manual admin correction
+  ADMIN_CREDIT    // Admin wallet top-up
+}
+
+// ─── Core Models ──────────────────────────────────────────────────────────────
+
+model User {
+  id              String    @id @default(cuid())
+  name            String?
+  email           String    @unique
+  password        String?   // Optional for Social Auth users
+  role            Role      @default(USER)
+  isVerified      Boolean   @default(false)
+  walletBalance   Float     @default(0)
+  walletCurrency  Currency  @default(NGN)
+  image           String?   // For NextAuth profile pics
+  emailVerified   DateTime? // Required for NextAuth
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  numbers      VirtualNumber[]
+  smsMessages  SMS[]
+  transactions Transaction[]
+
+  // NextAuth v5 Relations
+  accounts Account[]
+  sessions Session[]
+
+  @@index([email])
+}
+
+model VirtualNumber {
+  id          String       @id @default(cuid())
+  number      String       @unique
+  country     String       // e.g., "United States"
+  countryCode String       // e.g., "US"
+  dialCode    String?      // e.g., "+1"
+  server      ServerType
+  status      NumberStatus @default(AVAILABLE)
+
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  priceNGN    Float        @default(500)
+  priceUSD    Float        @default(0.5)
+
+  assignedAt  DateTime?
+  expiresAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  smsMessages  SMS[]
+  transactions Transaction[]
+
+  @@index([server, status])
+  @@index([userId])
+}
+
+model SMS {
+  id        String        @id @default(cuid())
+  body      String        @db.Text
+  from      String
+  to        String
+  provider  String?       // "termii", "twilio", etc.
+  raw       Json?         // Raw webhook payload
+  read      Boolean       @default(false)
+
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  numberId  String
+  number    VirtualNumber @relation(fields: [numberId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime      @default(now())
+
+  @@index([userId])
+  @@index([numberId])
+}
+
+model Transaction {
+  id        String            @id @default(cuid())
+  amount    Float
+  currency  Currency          @default(NGN)
+  reference String            @unique // Paystack Ref
+  type      TransactionType
+  status    TransactionStatus @default(PENDING)
+  server    ServerType?       // Which server the purchase was on
+  numberId  String?           // The number purchased, if applicable
+
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  number    VirtualNumber?    @relation(fields: [numberId], references: [id], onDelete: SetNull)
+
+  metadata  Json?             // Stores extra Paystack info
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([reference])
+  @@index([server])
+}
+
+model ServerConfig {
+  id        String  @id @default(cuid())
+  server    String  @unique // "SERVER1" | "SERVER2"
+  name      String
+  isEnabled Boolean @default(true)
+}
+
+model GlobalSettings {
+  id             String  @id @default(cuid())
+  siteName       String  @default("Abati Logs & SMS")
+  maintenance    Boolean @default(false)
+  minDepositNGN  Float   @default(1000)
+}
+
+// ─── NextAuth v5 Required Models ──────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

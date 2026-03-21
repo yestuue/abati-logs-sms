@@ -1,5 +1,13 @@
 node_modules/
 .env
+.env.local
+.env*.local
 .DS_Store
 npm-debug.log*
 waitlist.txt
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+.vercel
