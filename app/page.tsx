@@ -604,7 +604,7 @@ export default function LandingPage() {
               </p>
               <div className="flex items-center gap-3 mt-4">
                 <a
-                  href="https://wa.me/9049386397"
+                  href="https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"

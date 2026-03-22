@@ -78,7 +78,7 @@ export default async function DashboardPage() {
         </div>
         <div className="flex gap-3 flex-shrink-0">
           <a
-            href="https://wa.me/9049386397"
+            href="https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-85"

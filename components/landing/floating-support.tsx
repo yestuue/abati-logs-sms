@@ -56,7 +56,7 @@ export function FloatingSupport() {
               </a>
 
               <a
-                href="https://wa.me/9049386397"
+                href="https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02] active:scale-95"
