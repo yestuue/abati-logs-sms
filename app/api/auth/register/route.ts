@@ -45,15 +45,28 @@ export async function POST(req: Request) {
         name: name.trim(),
         email: normalizedEmail,
         password: hashed,
+        role: "USER",
         isVerified: true,
+        walletBalance: 0,
+        walletCurrency: "NGN",
       },
-      select: { id: true, name: true, email: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        walletBalance: true,
+        walletCurrency: true,
+      },
     });
 
-    return NextResponse.json(user, { status: 201 });
+    return NextResponse.json(
+      { success: true, user },
+      { status: 201 }
+    );
   } catch (err) {
+    console.error("[POST /api/auth/register] FULL ERROR:", err);
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[POST /api/auth/register]", message);
     return NextResponse.json(
       { error: "Registration failed", detail: message },
       { status: 500 }
