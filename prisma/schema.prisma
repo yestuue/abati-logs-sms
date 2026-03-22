@@ -1,8 +1,10 @@
 // Prisma 5 Schema — Abati Logs & SMS
-// Enhanced for Next.js 15, NextAuth v5, and Multi-Server SMS Logistics
+// Optimized for Next.js 15, Vercel Serverless, and NextAuth v5
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  engineType      = "library"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -140,7 +142,7 @@ model Transaction {
 
   number    VirtualNumber?    @relation(fields: [numberId], references: [id], onDelete: SetNull)
 
-  metadata  Json?             // Stores extra Paystack info
+  metadata  Json?              // Stores extra Paystack info
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
 
@@ -157,10 +159,10 @@ model ServerConfig {
 }
 
 model GlobalSettings {
-  id             String  @id @default(cuid())
-  siteName       String  @default("Abati Logs & SMS")
-  maintenance    Boolean @default(false)
-  minDepositNGN  Float   @default(1000)
+  id              String  @id @default(cuid())
+  siteName        String  @default("Abati Logs & SMS")
+  maintenance     Boolean @default(false)
+  minDepositNGN   Float   @default(1000)
 }
 
 // ─── NextAuth v5 Required Models ──────────────────────────────────────────────
