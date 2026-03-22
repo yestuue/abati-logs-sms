@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  Phone, Plus, Trash2, Search, Loader2, X,
+  Phone, Plus, Trash2, Search, Loader2,
   CheckCircle, Server,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,14 +20,16 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
+// Matches what prisma.virtualNumber.findMany returns (schema fields)
 type NumberRow = {
   id: string;
   number: string;
   country: string;
+  countryCode: string;
   server: string;
   status: string;
-  price: number;
-  currency: string;
+  priceNGN: number;
+  priceUSD: number;
   user: { name: string | null; email: string } | null;
 };
 
@@ -42,6 +44,11 @@ const STATUS_VARIANT = {
   SUSPENDED: "destructive",
 } as const;
 
+const EMPTY_FORM = {
+  number: "", country: "", countryCode: "", server: "SERVER1",
+  priceNGN: "500", priceUSD: "0.5",
+};
+
 export function NumbersManager({ numbers: initial }: NumbersManagerProps) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -49,11 +56,7 @@ export function NumbersManager({ numbers: initial }: NumbersManagerProps) {
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<NumberRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-
-  // Add form state
-  const [form, setForm] = useState({
-    number: "", country: "", server: "SERVER1", price: "500", currency: "NGN",
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
   const [addLoading, setAddLoading] = useState(false);
 
   const filtered = initial.filter((n) => {
@@ -69,10 +72,10 @@ export function NumbersManager({ numbers: initial }: NumbersManagerProps) {
   const server1 = filtered.filter((n) => n.server === "SERVER1");
   const server2 = filtered.filter((n) => n.server === "SERVER2");
 
-  async function handleAdd(e: React.FormEvent) {
+  async function handleAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!form.number.trim()) {
-      toast.error("Phone number is required");
+    if (!form.number.trim() || !form.country.trim() || !form.countryCode.trim()) {
+      toast.error("Number, country name, and country code are required");
       return;
     }
     setAddLoading(true);
@@ -80,7 +83,14 @@ export function NumbersManager({ numbers: initial }: NumbersManagerProps) {
       const res = await fetch("/api/admin/numbers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          number:      form.number.trim(),
+          country:     form.country.trim(),
+          countryCode: form.countryCode.trim().toUpperCase(),
+          server:      form.server,
+          priceNGN:    parseFloat(form.priceNGN) || 500,
+          priceUSD:    parseFloat(form.priceUSD) || 0.5,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -88,7 +98,7 @@ export function NumbersManager({ numbers: initial }: NumbersManagerProps) {
         return;
       }
       toast.success(`${form.number} added to ${form.server === "SERVER1" ? "Server 1" : "Server 2"}`);
-      setForm({ number: "", country: "", server: "SERVER1", price: "500", currency: "NGN" });
+      setForm(EMPTY_FORM);
       setAddOpen(false);
       router.refresh();
     } catch {
@@ -144,12 +154,11 @@ export function NumbersManager({ numbers: initial }: NumbersManagerProps) {
             >
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-mono font-semibold">{n.number}</p>
-                <p className="text-xs text-muted-foreground">{n.country}</p>
+                <p className="text-xs text-muted-foreground">{n.country} ({n.countryCode})</p>
               </div>
               <div className="hidden sm:block text-right">
-                <p className="text-xs font-semibold text-foreground">
-                  {n.currency === "NGN" ? "₦" : "$"}{n.price.toLocaleString()}
-                </p>
+                <p className="text-xs font-semibold text-foreground">₦{n.priceNGN.toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground">${n.priceUSD}</p>
               </div>
               {n.user ? (
                 <div className="text-right hidden md:block max-w-[140px]">
@@ -226,7 +235,7 @@ export function NumbersManager({ numbers: initial }: NumbersManagerProps) {
       {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "Total",     value: initial.length,                                   color: "text-foreground" },
+          { label: "Total",     value: initial.length,                                        color: "text-foreground" },
           { label: "Available", value: initial.filter((n) => n.status === "AVAILABLE").length, color: "text-emerald-500" },
           { label: "Assigned",  value: initial.filter((n) => n.status === "ASSIGNED").length,  color: "text-blue-500" },
           { label: "Expired",   value: initial.filter((n) => n.status === "EXPIRED").length,   color: "text-amber-500" },
@@ -260,16 +269,14 @@ export function NumbersManager({ numbers: initial }: NumbersManagerProps) {
               <Server className="w-4 h-4 text-primary" />
               Add Virtual Number
             </DialogTitle>
-            <DialogDescription>
-              Add a new number to the inventory pool
-            </DialogDescription>
+            <DialogDescription>Add a new number to the inventory pool</DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleAdd} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="number">Phone Number</Label>
+              <Label htmlFor="add-number">Phone Number</Label>
               <Input
-                id="number"
+                id="add-number"
                 placeholder="+12345678900"
                 value={form.number}
                 onChange={(e) => setForm({ ...form, number: e.target.value })}
@@ -277,61 +284,71 @@ export function NumbersManager({ numbers: initial }: NumbersManagerProps) {
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="add-country">Country Name</Label>
+                <Input
+                  id="add-country"
+                  placeholder="United States"
+                  value={form.country}
+                  onChange={(e) => setForm({ ...form, country: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="add-code">Country Code</Label>
+                <Input
+                  id="add-code"
+                  placeholder="US"
+                  maxLength={3}
+                  value={form.countryCode}
+                  onChange={(e) => setForm({ ...form, countryCode: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
             <div className="space-y-1.5">
-              <Label htmlFor="country">Country</Label>
-              <Input
-                id="country"
-                placeholder="United States"
-                value={form.country}
-                onChange={(e) => setForm({ ...form, country: e.target.value })}
-                required
-              />
+              <Label>Server</Label>
+              <Select
+                value={form.server}
+                onValueChange={(v) => setForm({ ...form, server: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SERVER1">🇺🇸 Server 1 (USA)</SelectItem>
+                  <SelectItem value="SERVER2">🌍 Server 2 (Global)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>Server</Label>
-                <Select
-                  value={form.server}
-                  onValueChange={(v) => setForm({ ...form, server: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="SERVER1">🇺🇸 Server 1 (USA)</SelectItem>
-                    <SelectItem value="SERVER2">🌍 Server 2 (Global)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="add-ngn">Price (₦)</Label>
+                <Input
+                  id="add-ngn"
+                  type="number"
+                  min="0"
+                  step="50"
+                  placeholder="500"
+                  value={form.priceNGN}
+                  onChange={(e) => setForm({ ...form, priceNGN: e.target.value })}
+                />
               </div>
-
               <div className="space-y-1.5">
-                <Label>Currency</Label>
-                <Select
-                  value={form.currency}
-                  onValueChange={(v) => setForm({ ...form, currency: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NGN">NGN (₦)</SelectItem>
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="add-usd">Price ($)</Label>
+                <Input
+                  id="add-usd"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  placeholder="0.50"
+                  value={form.priceUSD}
+                  onChange={(e) => setForm({ ...form, priceUSD: e.target.value })}
+                />
               </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="price">Price</Label>
-              <Input
-                id="price"
-                type="number"
-                min="0"
-                placeholder="500"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-              />
             </div>
 
             <DialogFooter className="gap-2">
@@ -342,10 +359,7 @@ export function NumbersManager({ numbers: initial }: NumbersManagerProps) {
                 {addLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    Add Number
-                  </>
+                  <><CheckCircle className="w-4 h-4" /> Add Number</>
                 )}
               </Button>
             </DialogFooter>
@@ -370,14 +384,8 @@ export function NumbersManager({ numbers: initial }: NumbersManagerProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteLoading}
-            >
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteLoading}>
               {deleteLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Delete"}
             </Button>
           </DialogFooter>

@@ -35,16 +35,14 @@ export async function POST(req: Request) {
     // Attempt to send email via nodemailer if SMTP env vars are present
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
       try {
-        const nodemailer = await import("nodemailer");
-        const transporter = nodemailer.createTransport({
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const nm = require("nodemailer") as { createTransport: Function };
+        const transporter = nm.createTransport({
           host: process.env.SMTP_HOST,
           port: Number(process.env.SMTP_PORT ?? 587),
           secure: process.env.SMTP_SECURE === "true",
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
-        });
+          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+        }) as { sendMail: Function };
         await transporter.sendMail({
           from: process.env.EMAIL_FROM ?? `Abati Logs <noreply@abatilogs.com>`,
           to: normalised,

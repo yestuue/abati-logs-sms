@@ -10,9 +10,12 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { number, country, server, price, currency } = await req.json();
-    if (!number || !country || !server) {
-      return NextResponse.json({ error: "number, country, and server are required" }, { status: 400 });
+    const { number, country, countryCode, server, priceNGN, priceUSD } = await req.json();
+    if (!number || !country || !countryCode || !server) {
+      return NextResponse.json(
+        { error: "number, country, countryCode, and server are required" },
+        { status: 400 }
+      );
     }
     if (!["SERVER1", "SERVER2"].includes(server)) {
       return NextResponse.json({ error: "Invalid server" }, { status: 400 });
@@ -27,9 +30,10 @@ export async function POST(req: Request) {
       data: {
         number,
         country,
+        countryCode: String(countryCode).toUpperCase(),
         server,
-        price: price ? parseFloat(price) : 500,
-        currency: currency ?? "NGN",
+        priceNGN: priceNGN ? parseFloat(priceNGN) : 500,
+        priceUSD: priceUSD ? parseFloat(priceUSD) : 0.5,
         status: "AVAILABLE",
       },
     });
