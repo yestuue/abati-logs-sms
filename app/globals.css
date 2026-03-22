@@ -137,13 +137,33 @@ body {
   animation: shimmer 1.5s infinite;
 }
 
+/* ─── Dark Theme (explicit override) ────────────────────────────────────────
+   Ensures dark mode always wins even if a parent has a .light-theme class.   */
+html[data-theme="dark"] {
+  --background:            oklch(0.07 0.006 265);
+  --foreground:            oklch(0.96 0.003 265);
+  --card:                  oklch(0.10 0.010 265);
+  --card-foreground:       oklch(0.96 0.003 265);
+  --popover:               oklch(0.10 0.010 265);
+  --popover-foreground:    oklch(0.96 0.003 265);
+  --primary:               oklch(0.80 0.19  162);
+  --primary-foreground:    oklch(0.07 0.006 265);
+  --secondary:             oklch(0.14 0.012 265);
+  --secondary-foreground:  oklch(0.96 0.003 265);
+  --muted:                 oklch(0.14 0.012 265);
+  --muted-foreground:      oklch(0.58 0.015 275);
+  --accent:                oklch(0.16 0.012 265);
+  --accent-foreground:     oklch(0.96 0.003 265);
+  --destructive:           oklch(0.53 0.22   27);
+  --destructive-foreground:oklch(0.98 0.002  27);
+  --border:                oklch(0.20 0.012 265);
+  --input:                 oklch(0.16 0.012 265);
+  --ring:                  oklch(0.80 0.19  162);
+}
+
 /* ─── Light Theme ────────────────────────────────────────────────────────────
-   Two triggers:
-   1. html[data-theme="light"]  — set by the global ThemeToggle (landing/auth)
-   2. .light-theme              — hardcoded on dashboard/admin layouts (always)
-   Both resolve to the same light color values.                               */
-html[data-theme="light"],
-.light-theme {
+   Triggered by html[data-theme="light"] set by the ThemeToggle.             */
+html[data-theme="light"] {
   --background:             #f8f9fa;
   --foreground:             #111827;
   --card:                   #ffffff;
@@ -166,15 +186,13 @@ html[data-theme="light"],
 }
 
 /* Sidebar: white with gray border in light mode */
-html[data-theme="light"] .sidebar-gradient,
-.light-theme .sidebar-gradient {
+html[data-theme="light"] .sidebar-gradient {
   background: #ffffff;
   border-right: 1px solid #e5e7eb;
 }
 
 /* Glass cards: plain white with subtle shadow in light mode */
-html[data-theme="light"] .glass-card,
-.light-theme .glass-card {
+html[data-theme="light"] .glass-card {
   background: #ffffff;
   backdrop-filter: none;
   -webkit-backdrop-filter: none;

@@ -13,7 +13,7 @@ export function ThemeToggle({ className }: { className?: string }) {
       title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
       className={cn(
         "w-9 h-9 flex items-center justify-center rounded-xl transition-all",
-        "hover:bg-white/10 text-muted-foreground hover:text-foreground",
+        "hover:bg-accent text-muted-foreground hover:text-foreground",
         className
       )}
     >

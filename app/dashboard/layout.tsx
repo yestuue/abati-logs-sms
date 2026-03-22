@@ -20,7 +20,7 @@ export default async function DashboardLayout({
   });
 
   return (
-    <div className="light-theme min-h-screen" style={{ background: "var(--background)" }}>
+    <div className="min-h-screen" style={{ background: "var(--background)" }}>
       <Header variant="user" />
 
       {/* Yellow verify banner — only shown when isVerified is false */}

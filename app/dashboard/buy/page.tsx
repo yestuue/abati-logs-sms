@@ -1,26 +1,44 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { redirect } from "next/navigation";
 import { ServerSelector } from "@/components/purchase/server-selector";
 
 export const metadata = { title: "Buy Number" };
 
 export default async function BuyPage() {
   const session = await auth();
-  const userId = session!.user.id;
+  if (!session?.user?.id) redirect("/login");
 
-  const [user, serverConfigs] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { walletBalance: true, walletCurrency: true },
-    }),
-    prisma.serverConfig.findMany({ orderBy: { server: "asc" } }),
-  ]);
+  const userId = session.user.id;
 
-  // Seed server configs if they don't exist
-  const configs = serverConfigs.length > 0 ? serverConfigs : [
+  let walletBalance = 0;
+  let walletCurrency: "NGN" | "USD" = "NGN";
+  let serverConfigs: { server: "SERVER1" | "SERVER2"; name: string; isEnabled: boolean }[] = [
     { server: "SERVER1", name: "Server 1 — USA Numbers", isEnabled: true },
     { server: "SERVER2", name: "Server 2 — Global Numbers", isEnabled: true },
   ];
+
+  try {
+    const [user, configs] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { walletBalance: true, walletCurrency: true },
+      }),
+      prisma.serverConfig.findMany({ orderBy: { server: "asc" } }),
+    ]);
+
+    if (user) {
+      walletBalance = user.walletBalance;
+      walletCurrency = user.walletCurrency as "NGN" | "USD";
+    }
+
+    if (configs.length > 0) {
+      serverConfigs = configs as typeof serverConfigs;
+    }
+  } catch (err) {
+    console.error("[BuyPage] DB error:", err);
+    // Fall through with defaults — page still renders
+  }
 
   return (
     <div className="space-y-6">
@@ -32,9 +50,9 @@ export default async function BuyPage() {
       </div>
 
       <ServerSelector
-        walletBalance={user?.walletBalance ?? 0}
-        walletCurrency={(user?.walletCurrency ?? "NGN") as "NGN" | "USD"}
-        serverConfigs={configs as { server: "SERVER1" | "SERVER2"; name: string; isEnabled: boolean }[]}
+        walletBalance={walletBalance}
+        walletCurrency={walletCurrency}
+        serverConfigs={serverConfigs}
         userId={userId}
       />
     </div>

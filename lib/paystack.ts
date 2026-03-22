@@ -1,11 +1,18 @@
 import crypto from "crypto";
 
-const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY!;
 const PAYSTACK_BASE = "https://api.paystack.co";
+
+function getSecret(): string {
+  const secret = process.env.PAYSTACK_SECRET_KEY;
+  if (!secret) {
+    throw new Error("[Paystack] PAYSTACK_SECRET_KEY is not set in environment variables.");
+  }
+  return secret;
+}
 
 export function verifyPaystackSignature(body: string, signature: string): boolean {
   const hash = crypto
-    .createHmac("sha512", PAYSTACK_SECRET)
+    .createHmac("sha512", getSecret())
     .update(body)
     .digest("hex");
   return hash === signature;
@@ -21,7 +28,7 @@ export async function initializeTransaction(params: {
   const res = await fetch(`${PAYSTACK_BASE}/transaction/initialize`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${PAYSTACK_SECRET}`,
+      Authorization: `Bearer ${getSecret()}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(params),
@@ -35,7 +42,7 @@ export async function initializeTransaction(params: {
 
 export async function verifyTransaction(reference: string) {
   const res = await fetch(`${PAYSTACK_BASE}/transaction/verify/${reference}`, {
-    headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` },
+    headers: { Authorization: `Bearer ${getSecret()}` },
   });
   return res.json() as Promise<{
     status: boolean;
