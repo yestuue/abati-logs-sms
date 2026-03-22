@@ -26,28 +26,23 @@ export async function POST(req: Request) {
     const userId = session.user.id;
     const email = session.user.email;
 
-    // For NUMBER_PURCHASE via wallet debit (no Paystack)
+    // ── NUMBER_PURCHASE: debit wallet directly, no Paystack ──────────────────
     if (type === "NUMBER_PURCHASE" && numberId) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { walletBalance: true },
-      });
-      const number = await prisma.virtualNumber.findUnique({
-        where: { id: numberId, status: "AVAILABLE" },
-      });
+      const [user, number] = await Promise.all([
+        prisma.user.findUnique({ where: { id: userId }, select: { walletBalance: true } }),
+        prisma.virtualNumber.findUnique({ where: { id: numberId, status: "AVAILABLE" } }),
+      ]);
 
       if (!number) {
         return NextResponse.json({ error: "Number not available" }, { status: 400 });
       }
-
       if ((user?.walletBalance ?? 0) < number.priceNGN) {
         return NextResponse.json({ error: "Insufficient wallet balance" }, { status: 400 });
       }
 
       const reference = generateReference();
-      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-      // Atomic: debit wallet + assign number + create transaction
       await prisma.$transaction([
         prisma.user.update({
           where: { id: userId },
@@ -55,12 +50,7 @@ export async function POST(req: Request) {
         }),
         prisma.virtualNumber.update({
           where: { id: numberId },
-          data: {
-            status: "ASSIGNED",
-            userId,
-            assignedAt: new Date(),
-            expiresAt,
-          },
+          data: { status: "ASSIGNED", userId, assignedAt: new Date(), expiresAt },
         }),
         prisma.transaction.create({
           data: {
@@ -79,28 +69,44 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, number: number.number, expiresAt });
     }
 
-    // Wallet top-up via Paystack
+    // ── WALLET_TOPUP: initialize Paystack transaction ─────────────────────────
     const reference = generateReference();
+
+    // Rule 1: amount in kobo (NGN * 100)
     const amountKobo = Math.round(amount * 100);
-    const callbackUrl = `${process.env.NEXTAUTH_URL}/api/payments/verify?reference=${reference}`;
+
+    // Rule 3: use PAYSTACK_CALLBACK_URL env var, fall back to derived URL
+    const callbackUrl =
+      process.env.PAYSTACK_CALLBACK_URL ??
+      `${process.env.NEXTAUTH_URL}/api/payments/verify?reference=${reference}`;
+
+    console.log("[payments/initialize] Sending to Paystack:", {
+      email,
+      amount: amountKobo,
+      currency: "NGN",
+      reference,
+      callback_url: callbackUrl,
+    });
 
     const paystackRes = await initializeTransaction({
       email,
       amount: amountKobo,
+      currency: "NGN",       // Rule 2: explicit currency
       reference,
       callback_url: callbackUrl,
-      metadata: {
-        userId,
-        type,
-        amount,
-      },
+      metadata: { userId, type, amount },
     });
 
+    console.log("[payments/initialize] Paystack response:", paystackRes);
+
     if (!paystackRes.status) {
-      return NextResponse.json({ error: "Payment initialization failed" }, { status: 502 });
+      console.error("[payments/initialize] Paystack rejected:", paystackRes.message);
+      return NextResponse.json(
+        { error: "Payment initialization failed", detail: paystackRes.message },
+        { status: 502 }
+      );
     }
 
-    // Create pending transaction
     await prisma.transaction.create({
       data: {
         userId,
@@ -114,7 +120,12 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: paystackRes.data.authorization_url, reference });
   } catch (err) {
-    console.error("Payment init error:", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    // Rule 4: detailed error log
+    const error = err as { response?: { data?: unknown }; message?: string };
+    console.error("PAYSTACK_INIT_ERROR:", error.response?.data || error.message || err);
+    return NextResponse.json(
+      { error: "Server error", detail: error.message },
+      { status: 500 }
+    );
   }
 }

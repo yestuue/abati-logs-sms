@@ -21,6 +21,7 @@ export function verifyPaystackSignature(body: string, signature: string): boolea
 export async function initializeTransaction(params: {
   email: string;
   amount: number; // in kobo (NGN * 100)
+  currency?: string;
   reference: string;
   metadata?: Record<string, unknown>;
   callback_url?: string;
