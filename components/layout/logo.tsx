@@ -34,9 +34,9 @@ export function Logo({ size = "md", showText = true, className }: LogoProps) {
             fill="white"
             fillOpacity="0.9"
           />
-          <circle cx="7" cy="8" r="1" fill="oklch(0.47 0.22 250)" />
-          <circle cx="10" cy="8" r="1" fill="oklch(0.47 0.22 250)" />
-          <circle cx="13" cy="8" r="1" fill="oklch(0.47 0.22 250)" />
+          <circle cx="7" cy="8" r="1" fill="oklch(0.55 0.14 162)" />
+          <circle cx="10" cy="8" r="1" fill="oklch(0.55 0.14 162)" />
+          <circle cx="13" cy="8" r="1" fill="oklch(0.55 0.14 162)" />
         </svg>
       </div>
 

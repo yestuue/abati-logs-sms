@@ -1,41 +1,59 @@
-const CACHE = 'abati-v1';
+const CACHE = 'abati-v2';
 const OFFLINE_URL = '/offline.html';
 
+// Pages to pre-cache on install
 const PRECACHE = [
   '/',
-  '/dashboard.html',
   '/manifest.json',
   '/offline.html',
-  'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Syne:wght@600;700;800&display=swap'
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
 ];
 
 // Install — cache essentials
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then(c => c.addAll(PRECACHE))
+      .then(() => self.skipWaiting())
   );
 });
 
 // Activate — clean old caches
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(
+        keys.filter(k => k !== CACHE).map(k => caches.delete(k))
+      ))
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch — network first, fallback to cache, then offline page
+// Fetch strategy: network-first for pages/API, cache-first for assets
 self.addEventListener('fetch', e => {
-  // Skip non-GET and API calls (always go to network for API)
   if (e.request.method !== 'GET') return;
-  if (e.request.url.includes('/api/')) return;
 
+  const url = new URL(e.request.url);
+
+  // Always go to network for API calls — never cache these
+  if (url.pathname.startsWith('/api/')) return;
+
+  // Next.js internals — skip caching
+  if (url.pathname.startsWith('/_next/')) {
+    e.respondWith(
+      fetch(e.request).catch(() =>
+        caches.match(e.request).then(cached => cached || new Response('', { status: 503 }))
+      )
+    );
+    return;
+  }
+
+  // Pages: network-first, fall back to cache, then offline page
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        // Cache successful responses
-        if (res && res.status === 200) {
+        if (res && res.status === 200 && res.type !== 'opaque') {
           const clone = res.clone();
           caches.open(CACHE).then(c => c.put(e.request, clone));
         }
@@ -49,9 +67,9 @@ self.addEventListener('fetch', e => {
   );
 });
 
-// Push notifications (for future use)
+// Push notifications — SMS alerts
 self.addEventListener('push', e => {
-  const data = e.data?.json() || { title: 'ABATI SMS', body: 'New message received!' };
+  const data = e.data?.json() || { title: 'Abati SMS', body: 'New message received!' };
   e.waitUntil(
     self.registration.showNotification(data.title, {
       body: data.body,
@@ -59,7 +77,24 @@ self.addEventListener('push', e => {
       badge: '/icons/icon-72.png',
       vibrate: [200, 100, 200],
       tag: 'sms-notification',
-      renotify: true
+      renotify: true,
+      actions: [
+        { action: 'view', title: 'View SMS' },
+        { action: 'dismiss', title: 'Dismiss' },
+      ],
+    })
+  );
+});
+
+// Notification click — open dashboard/sms
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  if (e.action === 'dismiss') return;
+  e.waitUntil(
+    clients.matchAll({ type: 'window' }).then(list => {
+      const existing = list.find(c => c.url.includes('/dashboard'));
+      if (existing) return existing.focus();
+      return clients.openWindow('/dashboard/sms');
     })
   );
 });

@@ -1,9 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  Flag,
-  Globe,
   Phone,
   Copy,
   Check,
@@ -74,7 +72,7 @@ export function ServerSelector({
   walletBalance,
   walletCurrency,
   serverConfigs,
-  userId,
+  userId: _userId,
 }: ServerSelectorProps) {
   const router = useRouter();
   const [activeServer, setActiveServer] = useState<"SERVER1" | "SERVER2">("SERVER1");
@@ -265,8 +263,9 @@ export function ServerSelector({
 
                   <CardContent className="p-0">
                     {loading ? (
-                      <div className="flex items-center justify-center py-16">
+                      <div className="flex flex-col items-center justify-center py-16 gap-3">
                         <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                        <p className="text-sm text-muted-foreground">Loading services...</p>
                       </div>
                     ) : filtered.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-12 text-center">

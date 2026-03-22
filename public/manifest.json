@@ -1,13 +1,15 @@
 {
-  "name": "ABATI SMS — Global Virtual Numbers",
-  "short_name": "ABATI SMS",
+  "name": "Abati Logs & SMS",
+  "short_name": "Abati SMS",
   "description": "Get a private virtual number from 50+ countries. Receive SMS instantly.",
-  "start_url": "/dashboard.html",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#09090d",
   "theme_color": "#00E5A0",
   "orientation": "portrait-primary",
   "scope": "/",
+  "lang": "en",
+  "categories": ["utilities", "productivity"],
   "icons": [
     {
       "src": "/icons/icon-72.png",
@@ -40,14 +42,24 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
+  "shortcuts": [
     {
-      "src": "/icons/screenshot-mobile.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
+      "name": "Dashboard",
+      "short_name": "Home",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Buy Number",
+      "short_name": "Buy",
+      "url": "/dashboard/buy",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "SMS Inbox",
+      "short_name": "SMS",
+      "url": "/dashboard/sms",
+      "icons": [{ "src": "/icons/icon-96.png", "sizes": "96x96" }]
     }
-  ],
-  "categories": ["utilities", "productivity"],
-  "lang": "en"
+  ]
 }

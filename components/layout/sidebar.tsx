@@ -12,6 +12,7 @@ import {
   Users,
   Server,
   Phone,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
@@ -25,10 +26,11 @@ interface NavItem {
 }
 
 const userNav: NavItem[] = [
-  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Buy Number", href: "/dashboard/buy", icon: ShoppingCart },
-  { label: "SMS Inbox", href: "/dashboard/sms", icon: MessageSquare },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
+  { label: "Dashboard",    href: "/dashboard",              icon: LayoutDashboard },
+  { label: "Buy Number",   href: "/dashboard/buy",          icon: ShoppingCart },
+  { label: "SMS Inbox",    href: "/dashboard/sms",          icon: MessageSquare },
+  { label: "Transactions", href: "/dashboard/transactions", icon: CreditCard },
+  { label: "Settings",     href: "/dashboard/settings",     icon: Settings },
 ];
 
 const adminNav: NavItem[] = [
