@@ -24,7 +24,22 @@ export async function POST(req: Request) {
     const { name, email, password } = parsed.data;
     const normalizedEmail = email.toLowerCase().trim();
 
-    await prisma.$connect();
+    // Explicit connect — surfaces connection errors clearly before any query
+    try {
+      await prisma.$connect();
+    } catch (connErr) {
+      const connMsg = connErr instanceof Error ? connErr.message : String(connErr);
+      console.error("[register] DB CONNECTION FAILED:", connMsg);
+
+      if (connMsg.includes("Tenant or user not found") || connMsg.includes("FATAL")) {
+        console.error("[register] ❌ DATABASE_URL is wrong. Check Vercel env vars — username must be postgres.PROJECT_REF (e.g. postgres.wqplmzlwtmprgkykuhzb)");
+      }
+
+      return NextResponse.json(
+        { error: "Database connection failed", detail: connMsg },
+        { status: 503 }
+      );
+    }
 
     const exists = await prisma.user.findUnique({
       where: { email: normalizedEmail },
@@ -65,8 +80,13 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (err) {
-    console.error("[POST /api/auth/register] FULL ERROR:", err);
+    console.error("[register] FULL ERROR:", err);
     const message = err instanceof Error ? err.message : String(err);
+
+    if (message.includes("Tenant or user not found") || message.includes("FATAL")) {
+      console.error("[register] ❌ DATABASE_URL username is wrong in Vercel. Must be: postgres.wqplmzlwtmprgkykuhzb");
+    }
+
     return NextResponse.json(
       { error: "Registration failed", detail: message },
       { status: 500 }
