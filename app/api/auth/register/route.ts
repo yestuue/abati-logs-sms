@@ -13,6 +13,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
     const parsed = schema.safeParse(body);
+
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.errors[0].message },
@@ -21,8 +22,15 @@ export async function POST(req: Request) {
     }
 
     const { name, email, password } = parsed.data;
+    const normalizedEmail = email.toLowerCase().trim();
 
-    const exists = await prisma.user.findUnique({ where: { email } });
+    await prisma.$connect();
+
+    const exists = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true },
+    });
+
     if (exists) {
       return NextResponse.json(
         { error: "An account with this email already exists" },
@@ -31,20 +39,23 @@ export async function POST(req: Request) {
     }
 
     const hashed = await bcrypt.hash(password, 12);
+
     const user = await prisma.user.create({
-      data: { name, email, password: hashed, isVerified: true },
+      data: {
+        name: name.trim(),
+        email: normalizedEmail,
+        password: hashed,
+        isVerified: true,
+      },
+      select: { id: true, name: true, email: true },
     });
 
-    return NextResponse.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    });
+    return NextResponse.json(user, { status: 201 });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    console.error("[POST /api/auth/register] Unhandled error:", message, err);
+    console.error("[POST /api/auth/register]", message);
     return NextResponse.json(
-      { error: "Server error", detail: process.env.NODE_ENV === "development" ? message : undefined },
+      { error: "Registration failed", detail: message },
       { status: 500 }
     );
   }
