@@ -1,5 +1,5 @@
 "use client";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { Logo } from "@/components/layout/logo";
@@ -47,6 +47,32 @@ function InView({ children, className }: { children: React.ReactNode; className?
   );
 }
 
+// ── Count-up number animation ─────────────────────────────────────────────────
+function CountUpNumber({ end, suffix = "", duration = 1800 }: { end: number; suffix?: string; duration?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-60px" });
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (!inView) return;
+    let startTime: number | null = null;
+    const step = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * end));
+      if (progress < 1) requestAnimationFrame(step);
+      else setCount(end);
+    };
+    const raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [inView, end, duration]);
+
+  const formatted = end >= 1000 ? count.toLocaleString("en-US") : count.toString();
+  return <span ref={ref}>{formatted}{suffix}</span>;
+}
+
 // ── Features data ──────────────────────────────────────────────────────────────
 const features = [
   { icon: Zap,          title: "Instant Activation",  description: "Get a virtual number in seconds, start receiving OTPs immediately." },
@@ -57,10 +83,10 @@ const features = [
 
 // ── Trust stats ───────────────────────────────────────────────────────────────
 const trustStats = [
-  { icon: Users,      value: "2,500+", label: "Active Users" },
-  { icon: Phone,      value: "10,000+", label: "Numbers Issued" },
-  { icon: BadgeCheck, value: "99.9%",  label: "Uptime" },
-  { icon: Clock,      value: "< 5s",   label: "OTP Delivery" },
+  { icon: Users,      value: "2,500+",  label: "Active Users",    countTo: 2500,  suffix: "+" },
+  { icon: Phone,      value: "10,000+", label: "Numbers Issued",  countTo: 10000, suffix: "+" },
+  { icon: BadgeCheck, value: "99.9%",   label: "Uptime",          countTo: null,  suffix: ""  },
+  { icon: Clock,      value: "< 5s",    label: "OTP Delivery",    countTo: null,  suffix: ""  },
 ];
 
 // ── Testimonials ──────────────────────────────────────────────────────────────
@@ -277,7 +303,9 @@ export default function LandingPage() {
                       <Icon className="w-5 h-5" style={{ color: "var(--primary)" }} />
                     </div>
                     <p className="text-2xl font-bold text-foreground" style={{ fontFamily: "var(--font-heading)" }}>
-                      {s.value}
+                      {s.countTo !== null
+                        ? <CountUpNumber end={s.countTo} suffix={s.suffix} />
+                        : s.value}
                     </p>
                     <p className="text-xs text-muted-foreground">{s.label}</p>
                   </motion.div>
