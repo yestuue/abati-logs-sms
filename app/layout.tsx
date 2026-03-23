@@ -29,6 +29,33 @@ export const metadata: Metadata = {
     "Get instant virtual phone numbers from USA and global providers. Receive OTPs and SMS messages in real time.",
   keywords: ["virtual number", "OTP", "SMS", "Abati Logs", "Nigeria"],
   manifest: "/manifest.json",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
+  openGraph: {
+    title: "Abati Logs & SMS — Virtual Numbers & OTP Platform",
+    description:
+      "Get instant virtual phone numbers from USA and global providers. Receive OTPs and SMS messages in real time.",
+    url: "https://abatilogs.com",
+    siteName: "Abati Logs & SMS",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Abati Logs SMS",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Abati Logs & SMS — Virtual Numbers & OTP Platform",
+    description:
+      "Get instant virtual phone numbers from USA and global providers. Receive OTPs and SMS messages in real time.",
+    images: ["/logo.png"],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
