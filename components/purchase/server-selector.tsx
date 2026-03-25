@@ -313,7 +313,7 @@ export function ServerSelector({
                       This service may not be available yet. Request it and we&apos;ll add it.
                     </p>
                     <a
-                      href={`https://wa.me/9049386397?text=Hi%2C%20I%20need%20a%20number%20for%20${encodeURIComponent(search)}%20on%20${SERVER_INFO[activeServer].label}`}
+                      href="https://api.whatsapp.com/send?phone=2349049386397"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-85"

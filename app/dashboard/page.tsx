@@ -99,7 +99,7 @@ export default async function DashboardPage() {
             WhatsApp Group
           </a>
           <a
-            href="https://wa.me/2349049386397?text=Hi%2C%20I%20need%20help%20with%20Abati%20Logs"
+            href="https://api.whatsapp.com/send?phone=2349049386397"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:opacity-85"
