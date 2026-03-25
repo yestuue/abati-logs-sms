@@ -42,7 +42,7 @@ export function FloatingSupport() {
               </p>
 
               <a
-                href="https://wa.me/9049386397?text=Hi%2C%20I%20need%20help%20with%20Abati%20Logs"
+                href="https://wa.me/2349049386397?text=Hi%2C%20I%20need%20help%20with%20Abati%20Logs"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02] active:scale-95"
