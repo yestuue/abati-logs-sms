@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls \"c:\\\\Users\\\\Admin\\\\Desktop\\\\abati-logs-sms\\\\public\"\" && ls \"c:UsersAdminDesktopabati-logs-smsapp\"\")"
+      "Bash(ls \"c:\\\\Users\\\\Admin\\\\Desktop\\\\abati-logs-sms\\\\public\"\" && ls \"c:UsersAdminDesktopabati-logs-smsapp\"\")",
+      "Bash(sed -i 's/rgba\\(0,229,160,0\\\\.12\\)/oklch\\(0.68 0.22 278 \\\\/ 0.12\\)/g; s/rgba\\(0,229,160,0\\\\.25\\)/oklch\\(0.68 0.22 278 \\\\/ 0.25\\)/g' /c/Users/Admin/Desktop/abati-logs-sms/app/\\\\\\(auth\\\\\\)/forgot-password/page.tsx /c/Users/Admin/Desktop/abati-logs-sms/app/\\\\\\(auth\\\\\\)/reset-password/page.tsx)",
+      "Bash(sed -i 's/#00E5A0/#7C3AED/g' /c/Users/Admin/Desktop/abati-logs-sms/app/layout.tsx)",
+      "Bash(npm run:*)"
     ]
   }
 }

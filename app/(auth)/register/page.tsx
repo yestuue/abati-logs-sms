@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,10 +11,26 @@ import { Logo } from "@/components/layout/logo";
 import { toast } from "sonner";
 import { signIn } from "next-auth/react";
 
+const PERKS = [
+  "50+ countries supported",
+  "Instant OTP delivery",
+  "Social account marketplace",
+  "Secure Paystack funding",
+];
+
 export default function RegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirm: "",
+  });
   const [show, setShow] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
   function update(field: keyof typeof form, val: string) {
@@ -23,21 +39,35 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (form.password !== form.confirm) {
-      toast.error("Passwords do not match");
+
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      toast.error("Please enter your first and last name");
+      return;
+    }
+    if (!form.username.trim()) {
+      toast.error("Please choose a username");
       return;
     }
     if (form.password.length < 6) {
       toast.error("Password must be at least 6 characters");
       return;
     }
+    if (form.password !== form.confirm) {
+      toast.error("Passwords do not match");
+      return;
+    }
 
     setLoading(true);
 
+    const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`;
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
+      body: JSON.stringify({
+        name: fullName,
+        email: form.email,
+        password: form.password,
+      }),
     });
     const data = await res.json();
 
@@ -58,105 +88,244 @@ export default function RegisterPage() {
     router.push("/dashboard");
   }
 
+  const passwordStrength = form.password.length === 0 ? 0
+    : form.password.length < 6 ? 1
+    : form.password.length < 10 ? 2
+    : 3;
+
+  const strengthLabels = ["", "Weak", "Good", "Strong"];
+  const strengthColors = ["", "oklch(0.53 0.22 27)", "oklch(0.80 0.15 80)", "oklch(0.62 0.18 150)"];
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
+      {/* Background glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-brand-600/10 rounded-full blur-3xl" />
+        <div
+          className="absolute top-0 right-1/4 w-[500px] h-[500px] rounded-full blur-3xl"
+          style={{ background: "oklch(0.68 0.22 278 / 0.08)" }}
+        />
+        <div
+          className="absolute bottom-0 left-1/4 w-[400px] h-[400px] rounded-full blur-3xl"
+          style={{ background: "oklch(0.55 0.24 278 / 0.06)" }}
+        />
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-sm relative"
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-4xl relative grid lg:grid-cols-2 gap-8 items-start"
       >
-        <div className="flex justify-center mb-8">
-          <Logo size="lg" />
+        {/* Left: perks panel (desktop only) */}
+        <div className="hidden lg:flex flex-col justify-center h-full py-8">
+          <Logo size="lg" className="mb-6" />
+          <h2
+            className="text-3xl font-extrabold text-foreground leading-tight"
+            style={{ fontFamily: "var(--font-heading)" }}
+          >
+            Digital services,
+            <br />
+            <span style={{ color: "var(--primary)" }}>unlocked.</span>
+          </h2>
+          <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+            Join thousands of digital professionals who use LarryDigitals for virtual numbers,
+            social accounts, and instant OTP delivery.
+          </p>
+          <div className="mt-6 space-y-3">
+            {PERKS.map((perk) => (
+              <div key={perk} className="flex items-center gap-3">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0" style={{ color: "var(--primary)" }} />
+                <span className="text-sm text-foreground">{perk}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="glass-card rounded-2xl p-6 space-y-5">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">Create account</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Get started with virtual numbers today
-            </p>
+        {/* Right: form */}
+        <div>
+          {/* Logo for mobile */}
+          <div className="flex justify-center mb-6 lg:hidden">
+            <Logo size="lg" />
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                placeholder="John Doe"
-                value={form.name}
-                onChange={(e) => update("name", e.target.value)}
-                required
-              />
+          <div className="glass-card rounded-2xl p-6 space-y-5">
+            <div>
+              <h1
+                className="text-xl font-bold text-foreground"
+                style={{ fontFamily: "var(--font-heading)" }}
+              >
+                Create your account
+              </h1>
+              <p className="text-sm text-muted-foreground mt-0.5">
+                Free to join — no credit card required
+              </p>
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={(e) => update("email", e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={show ? "text" : "password"}
-                  placeholder="Min. 6 characters"
-                  value={form.password}
-                  onChange={(e) => update("password", e.target.value)}
-                  required
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShow(!show)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name row */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input
+                    id="firstName"
+                    placeholder="John"
+                    value={form.firstName}
+                    onChange={(e) => update("firstName", e.target.value)}
+                    required
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input
+                    id="lastName"
+                    placeholder="Doe"
+                    value={form.lastName}
+                    onChange={(e) => update("lastName", e.target.value)}
+                    required
+                    autoComplete="family-name"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="confirm">Confirm Password</Label>
-              <Input
-                id="confirm"
-                type="password"
-                placeholder="Re-enter password"
-                value={form.confirm}
-                onChange={(e) => update("confirm", e.target.value)}
-                required
-              />
-            </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  placeholder="johndoe123"
+                  value={form.username}
+                  onChange={(e) => update("username", e.target.value.replace(/\s/g, "").toLowerCase())}
+                  required
+                  autoComplete="username"
+                />
+              </div>
 
-            <Button
-              type="submit"
-              variant="brand"
-              size="lg"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create Account"}
-            </Button>
-          </form>
+              <div className="space-y-1.5">
+                <Label htmlFor="reg-email">Email Address</Label>
+                <Input
+                  id="reg-email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={form.email}
+                  onChange={(e) => update("email", e.target.value)}
+                  required
+                  autoComplete="email"
+                />
+              </div>
 
-          <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="text-primary hover:underline font-medium">
-              Sign in
-            </Link>
-          </p>
+              <div className="space-y-1.5">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+2348012345678"
+                  value={form.phone}
+                  onChange={(e) => update("phone", e.target.value)}
+                  autoComplete="tel"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="reg-password">Password</Label>
+                <div className="relative">
+                  <Input
+                    id="reg-password"
+                    type={show ? "text" : "password"}
+                    placeholder="Min. 6 characters"
+                    value={form.password}
+                    onChange={(e) => update("password", e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShow(!show)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {/* Strength bar */}
+                {form.password.length > 0 && (
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <div className="flex gap-1 flex-1">
+                      {[1, 2, 3].map((lvl) => (
+                        <div
+                          key={lvl}
+                          className="h-1 flex-1 rounded-full transition-all duration-300"
+                          style={{
+                            background: passwordStrength >= lvl
+                              ? strengthColors[passwordStrength]
+                              : "var(--border)",
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <span
+                      className="text-[10px] font-medium flex-shrink-0"
+                      style={{ color: strengthColors[passwordStrength] }}
+                    >
+                      {strengthLabels[passwordStrength]}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="confirm">Confirm Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirm"
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="Re-enter password"
+                    value={form.confirm}
+                    onChange={(e) => update("confirm", e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {form.confirm && form.password !== form.confirm && (
+                  <p className="text-[11px]" style={{ color: "oklch(0.53 0.22 27)" }}>
+                    Passwords do not match
+                  </p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full font-semibold"
+                style={{
+                  background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))",
+                  color: "#fff",
+                  boxShadow: "0 4px 14px oklch(0.68 0.22 278 / 0.40)",
+                }}
+                disabled={loading}
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Creating account…</>
+                ) : (
+                  "Create Free Account"
+                )}
+              </Button>
+            </form>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link href="/login" className="font-medium hover:underline" style={{ color: "var(--primary)" }}>
+                Sign in
+              </Link>
+            </p>
+          </div>
         </div>
       </motion.div>
     </div>

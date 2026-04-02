@@ -96,7 +96,7 @@ const testimonials = [
     handle: "@adebayo_ok",
     avatar: "AO",
     stars: 5,
-    text: "Abati Logs is hands down the best virtual number service I've used. Got my OTP in under 3 seconds. No stress, no lag. 100% recommend!",
+    text: "LarryDigitals is hands down the best virtual number service I've used. Got my OTP in under 3 seconds. No stress, no lag. 100% recommend!",
     tag: "Verified User",
   },
   {
@@ -136,7 +136,7 @@ const testimonials = [
     handle: "@emeka_obi",
     avatar: "EO",
     stars: 5,
-    text: "Cheapest and most reliable virtual number service in Nigeria. I've tried others but Abati Logs is superior in every way.",
+    text: "Cheapest and most reliable virtual number service in Nigeria. I've tried others but LarryDigitals is superior in every way.",
     tag: "Long-term User",
   },
 ];
@@ -171,7 +171,7 @@ export default function LandingPage() {
             <Link
               href="/register"
               className="px-4 sm:px-5 py-2 rounded-[9px] text-sm font-bold transition-all hover:opacity-88 active:scale-95"
-              style={{ background: "var(--primary)", color: "#09090d" }}
+              style={{ background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))", color: "#fff" }}
             >
               Get Started
             </Link>
@@ -193,7 +193,7 @@ export default function LandingPage() {
             style={{
               width: "min(700px, 100vw)",
               height: 500,
-              background: "radial-gradient(ellipse, rgba(0,229,160,0.10) 0%, transparent 70%)",
+              background: "radial-gradient(ellipse, oklch(0.68 0.22 278 / 0.10) 0%, transparent 70%)",
             }}
           />
         </motion.div>
@@ -209,8 +209,8 @@ export default function LandingPage() {
             <span
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
               style={{
-                background: "rgba(0,229,160,0.08)",
-                border: "1px solid rgba(0,229,160,0.22)",
+                background: "oklch(0.68 0.22 278 / 0.08)",
+                border: "1px solid oklch(0.68 0.22 278 / 0.22)",
                 color: "var(--primary)",
               }}
             >
@@ -253,7 +253,7 @@ export default function LandingPage() {
             <Link
               href="/register"
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-[10px] text-[15px] font-bold transition-all hover:opacity-90 hover:-translate-y-0.5 active:scale-95"
-              style={{ background: "var(--primary)", color: "#09090d" }}
+              style={{ background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))", color: "#fff" }}
             >
               Get Started Free
               <ArrowRight className="w-4 h-4" />
@@ -298,7 +298,7 @@ export default function LandingPage() {
                   >
                     <div
                       className="w-10 h-10 rounded-2xl flex items-center justify-center"
-                      style={{ background: "rgba(0,229,160,0.08)", border: "1px solid rgba(0,229,160,0.18)" }}
+                      style={{ background: "oklch(0.68 0.22 278 / 0.08)", border: "1px solid oklch(0.68 0.22 278 / 0.18)" }}
                     >
                       <Icon className="w-5 h-5" style={{ color: "var(--primary)" }} />
                     </div>
@@ -370,7 +370,7 @@ export default function LandingPage() {
                   >
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-                      style={{ background: "rgba(0,229,160,0.08)", border: "1px solid rgba(0,229,160,0.18)" }}
+                      style={{ background: "oklch(0.68 0.22 278 / 0.08)", border: "1px solid oklch(0.68 0.22 278 / 0.18)" }}
                     >
                       <Icon className="w-5 h-5" style={{ color: "var(--primary)" }} />
                     </div>
@@ -411,7 +411,7 @@ export default function LandingPage() {
                 <motion.div key={s.step} variants={fadeUp} className="flex flex-col items-center">
                   <div
                     className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 text-sm font-bold"
-                    style={{ background: "rgba(0,229,160,0.10)", border: "1px solid rgba(0,229,160,0.22)", color: "var(--primary)", fontFamily: "var(--font-heading)" }}
+                    style={{ background: "oklch(0.68 0.22 278 / 0.10)", border: "1px solid oklch(0.68 0.22 278 / 0.22)", color: "var(--primary)", fontFamily: "var(--font-heading)" }}
                   >
                     {s.step}
                   </div>
@@ -475,7 +475,7 @@ export default function LandingPage() {
                   <div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: "var(--border)" }}>
                     <div
                       className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                      style={{ background: "rgba(0,229,160,0.12)", color: "var(--primary)" }}
+                      style={{ background: "oklch(0.68 0.22 278 / 0.12)", color: "var(--primary)" }}
                     >
                       {t.avatar}
                     </div>
@@ -487,7 +487,7 @@ export default function LandingPage() {
                     </div>
                     <span
                       className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
-                      style={{ background: "rgba(0,229,160,0.10)", color: "var(--primary)", border: "1px solid rgba(0,229,160,0.20)" }}
+                      style={{ background: "oklch(0.68 0.22 278 / 0.10)", color: "var(--primary)", border: "1px solid oklch(0.68 0.22 278 / 0.20)" }}
                     >
                       {t.tag}
                     </span>
@@ -515,7 +515,7 @@ export default function LandingPage() {
                     className="text-3xl sm:text-4xl mb-4"
                     style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
                   >
-                    Why Abati Logs?
+                    Why LarryDigitals?
                   </motion.h2>
                   <motion.p
                     variants={fadeUp}
@@ -558,7 +558,7 @@ export default function LandingPage() {
                         key={s.label}
                         variants={scaleIn}
                         className="rounded-2xl p-4 text-center"
-                        style={{ background: "rgba(0,229,160,0.04)", border: "1px solid rgba(0,229,160,0.12)" }}
+                        style={{ background: "oklch(0.68 0.22 278 / 0.04)", border: "1px solid oklch(0.68 0.22 278 / 0.12)" }}
                       >
                         <Icon className="w-6 h-6 mx-auto mb-2" style={{ color: "var(--primary)" }} />
                         <p className="text-xl font-bold" style={{ fontFamily: "var(--font-heading)" }}>{s.value}</p>
@@ -596,7 +596,7 @@ export default function LandingPage() {
                 <Link
                   href="/register"
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[10px] text-base font-bold transition-all hover:opacity-90 hover:-translate-y-0.5 active:scale-95"
-                  style={{ background: "var(--primary)", color: "#09090d" }}
+                  style={{ background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))", color: "#fff" }}
                 >
                   Create Free Account
                   <ArrowRight className="w-4 h-4" />
@@ -636,7 +636,7 @@ export default function LandingPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                  style={{ background: "rgba(0,229,160,0.12)", border: "1px solid rgba(0,229,160,0.20)" }}
+                  style={{ background: "oklch(0.68 0.22 278 / 0.12)", border: "1px solid oklch(0.68 0.22 278 / 0.20)" }}
                   aria-label="WhatsApp"
                 >
                   <MessageSquare className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
@@ -646,7 +646,7 @@ export default function LandingPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                  style={{ background: "rgba(0,229,160,0.12)", border: "1px solid rgba(0,229,160,0.20)" }}
+                  style={{ background: "oklch(0.68 0.22 278 / 0.12)", border: "1px solid oklch(0.68 0.22 278 / 0.20)" }}
                   aria-label="Telegram"
                 >
                   <Send className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
@@ -654,7 +654,7 @@ export default function LandingPage() {
                 <a
                   href="mailto:support@abatilogs.com"
                   className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                  style={{ background: "rgba(0,229,160,0.12)", border: "1px solid rgba(0,229,160,0.20)" }}
+                  style={{ background: "oklch(0.68 0.22 278 / 0.12)", border: "1px solid oklch(0.68 0.22 278 / 0.20)" }}
                   aria-label="Email"
                 >
                   <Mail className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
@@ -737,7 +737,7 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:opacity-85"
-                style={{ background: "rgba(0,229,160,0.12)", color: "var(--primary)", border: "1px solid rgba(0,229,160,0.22)" }}
+                style={{ background: "oklch(0.68 0.22 278 / 0.12)", color: "var(--primary)", border: "1px solid oklch(0.68 0.22 278 / 0.22)" }}
               >
                 <MessageSquare className="w-3.5 h-3.5" />
                 24/7 WhatsApp Support
@@ -751,7 +751,7 @@ export default function LandingPage() {
             style={{ borderTop: "1px solid var(--border)" }}
           >
             <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-              © {new Date().getFullYear()} Abati Logs &amp; SMS. All rights reserved.
+              © {new Date().getFullYear()} LarryDigitals. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <ThemeToggle />

@@ -1,14 +1,15 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ShoppingCart, MessageSquare, User } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, ShoppingBag, MessageSquare, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { label: "Home",    href: "/dashboard",          icon: LayoutDashboard },
-  { label: "Buy",     href: "/dashboard/buy",       icon: ShoppingCart },
+  { label: "Numbers", href: "/dashboard/buy",       icon: ShoppingCart },
+  { label: "Social",  href: "/dashboard/social",    icon: ShoppingBag },
   { label: "SMS",     href: "/dashboard/sms",       icon: MessageSquare },
-  { label: "Account", href: "/dashboard/settings",  icon: User },
+  { label: "Wallet",  href: "/dashboard/wallet",    icon: Wallet },
 ];
 
 export function BottomNav() {
@@ -18,8 +19,8 @@ export function BottomNav() {
     <nav
       className="lg:hidden fixed bottom-0 inset-x-0 z-30 flex border-t"
       style={{
-        background: "#ffffff",
-        borderColor: "#e5e7eb",
+        background: "var(--card)",
+        borderColor: "var(--border)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
       }}
     >
@@ -35,8 +36,8 @@ export function BottomNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
-              active ? "text-[#00E5A0]" : "text-gray-400 hover:text-gray-600"
+              "flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium transition-colors",
+              active ? "text-primary" : "text-muted-foreground hover:text-foreground"
             )}
           >
             <Icon className={cn("w-5 h-5", active && "stroke-[2.5px]")} />

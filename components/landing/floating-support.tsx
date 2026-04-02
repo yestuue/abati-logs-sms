@@ -21,7 +21,7 @@ export function FloatingSupport() {
             {/* Header */}
             <div
               className="px-4 py-3 flex items-center gap-3"
-              style={{ background: "#00E5A0" }}
+              style={{ background: "oklch(0.68 0.22 278)" }}
             >
               <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
                 <Headphones className="w-4 h-4 text-white" />
@@ -46,9 +46,9 @@ export function FloatingSupport() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02] active:scale-95"
-                style={{ background: "rgba(0,229,160,0.08)", border: "1px solid rgba(0,229,160,0.20)" }}
+                style={{ background: "oklch(0.68 0.22 278 / 0.08)", border: "1px solid oklch(0.68 0.22 278 / 0.20)" }}
               >
-                <MessageCircle className="w-4 h-4 flex-shrink-0" style={{ color: "#00E5A0" }} />
+                <MessageCircle className="w-4 h-4 flex-shrink-0" style={{ color: "oklch(0.68 0.22 278)" }} />
                 <div>
                   <p className="text-sm font-semibold">Chat with Us</p>
                   <p className="text-[11px] text-muted-foreground">WhatsApp — fastest response</p>
@@ -60,9 +60,9 @@ export function FloatingSupport() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02] active:scale-95"
-                style={{ background: "rgba(0,229,160,0.05)", border: "1px solid var(--border)" }}
+                style={{ background: "oklch(0.68 0.22 278 / 0.05)", border: "1px solid var(--border)" }}
               >
-                <Users className="w-4 h-4 flex-shrink-0" style={{ color: "#00E5A0" }} />
+                <Users className="w-4 h-4 flex-shrink-0" style={{ color: "oklch(0.68 0.22 278)" }} />
                 <div>
                   <p className="text-sm font-semibold">Join Community</p>
                   <p className="text-[11px] text-muted-foreground">WhatsApp group — tips & updates</p>
@@ -79,7 +79,7 @@ export function FloatingSupport() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
         className="w-14 h-14 rounded-full shadow-2xl flex items-center justify-center relative"
-        style={{ background: "#00E5A0" }}
+        style={{ background: "oklch(0.68 0.22 278)" }}
         aria-label="Open support"
       >
         <AnimatePresence mode="wait">
@@ -109,7 +109,7 @@ export function FloatingSupport() {
         {!open && (
           <span
             className="absolute inset-0 rounded-full animate-ping"
-            style={{ background: "rgba(0,229,160,0.4)" }}
+            style={{ background: "oklch(0.68 0.22 278 / 0.40)" }}
           />
         )}
       </motion.button>

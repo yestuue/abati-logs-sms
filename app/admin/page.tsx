@@ -192,7 +192,7 @@ export default async function AdminPage() {
         </div>
         <div
           className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium"
-          style={{ background: "rgba(0,229,160,0.08)", border: "1px solid rgba(0,229,160,0.20)", color: "var(--primary)" }}
+          style={{ background: "oklch(0.68 0.22 278 / 0.08)", border: "1px solid oklch(0.68 0.22 278 / 0.20)", color: "var(--primary)" }}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
           Live Dashboard
@@ -227,7 +227,7 @@ export default async function AdminPage() {
       {/* Revenue banner */}
       <Card
         className="overflow-hidden"
-        style={{ background: "linear-gradient(135deg, rgba(0,229,160,0.08) 0%, rgba(0,229,160,0.04) 100%)", border: "1px solid rgba(0,229,160,0.20)" }}
+        style={{ background: "linear-gradient(135deg, oklch(0.68 0.22 278 / 0.08) 0%, oklch(0.68 0.22 278 / 0.04) 100%)", border: "1px solid oklch(0.68 0.22 278 / 0.20)" }}
       >
         <CardContent className="p-5">
           <div className="flex items-center justify-between">
@@ -240,7 +240,7 @@ export default async function AdminPage() {
             <Link
               href="/admin/revenue"
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
-              style={{ background: "rgba(0,229,160,0.15)", color: "var(--primary)" }}
+              style={{ background: "oklch(0.68 0.22 278 / 0.15)", color: "var(--primary)" }}
             >
               <TrendingUp className="w-4 h-4" />
               View Analytics

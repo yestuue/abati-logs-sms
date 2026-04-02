@@ -62,10 +62,18 @@ const SERVER_INFO = {
     sublabel: "Global Numbers",
     description: "Numbers from 50+ countries. Great for international platforms.",
     icon: "🌍",
-    glow: "0 0 0 2px rgba(0,229,160,0.5), 0 0 16px rgba(0,229,160,0.15)",
-    activeBorder: "rgba(0,229,160,0.4)",
+    glow: "0 0 0 2px oklch(0.68 0.22 278 / 0.50), 0 0 16px oklch(0.68 0.22 278 / 0.15)",
+    activeBorder: "oklch(0.68 0.22 278 / 0.40)",
   },
 };
+
+type Carrier = "any" | "att" | "tmobile";
+
+const CARRIERS: { value: Carrier; label: string; premium: boolean }[] = [
+  { value: "any",     label: "Any Carrier",    premium: false },
+  { value: "att",     label: "AT&T (+35%)",    premium: true  },
+  { value: "tmobile", label: "T-Mobile (+35%)", premium: true  },
+];
 
 export function ServerSelector({
   walletBalance,
@@ -83,6 +91,7 @@ export function ServerSelector({
   const [selected, setSelected] = useState<NumberItem | null>(null);
   const [buying, setBuying] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [carrier, setCarrier] = useState<Carrier>("any");
 
   const fetchNumbers = useCallback(
     async (server: "SERVER1" | "SERVER2", force = false) => {
@@ -125,10 +134,18 @@ export function ServerSelector({
       n.country.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Apply +35% carrier premium for specific carriers
+  const carrierPremiumMultiplier = CARRIERS.find((c) => c.value === carrier)?.premium ? 1.35 : 1.0;
+
+  function getPriceWithCarrier(basePrice: number) {
+    return Math.ceil(basePrice * carrierPremiumMultiplier);
+  }
+
   async function handlePurchase() {
     if (!selected) return;
     setBuying(true);
-    const price = walletCurrency === "USD" ? selected.priceUSD : selected.priceNGN;
+    const basePrice = walletCurrency === "USD" ? selected.priceUSD : selected.priceNGN;
+    const price = getPriceWithCarrier(basePrice);
     if (walletBalance < price) {
       toast.error("Insufficient wallet balance. Please top up first.");
       setBuying(false);
@@ -217,9 +234,9 @@ export function ServerSelector({
                       <span
                         className="text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider"
                         style={{
-                          background: "rgba(0,229,160,0.15)",
+                          background: "oklch(0.68 0.22 278 / 0.15)",
                           color: "var(--primary)",
-                          border: "1px solid rgba(0,229,160,0.25)",
+                          border: "1px solid oklch(0.68 0.22 278 / 0.25)",
                         }}
                       >
                         Active
@@ -240,6 +257,50 @@ export function ServerSelector({
           );
         })}
       </div>
+
+      {/* Carrier selector — only for USA (SERVER1) */}
+      {activeServer === "SERVER1" && (
+        <div
+          className="p-3 rounded-xl"
+          style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
+        >
+          <p className="text-xs font-semibold text-foreground mb-2.5">
+            Carrier Preference
+            <span className="text-muted-foreground font-normal ml-1.5">
+              (specific carriers add a +35% premium)
+            </span>
+          </p>
+          <div className="flex gap-2 flex-wrap">
+            {CARRIERS.map((c) => (
+              <button
+                key={c.value}
+                onClick={() => setCarrier(c.value)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                style={
+                  carrier === c.value
+                    ? {
+                        background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))",
+                        color: "#fff",
+                        boxShadow: "0 2px 8px oklch(0.68 0.22 278 / 0.30)",
+                      }
+                    : {
+                        background: "var(--card)",
+                        color: "var(--muted-foreground)",
+                        border: "1px solid var(--border)",
+                      }
+                }
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+          {carrierPremiumMultiplier > 1 && (
+            <p className="text-xs mt-2" style={{ color: "oklch(0.68 0.22 278)" }}>
+              ⚡ +35% carrier premium applied to all prices below
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Number list card */}
       {isDisabled ? (
@@ -318,9 +379,9 @@ export function ServerSelector({
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-85"
                       style={{
-                        background: "rgba(0,229,160,0.12)",
+                        background: "oklch(0.68 0.22 278 / 0.12)",
                         color: "var(--primary)",
-                        border: "1px solid rgba(0,229,160,0.25)",
+                        border: "1px solid oklch(0.68 0.22 278 / 0.25)",
                       }}
                     >
                       <MessageSquare className="w-4 h-4" />
@@ -353,10 +414,13 @@ export function ServerSelector({
                       </div>
                       <div className="text-right flex-shrink-0">
                         <p className="text-sm font-semibold text-primary">
-                          ₦{n.priceNGN.toLocaleString()}
+                          ₦{getPriceWithCarrier(n.priceNGN).toLocaleString()}
                         </p>
                         <p className="text-[10px] text-muted-foreground">
-                          ${n.priceUSD.toFixed(2)}
+                          {carrierPremiumMultiplier > 1 && (
+                            <span className="line-through mr-1 opacity-60">₦{n.priceNGN.toLocaleString()}</span>
+                          )}
+                          ${getPriceWithCarrier(n.priceUSD).toFixed(2)}
                         </p>
                       </div>
                       <button
@@ -404,9 +468,19 @@ export function ServerSelector({
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm border-t border-border/30 pt-2 mt-2">
-                  <span className="font-medium">Price</span>
+                  <span className="font-medium">Base Price</span>
+                  <span className="text-muted-foreground">₦{selected.priceNGN.toLocaleString()}</span>
+                </div>
+                {carrierPremiumMultiplier > 1 && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium" style={{ color: "oklch(0.68 0.22 278)" }}>Carrier Premium</span>
+                    <span style={{ color: "oklch(0.68 0.22 278)" }}>+35%</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-sm border-t border-border/30 pt-2">
+                  <span className="font-bold">Total</span>
                   <span className="font-bold text-primary text-base">
-                    ₦{selected.priceNGN.toLocaleString()}
+                    ₦{getPriceWithCarrier(selected.priceNGN).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -415,14 +489,14 @@ export function ServerSelector({
                 <span className="text-muted-foreground">Wallet Balance After</span>
                 <span
                   className={`font-semibold ${
-                    walletBalance < selected.priceNGN ? "text-destructive" : "text-emerald-400"
+                    walletBalance < getPriceWithCarrier(selected.priceNGN) ? "text-destructive" : "text-emerald-400"
                   }`}
                 >
-                  {formatCurrency(Math.max(0, walletBalance - selected.priceNGN), "NGN")}
+                  {formatCurrency(Math.max(0, walletBalance - getPriceWithCarrier(selected.priceNGN)), "NGN")}
                 </span>
               </div>
 
-              {walletBalance < selected.priceNGN && (
+              {walletBalance < getPriceWithCarrier(selected.priceNGN) && (
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   Insufficient balance. Please top up your wallet first.
@@ -436,7 +510,7 @@ export function ServerSelector({
             <Button
               variant="brand"
               onClick={handlePurchase}
-              disabled={buying || !selected || walletBalance < (selected?.priceNGN ?? 0)}
+              disabled={buying || !selected || walletBalance < getPriceWithCarrier(selected?.priceNGN ?? 0)}
             >
               {buying ? (
                 <Loader2 className="w-4 h-4 animate-spin" />

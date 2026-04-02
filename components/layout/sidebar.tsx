@@ -2,43 +2,40 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  ShoppingCart,
-  MessageSquare,
-  Settings,
-  LogOut,
-  Shield,
-  BarChart3,
-  Users,
-  Server,
-  Phone,
-  CreditCard,
+  LayoutDashboard, ShoppingCart, MessageSquare, Settings,
+  LogOut, Shield, BarChart3, Users, Server, Phone,
+  CreditCard, ShoppingBag, Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { signOut } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "@/components/theme-provider";
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  badge?: string;
 }
 
 const userNav: NavItem[] = [
   { label: "Dashboard",    href: "/dashboard",              icon: LayoutDashboard },
   { label: "Buy Number",   href: "/dashboard/buy",          icon: ShoppingCart },
+  { label: "Social Logs",  href: "/dashboard/social",       icon: ShoppingBag },
   { label: "SMS Inbox",    href: "/dashboard/sms",          icon: MessageSquare },
+  { label: "Wallet",       href: "/dashboard/wallet",       icon: Wallet },
   { label: "Transactions", href: "/dashboard/transactions", icon: CreditCard },
   { label: "Settings",     href: "/dashboard/settings",     icon: Settings },
 ];
 
 const adminNav: NavItem[] = [
-  { label: "Overview", href: "/admin", icon: LayoutDashboard },
-  { label: "Servers", href: "/admin/servers", icon: Server },
-  { label: "Numbers", href: "/admin/numbers", icon: Phone },
-  { label: "Users", href: "/admin/users", icon: Users },
-  { label: "Revenue", href: "/admin/revenue", icon: BarChart3 },
+  { label: "Overview",  href: "/admin",          icon: LayoutDashboard },
+  { label: "Servers",   href: "/admin/servers",  icon: Server },
+  { label: "Numbers",   href: "/admin/numbers",  icon: Phone },
+  { label: "Users",     href: "/admin/users",    icon: Users },
+  { label: "Revenue",   href: "/admin/revenue",  icon: BarChart3 },
 ];
 
 interface SidebarProps {
@@ -48,12 +45,11 @@ interface SidebarProps {
 
 export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
   const pathname = usePathname();
+  const { theme } = useTheme();
   const nav = variant === "admin" ? adminNav : userNav;
 
   const isActive = (href: string) => {
-    if (href === "/dashboard" || href === "/admin") {
-      return pathname === href;
-    }
+    if (href === "/dashboard" || href === "/admin") return pathname === href;
     return pathname.startsWith(href);
   };
 
@@ -75,7 +71,7 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
       <Separator />
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
         {nav.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
@@ -87,16 +83,23 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                 active
-                  ? "bg-primary/15 text-primary border border-primary/20"
+                  ? "text-primary-foreground"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
+              style={active ? {
+                background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))",
+                boxShadow: "0 2px 8px oklch(0.68 0.22 278 / 0.30)",
+              } : {}}
             >
-              <Icon
-                className={cn("w-4 h-4 flex-shrink-0", active && "text-primary")}
-              />
-              {item.label}
-              {active && (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+              <Icon className="w-4 h-4 flex-shrink-0" />
+              <span className="flex-1">{item.label}</span>
+              {item.badge && (
+                <span
+                  className="text-[10px] font-bold px-1.5 py-0.5 rounded-md"
+                  style={{ background: "oklch(0.68 0.22 278 / 0.20)", color: "var(--primary)" }}
+                >
+                  {item.badge}
+                </span>
               )}
             </Link>
           );
@@ -105,17 +108,30 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
 
       <Separator />
 
-      {/* Footer */}
+      {/* Footer: theme toggle + sign out */}
       <div className="p-3 space-y-1">
+        {/* Theme Toggle Row */}
+        <div
+          className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+          style={{ background: "var(--accent)" }}
+        >
+          <span className="text-sm font-medium text-muted-foreground">
+            {theme === "dark" ? "Dark Mode" : "Light Mode"}
+          </span>
+          <ThemeToggle />
+        </div>
+
         {variant === "admin" && (
           <Link
             href="/dashboard"
+            onClick={onNavigate}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
           >
             <LayoutDashboard className="w-4 h-4" />
             User Dashboard
           </Link>
         )}
+
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"

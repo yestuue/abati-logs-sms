@@ -61,8 +61,8 @@ export function Header({ variant = "user" }: HeaderProps) {
             <div
               className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold text-primary"
               style={{
-                background: "rgba(0,229,160,0.10)",
-                border: "1px solid rgba(0,229,160,0.25)",
+                background: "oklch(0.68 0.22 278 / 0.10)",
+                border: "1px solid oklch(0.68 0.22 278 / 0.25)",
               }}
             >
               <Wallet className="w-3.5 h-3.5" />
@@ -82,7 +82,7 @@ export function Header({ variant = "user" }: HeaderProps) {
                 <Avatar className="h-7 w-7">
                   <AvatarFallback
                     className="text-xs font-bold text-primary"
-                    style={{ background: "rgba(0,229,160,0.15)" }}
+                    style={{ background: "oklch(0.68 0.22 278 / 0.15)" }}
                   >
                     {initials}
                   </AvatarFallback>

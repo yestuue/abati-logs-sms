@@ -72,7 +72,7 @@ export function NumbersShowcase() {
           >
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: "rgba(0,229,160,0.08)" }}
+              style={{ background: "oklch(0.68 0.22 278 / 0.08)" }}
             >
               <Phone className="w-4 h-4" style={{ color: "var(--primary)" }} />
             </div>
@@ -86,8 +86,8 @@ export function NumbersShowcase() {
               <span
                 className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
                 style={{
-                  background: "rgba(0,229,160,0.08)",
-                  border: "1px solid rgba(0,229,160,0.2)",
+                  background: "oklch(0.68 0.22 278 / 0.08)",
+                  border: "1px solid oklch(0.68 0.22 278 / 0.20)",
                   color: "var(--primary)",
                 }}
               >

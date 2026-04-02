@@ -22,51 +22,44 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: {
-    default: "Abati Logs & SMS — Virtual Numbers & OTP Platform",
-    template: "%s | Abati Logs & SMS",
+    default: "LarryDigitals — Virtual Numbers, Social Logs & OTP Platform",
+    template: "%s | LarryDigitals",
   },
   description:
-    "Get instant virtual phone numbers from USA and global providers. Receive OTPs and SMS messages in real time.",
-  keywords: ["virtual number", "OTP", "SMS", "Abati Logs", "Nigeria"],
+    "Get instant virtual phone numbers from USA and 50+ countries. Buy premium social accounts. Receive OTPs in real time.",
+  keywords: ["virtual number", "OTP", "SMS", "LarryDigitals", "Nigeria", "social accounts"],
   manifest: "/manifest.json",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
   },
   openGraph: {
-    title: "Abati Logs & SMS — Virtual Numbers & OTP Platform",
+    title: "LarryDigitals — Virtual Numbers & Social Logs Platform",
     description:
-      "Get instant virtual phone numbers from USA and global providers. Receive OTPs and SMS messages in real time.",
-    url: "https://abatilogs.com",
-    siteName: "Abati Logs & SMS",
-    images: [
-      {
-        url: "/logo.png",
-        width: 1200,
-        height: 630,
-        alt: "Abati Logs SMS",
-      },
-    ],
+      "Get instant virtual phone numbers from USA and 50+ countries. Buy premium social accounts. Receive OTPs in real time.",
+    url: "https://larrydigitals.com",
+    siteName: "LarryDigitals",
+    images: [{ url: "/logo.png", width: 1200, height: 630, alt: "LarryDigitals" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Abati Logs & SMS — Virtual Numbers & OTP Platform",
+    title: "LarryDigitals — Virtual Numbers & Social Logs Platform",
     description:
-      "Get instant virtual phone numbers from USA and global providers. Receive OTPs and SMS messages in real time.",
+      "Get instant virtual phone numbers from USA and 50+ countries. Buy premium social accounts.",
     images: ["/logo.png"],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Abati SMS",
+    title: "LarryDigitals",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: dark)",  color: "#09090d" },
-    { media: "(prefers-color-scheme: light)", color: "#00E5A0" },
+    { media: "(prefers-color-scheme: light)", color: "#7C3AED" },
   ],
   width: "device-width",
   initialScale: 1,

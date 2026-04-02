@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
             >
               <div
                 className="w-14 h-14 rounded-full flex items-center justify-center mx-auto"
-                style={{ background: "rgba(0,229,160,0.12)", border: "1px solid rgba(0,229,160,0.25)" }}
+                style={{ background: "oklch(0.68 0.22 278 / 0.12)", border: "1px solid oklch(0.68 0.22 278 / 0.25)" }}
               >
                 <CheckCircle className="w-7 h-7" style={{ color: "var(--primary)" }} />
               </div>

@@ -44,9 +44,9 @@ export async function POST(req: Request) {
           auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
         }) as { sendMail: Function };
         await transporter.sendMail({
-          from: process.env.EMAIL_FROM ?? `Abati Logs <noreply@abatilogs.com>`,
+          from: process.env.EMAIL_FROM ?? `LarryDigitals <noreply@larrydigitals.com>`,
           to: normalised,
-          subject: "Reset your Abati Logs password",
+          subject: "Reset your LarryDigitals password",
           html: `
             <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
               <h2 style="margin:0 0 8px;font-size:22px">Password Reset</h2>
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
                 Click the button below to reset your password. This link expires in 1 hour.
               </p>
               <a href="${resetUrl}"
-                style="display:inline-block;background:#00E5A0;color:#09090d;font-weight:700;
+                style="display:inline-block;background:#7C3AED;color:#ffffff;font-weight:700;
                        padding:12px 28px;border-radius:10px;text-decoration:none;font-size:15px">
                 Reset Password
               </a>

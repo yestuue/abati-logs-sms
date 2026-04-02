@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
 
 export default async function AdminLayout({
   children,
@@ -12,11 +12,13 @@ export default async function AdminLayout({
   if (session.user.role !== "ADMIN") redirect("/dashboard");
 
   return (
-    <div className="min-h-screen" style={{ background: "var(--background)" }}>
-      <Header variant="admin" />
-      <main className="lg:pl-[240px] pt-14">
-        <div className="p-4 md:p-6 max-w-7xl mx-auto">{children}</div>
-      </main>
-    </div>
+    <AppShell
+      variant="admin"
+      userName={session.user.name ?? undefined}
+      userEmail={session.user.email ?? undefined}
+      userRole={session.user.role ?? undefined}
+    >
+      {children}
+    </AppShell>
   );
 }
