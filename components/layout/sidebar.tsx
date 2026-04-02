@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, MessageSquare, Settings,
   LogOut, Shield, BarChart3, Users, Server, Phone,
-  CreditCard, ShoppingBag, Wallet,
+  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
@@ -24,6 +24,7 @@ const userNav: NavItem[] = [
   { label: "Dashboard",    href: "/dashboard",              icon: LayoutDashboard },
   { label: "Buy Number",   href: "/dashboard/buy",          icon: ShoppingCart },
   { label: "Social Logs",  href: "/dashboard/social",       icon: ShoppingBag },
+  { label: "My Vault",     href: "/dashboard/orders",       icon: Archive },
   { label: "SMS Inbox",    href: "/dashboard/sms",          icon: MessageSquare },
   { label: "Wallet",       href: "/dashboard/wallet",       icon: Wallet },
   { label: "Transactions", href: "/dashboard/transactions", icon: CreditCard },
@@ -31,11 +32,12 @@ const userNav: NavItem[] = [
 ];
 
 const adminNav: NavItem[] = [
-  { label: "Overview",  href: "/admin",          icon: LayoutDashboard },
-  { label: "Servers",   href: "/admin/servers",  icon: Server },
-  { label: "Numbers",   href: "/admin/numbers",  icon: Phone },
-  { label: "Users",     href: "/admin/users",    icon: Users },
-  { label: "Revenue",   href: "/admin/revenue",  icon: BarChart3 },
+  { label: "Overview",   href: "/admin",             icon: LayoutDashboard },
+  { label: "Servers",    href: "/admin/servers",     icon: Server },
+  { label: "Numbers",    href: "/admin/numbers",     icon: Phone },
+  { label: "Inventory",  href: "/admin/inventory",   icon: PackageSearch },
+  { label: "Users",      href: "/admin/users",       icon: Users },
+  { label: "Revenue",    href: "/admin/revenue",     icon: BarChart3 },
 ];
 
 interface SidebarProps {

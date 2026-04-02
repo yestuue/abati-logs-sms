@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ShoppingCart, ShoppingBag, MessageSquare, Wallet } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, ShoppingBag, Archive, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { label: "Home",    href: "/dashboard",          icon: LayoutDashboard },
   { label: "Numbers", href: "/dashboard/buy",       icon: ShoppingCart },
   { label: "Social",  href: "/dashboard/social",    icon: ShoppingBag },
-  { label: "SMS",     href: "/dashboard/sms",       icon: MessageSquare },
+  { label: "Vault",   href: "/dashboard/orders",    icon: Archive },
   { label: "Wallet",  href: "/dashboard/wallet",    icon: Wallet },
 ];
 

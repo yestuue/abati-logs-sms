@@ -9,13 +9,13 @@ import { FloatingSupport } from "@/components/landing/floating-support";
 import {
   ArrowRight, CheckCircle, Zap, Globe, MessageSquare, Shield,
   Star, Users, Phone, Clock, BadgeCheck, TrendingUp,
-  Twitter, Send, Mail, HeartHandshake,
+  Send, Mail, HeartHandshake, ShoppingBag, CreditCard,
 } from "lucide-react";
 
 // ── Animation primitives ──────────────────────────────────────────────────────
 const fadeUp = {
   hidden:  { opacity: 0, y: 28 },
-  visible: { opacity: 1, y: 0,  transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
 };
 const fadeIn = {
   hidden:  { opacity: 0 },
@@ -59,7 +59,6 @@ function CountUpNumber({ end, suffix = "", duration = 1800 }: { end: number; suf
     const step = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
-      // ease-out cubic
       const eased = 1 - Math.pow(1 - progress, 3);
       setCount(Math.floor(eased * end));
       if (progress < 1) requestAnimationFrame(step);
@@ -73,105 +72,143 @@ function CountUpNumber({ end, suffix = "", duration = 1800 }: { end: number; suf
   return <span ref={ref}>{formatted}{suffix}</span>;
 }
 
-// ── Features data ──────────────────────────────────────────────────────────────
+// ── Data ───────────────────────────────────────────────────────────────────────
 const features = [
-  { icon: Zap,          title: "Instant Activation",  description: "Get a virtual number in seconds, start receiving OTPs immediately." },
-  { icon: Globe,        title: "Two Server System",   description: "Server 1 for USA (+1) numbers. Server 2 for global coverage across 50+ countries." },
-  { icon: MessageSquare,title: "Real-Time SMS Inbox", description: "OTPs and messages routed directly to your private dashboard." },
-  { icon: Shield,       title: "Secure Wallet",       description: "Fund your wallet via Paystack and use it across all purchases." },
+  { icon: Zap,           title: "Instant Activation",  description: "Get a virtual number in seconds, start receiving OTPs immediately." },
+  { icon: Globe,         title: "Two Server System",   description: "Server 1 for USA (+1) numbers. Server 2 for global coverage across 50+ countries." },
+  { icon: MessageSquare, title: "Real-Time SMS Inbox", description: "OTPs and messages routed directly to your private dashboard." },
+  { icon: Shield,        title: "Secure Wallet",       description: "Fund your wallet via Paystack and use it across all purchases." },
 ];
 
-// ── Trust stats ───────────────────────────────────────────────────────────────
+const services = [
+  {
+    icon: Phone,
+    emoji: "📱",
+    title: "Virtual Numbers",
+    description: "Receive OTPs for WhatsApp, Telegram, Google, and 50+ services instantly. USA numbers via Server 1, global numbers via Server 2.",
+    color: "#00E5A0",
+    tags: ["WhatsApp", "Telegram", "Google", "USA & Global"],
+  },
+  {
+    icon: ShoppingBag,
+    emoji: "📲",
+    title: "Social Logs",
+    description: "High-quality Facebook, Instagram, TikTok, Twitter/X, and Gmail accounts with aged history. Phone-verified and ready to use.",
+    color: "#6366f1",
+    tags: ["Facebook", "Instagram", "TikTok", "Twitter/X"],
+  },
+  {
+    icon: CreditCard,
+    emoji: "🏦",
+    title: "Business Tools",
+    description: "Verification solutions for PayPal, Stripe, and global business platforms. Get verified accounts for your business operations.",
+    color: "#f59e0b",
+    tags: ["PayPal", "Stripe", "Business", "Verified"],
+  },
+];
+
 const trustStats = [
-  { icon: Users,      value: "2,500+",  label: "Active Users",    countTo: 2500,  suffix: "+" },
-  { icon: Phone,      value: "10,000+", label: "Numbers Issued",  countTo: 10000, suffix: "+" },
-  { icon: BadgeCheck, value: "99.9%",   label: "Uptime",          countTo: null,  suffix: ""  },
-  { icon: Clock,      value: "< 5s",    label: "OTP Delivery",    countTo: null,  suffix: ""  },
+  { icon: Users,      value: "2,500+",  label: "Active Users",   countTo: 2500,  suffix: "+" },
+  { icon: Phone,      value: "10,000+", label: "Numbers Issued", countTo: 10000, suffix: "+" },
+  { icon: BadgeCheck, value: "99.9%",   label: "Uptime",         countTo: null,  suffix: "" },
+  { icon: Clock,      value: "< 5s",    label: "OTP Delivery",   countTo: null,  suffix: "" },
 ];
 
-// ── Testimonials ──────────────────────────────────────────────────────────────
 const testimonials = [
   {
-    name: "Adebayo Okonkwo",
-    handle: "@adebayo_ok",
-    avatar: "AO",
-    stars: 5,
+    name: "Adebayo Okonkwo", handle: "@adebayo_ok", avatar: "AO", stars: 5,
     text: "Abati Logs is hands down the best virtual number service I've used. Got my OTP in under 3 seconds. No stress, no lag. 100% recommend!",
     tag: "Verified User",
   },
   {
-    name: "Chiamaka Ezeh",
-    handle: "@chiamaka_e",
-    avatar: "CE",
-    stars: 5,
+    name: "Chiamaka Ezeh", handle: "@chiamaka_e", avatar: "CE", stars: 5,
     text: "I needed a USA number for verification and Server 1 delivered instantly. The wallet top-up via Paystack was super smooth too.",
     tag: "Server 1 User",
   },
   {
-    name: "Tunde Fashola",
-    handle: "@tunde_f",
-    avatar: "TF",
-    stars: 5,
+    name: "Tunde Fashola", handle: "@tunde_f", avatar: "TF", stars: 5,
     text: "Been using this for 3 months now. The dashboard is clean, SMS arrives fast, and the support team responds on WhatsApp within minutes.",
     tag: "Power User",
   },
   {
-    name: "Kelechi Nwosu",
-    handle: "@kel_nw",
-    avatar: "KN",
-    stars: 5,
+    name: "Kelechi Nwosu", handle: "@kel_nw", avatar: "KN", stars: 5,
     text: "Global numbers from Server 2 are perfect for my international accounts. The platform just works — no downtime, no excuses.",
     tag: "Server 2 User",
   },
   {
-    name: "Fatimah Aliyu",
-    handle: "@fatimah_a",
-    avatar: "FA",
-    stars: 5,
+    name: "Fatimah Aliyu", handle: "@fatimah_a", avatar: "FA", stars: 5,
     text: "The real-time SMS inbox is a game changer. I can see OTPs the moment they arrive. Clean UI, great service. Keep it up!",
     tag: "Verified User",
   },
   {
-    name: "Emeka Obi",
-    handle: "@emeka_obi",
-    avatar: "EO",
-    stars: 5,
+    name: "Emeka Obi", handle: "@emeka_obi", avatar: "EO", stars: 5,
     text: "Cheapest and most reliable virtual number service in Nigeria. I've tried others but Abati Logs is superior in every way.",
     tag: "Long-term User",
   },
 ];
 
+// ── Mint green helpers ────────────────────────────────────────────────────────
+const MINT      = "oklch(0.80 0.19 162)";
+const MINT_DARK = "oklch(0.68 0.17 162)";
+
 export default function LandingPage() {
   return (
-    <div className="min-h-screen overflow-x-hidden" style={{ background: "var(--background)" }}>
+    <div
+      className="min-h-screen overflow-x-hidden relative"
+      style={{
+        background: "radial-gradient(ellipse at top center, #0d1a12 0%, #050a07 40%, #000000 100%)",
+      }}
+    >
+      {/* ── Faint grid overlay ───────────────────────────────────────────────── */}
+      <div
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(0,229,160,0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,229,160,0.04) 1px, transparent 1px)
+          `,
+          backgroundSize: "48px 48px",
+          maskImage: "radial-gradient(ellipse at top, black 0%, transparent 70%)",
+          WebkitMaskImage: "radial-gradient(ellipse at top, black 0%, transparent 70%)",
+        }}
+        aria-hidden
+      />
 
       {/* ── Navbar ──────────────────────────────────────────────────────────── */}
       <motion.nav
         initial={{ opacity: 0, y: -16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="sticky top-0 z-50 border-b"
+        className="sticky top-0 z-50 border-b relative"
         style={{
-          borderColor: "rgba(255,255,255,0.07)",
-          background: "rgba(var(--background-rgb, 9,9,13),0.85)",
-          backdropFilter: "blur(12px)",
+          borderColor: "rgba(0,229,160,0.10)",
+          background: "rgba(0,0,0,0.75)",
+          backdropFilter: "blur(14px)",
         }}
       >
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <Logo size="md" />
           <div className="flex items-center gap-1.5 sm:gap-3">
             <ThemeToggle className="hidden sm:flex" />
+            {/* Glass-morphism Sign In */}
             <Link
               href="/login"
-              className="px-3 sm:px-4 py-2 text-sm font-medium transition-colors rounded-lg"
-              style={{ color: "var(--muted-foreground)" }}
+              className="px-3 sm:px-4 py-2 text-sm font-medium transition-all rounded-lg border hover:bg-white/5"
+              style={{
+                border: "1px solid rgba(0,229,160,0.25)",
+                color: MINT,
+                backdropFilter: "blur(8px)",
+              }}
             >
               Sign In
             </Link>
             <Link
               href="/register"
               className="px-4 sm:px-5 py-2 rounded-[9px] text-sm font-bold transition-all hover:opacity-88 active:scale-95"
-              style={{ background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))", color: "#fff" }}
+              style={{
+                background: `linear-gradient(135deg, ${MINT}, ${MINT_DARK})`,
+                color: "#09090d",
+              }}
             >
               Get Started
             </Link>
@@ -180,20 +217,20 @@ export default function LandingPage() {
       </motion.nav>
 
       {/* ── Hero ────────────────────────────────────────────────────────────── */}
-      <section className="relative px-4 pt-16 pb-16 sm:pt-24 sm:pb-20 overflow-hidden">
-        {/* Animated background glow */}
+      <section className="relative px-4 pt-16 pb-16 sm:pt-24 sm:pb-20 overflow-hidden z-10">
+        {/* Mint glow behind hero */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
+          transition={{ duration: 1.4, ease: "easeOut" }}
           className="absolute inset-0 pointer-events-none"
         >
           <div
             className="absolute top-0 left-1/2 -translate-x-1/2"
             style={{
-              width: "min(700px, 100vw)",
-              height: 500,
-              background: "radial-gradient(ellipse, oklch(0.68 0.22 278 / 0.10) 0%, transparent 70%)",
+              width: "min(800px, 100vw)",
+              height: 520,
+              background: `radial-gradient(ellipse, ${MINT}18 0%, transparent 68%)`,
             }}
           />
         </motion.div>
@@ -209,40 +246,37 @@ export default function LandingPage() {
             <span
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
               style={{
-                background: "oklch(0.68 0.22 278 / 0.08)",
-                border: "1px solid oklch(0.68 0.22 278 / 0.22)",
-                color: "var(--primary)",
+                background: `${MINT}14`,
+                border: `1px solid ${MINT}38`,
+                color: MINT,
               }}
             >
               <Zap className="w-3 h-3" />
-              Two-Server Virtual Number Platform
+              Your All-in-One Digital Log &amp; Virtual Number Hub
             </span>
           </motion.div>
 
           {/* Headline */}
           <motion.h1
             variants={fadeUp}
-            className="text-[2.4rem] sm:text-5xl lg:text-[4rem] leading-[1.12] mb-5 px-2"
+            className="text-[2.4rem] sm:text-5xl lg:text-[4rem] leading-[1.12] mb-5 px-2 text-white"
             style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
           >
-            Virtual Numbers for
+            Virtual Numbers &amp;
             <br />
-            <motion.span
-              variants={fadeUp}
-              style={{ color: "var(--primary)" }}
-            >
-              Every OTP Need
+            <motion.span variants={fadeUp} style={{ color: MINT }}>
+              Premium Social Logs
             </motion.span>
           </motion.h1>
 
-          {/* Subline */}
+          {/* Sub-text */}
           <motion.p
             variants={fadeUp}
             className="text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8 px-2"
-            style={{ color: "var(--muted-foreground)" }}
+            style={{ color: "rgba(255,255,255,0.62)" }}
           >
-            Get instant USA numbers from Server 1 or global numbers from Server 2.
-            Receive OTPs in real-time — right in your dashboard.
+            Instant access to USA &amp; global virtual numbers and premium social account logs.
+            Verified, reliable, and delivered in seconds.
           </motion.p>
 
           {/* CTA buttons */}
@@ -253,15 +287,21 @@ export default function LandingPage() {
             <Link
               href="/register"
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-[10px] text-[15px] font-bold transition-all hover:opacity-90 hover:-translate-y-0.5 active:scale-95"
-              style={{ background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))", color: "#fff" }}
+              style={{ background: `linear-gradient(135deg, ${MINT}, ${MINT_DARK})`, color: "#09090d" }}
             >
-              Get Started Free
+              Create Free Account
               <ArrowRight className="w-4 h-4" />
             </Link>
+            {/* Glass-morphism Sign In */}
             <Link
               href="/login"
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-[10px] text-[15px] font-medium transition-all hover:-translate-y-0.5 active:scale-95"
-              style={{ border: "1px solid rgba(255,255,255,0.12)", color: "var(--muted-foreground)" }}
+              style={{
+                border: `1px solid rgba(0,229,160,0.30)`,
+                color: "rgba(255,255,255,0.75)",
+                backdropFilter: "blur(8px)",
+                background: "rgba(0,229,160,0.05)",
+              }}
             >
               Sign In
             </Link>
@@ -271,11 +311,11 @@ export default function LandingPage() {
           <motion.div
             variants={fadeIn}
             className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm"
-            style={{ color: "var(--muted-foreground)" }}
+            style={{ color: "rgba(255,255,255,0.45)" }}
           >
             {["No credit card required", "Instant setup", "24/7 support"].map((t) => (
               <span key={t} className="flex items-center gap-1.5">
-                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--primary)" }} />
+                <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" style={{ color: MINT }} />
                 {t}
               </span>
             ))}
@@ -284,7 +324,10 @@ export default function LandingPage() {
       </section>
 
       {/* ── Trust Stats Row ──────────────────────────────────────────────────── */}
-      <section className="py-10 px-4 border-y" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+      <section
+        className="relative z-10 py-10 px-4 border-y"
+        style={{ borderColor: "rgba(0,229,160,0.08)", background: "rgba(0,0,0,0.30)" }}
+      >
         <div className="max-w-5xl mx-auto">
           <InView>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8">
@@ -298,16 +341,95 @@ export default function LandingPage() {
                   >
                     <div
                       className="w-10 h-10 rounded-2xl flex items-center justify-center"
-                      style={{ background: "oklch(0.68 0.22 278 / 0.08)", border: "1px solid oklch(0.68 0.22 278 / 0.18)" }}
+                      style={{ background: `${MINT}12`, border: `1px solid ${MINT}28` }}
                     >
-                      <Icon className="w-5 h-5" style={{ color: "var(--primary)" }} />
+                      <Icon className="w-5 h-5" style={{ color: MINT }} />
                     </div>
-                    <p className="text-2xl font-bold text-foreground" style={{ fontFamily: "var(--font-heading)" }}>
+                    <p className="text-2xl font-bold text-white" style={{ fontFamily: "var(--font-heading)" }}>
                       {s.countTo !== null
                         ? <CountUpNumber end={s.countTo} suffix={s.suffix} />
                         : s.value}
                     </p>
-                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                    <p className="text-xs" style={{ color: "rgba(255,255,255,0.48)" }}>{s.label}</p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </InView>
+        </div>
+      </section>
+
+      {/* ── Our Services ─────────────────────────────────────────────────────── */}
+      <section className="relative z-10 py-16 sm:py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <InView>
+            <div className="text-center mb-12">
+              <motion.p
+                variants={fadeIn}
+                className="text-xs font-semibold uppercase tracking-widest mb-3"
+                style={{ color: MINT }}
+              >
+                Our Services
+              </motion.p>
+              <motion.h2
+                variants={fadeUp}
+                className="text-3xl sm:text-[2.6rem] mb-3 text-white"
+                style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
+              >
+                Everything Digital, All in One Place
+              </motion.h2>
+              <motion.p
+                variants={fadeUp}
+                className="text-sm sm:text-base max-w-xl mx-auto"
+                style={{ color: "rgba(255,255,255,0.52)" }}
+              >
+                From instant OTP numbers to premium social accounts — we have it all.
+              </motion.p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              {services.map((s, i) => {
+                const Icon = s.icon;
+                return (
+                  <motion.div
+                    key={s.title}
+                    variants={scaleIn}
+                    transition={{ delay: i * 0.08 }}
+                    className="rounded-[18px] p-6 flex flex-col gap-4 hover:scale-[1.02] transition-transform cursor-default"
+                    style={{
+                      background: "rgba(255,255,255,0.03)",
+                      border: `1px solid ${s.color}28`,
+                      boxShadow: `0 0 28px ${s.color}0a`,
+                    }}
+                  >
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
+                      style={{ background: `${s.color}18`, border: `1px solid ${s.color}30` }}
+                    >
+                      {s.emoji}
+                    </div>
+                    <div>
+                      <h3
+                        className="text-base font-bold mb-2 text-white"
+                        style={{ fontFamily: "var(--font-heading)" }}
+                      >
+                        {s.title}
+                      </h3>
+                      <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.52)" }}>
+                        {s.description}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mt-auto">
+                      {s.tags.map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                          style={{ background: `${s.color}18`, color: s.color, border: `1px solid ${s.color}28` }}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </motion.div>
                 );
               })}
@@ -317,13 +439,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── Numbers Showcase ─────────────────────────────────────────────────── */}
-      <section className="py-10 sm:py-14 px-4">
+      <section className="relative z-10 py-10 sm:py-14 px-4">
         <div className="max-w-5xl mx-auto">
           <InView>
             <motion.p
               variants={fadeIn}
               className="text-center text-[10px] sm:text-xs font-semibold uppercase tracking-widest mb-6"
-              style={{ color: "var(--muted-foreground)" }}
+              style={{ color: "rgba(255,255,255,0.35)" }}
             >
               Sample Available Numbers
             </motion.p>
@@ -335,13 +457,13 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features ─────────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 px-4">
+      <section className="relative z-10 py-16 sm:py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <InView>
             <div className="text-center mb-12 sm:mb-16">
               <motion.h2
                 variants={fadeUp}
-                className="text-3xl sm:text-[2.6rem] mb-3 sm:mb-4"
+                className="text-3xl sm:text-[2.6rem] mb-3 sm:mb-4 text-white"
                 style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
               >
                 Everything You Need
@@ -349,7 +471,7 @@ export default function LandingPage() {
               <motion.p
                 variants={fadeUp}
                 className="text-sm sm:text-base"
-                style={{ color: "var(--muted-foreground)" }}
+                style={{ color: "rgba(255,255,255,0.52)" }}
               >
                 Built for speed, reliability, and simplicity
               </motion.p>
@@ -364,23 +486,23 @@ export default function LandingPage() {
                     variants={scaleIn}
                     className="rounded-[16px] p-5 sm:p-6 transition-transform hover:scale-[1.02] cursor-default"
                     style={{
-                      background: "var(--card)",
-                      border: "1px solid var(--border)",
+                      background: "rgba(255,255,255,0.03)",
+                      border: `1px solid ${MINT}18`,
                     }}
                   >
                     <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center mb-4"
-                      style={{ background: "oklch(0.68 0.22 278 / 0.08)", border: "1px solid oklch(0.68 0.22 278 / 0.18)" }}
+                      style={{ background: `${MINT}14`, border: `1px solid ${MINT}28` }}
                     >
-                      <Icon className="w-5 h-5" style={{ color: "var(--primary)" }} />
+                      <Icon className="w-5 h-5" style={{ color: MINT }} />
                     </div>
                     <h3
-                      className="text-base mb-2"
+                      className="text-base mb-2 text-white"
                       style={{ fontFamily: "var(--font-heading)", fontWeight: 700 }}
                     >
                       {f.title}
                     </h3>
-                    <p className="text-sm leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+                    <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.52)" }}>
                       {f.description}
                     </p>
                   </motion.div>
@@ -392,31 +514,38 @@ export default function LandingPage() {
       </section>
 
       {/* ── How It Works ─────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 px-4">
+      <section className="relative z-10 py-16 sm:py-20 px-4">
         <div className="max-w-4xl mx-auto">
           <InView className="text-center">
             <motion.h2
               variants={fadeUp}
-              className="text-3xl sm:text-[2.6rem] mb-12"
+              className="text-3xl sm:text-[2.6rem] mb-12 text-white"
               style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
             >
               Up and running in 3 steps
             </motion.h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 text-center">
               {[
-                { step: "01", title: "Create Account",   desc: "Sign up free in under 60 seconds." },
-                { step: "02", title: "Fund Your Wallet", desc: "Top up via Paystack — cards, bank transfer, USSD." },
-                { step: "03", title: "Get Your Number",  desc: "Pick a USA or global number and start receiving OTPs." },
+                { step: "01", title: "Register",      desc: "Sign up free in under 60 seconds — no credit card required." },
+                { step: "02", title: "Fund Wallet",   desc: "Top up via Paystack — cards, bank transfer, or USSD." },
+                { step: "03", title: "Use Services",  desc: "Buy numbers, get OTPs, or browse premium social logs instantly." },
               ].map((s) => (
                 <motion.div key={s.step} variants={fadeUp} className="flex flex-col items-center">
                   <div
                     className="w-12 h-12 rounded-2xl flex items-center justify-center mb-4 text-sm font-bold"
-                    style={{ background: "oklch(0.68 0.22 278 / 0.10)", border: "1px solid oklch(0.68 0.22 278 / 0.22)", color: "var(--primary)", fontFamily: "var(--font-heading)" }}
+                    style={{
+                      background: `${MINT}14`,
+                      border: `1px solid ${MINT}30`,
+                      color: MINT,
+                      fontFamily: "var(--font-heading)",
+                    }}
                   >
                     {s.step}
                   </div>
-                  <h3 className="font-semibold mb-1.5" style={{ fontFamily: "var(--font-heading)" }}>{s.title}</h3>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--muted-foreground)" }}>{s.desc}</p>
+                  <h3 className="font-semibold mb-1.5 text-white" style={{ fontFamily: "var(--font-heading)" }}>
+                    {s.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.52)" }}>{s.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -425,7 +554,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Testimonials ─────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 px-4">
+      <section className="relative z-10 py-16 sm:py-20 px-4">
         <div className="max-w-6xl mx-auto">
           <InView>
             <div className="text-center mb-12">
@@ -436,7 +565,7 @@ export default function LandingPage() {
               </motion.div>
               <motion.h2
                 variants={fadeUp}
-                className="text-3xl sm:text-[2.6rem] mb-3"
+                className="text-3xl sm:text-[2.6rem] mb-3 text-white"
                 style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
               >
                 Loved by Thousands
@@ -444,7 +573,7 @@ export default function LandingPage() {
               <motion.p
                 variants={fadeUp}
                 className="text-sm sm:text-base"
-                style={{ color: "var(--muted-foreground)" }}
+                style={{ color: "rgba(255,255,255,0.52)" }}
               >
                 Real reviews from real users across Nigeria and beyond
               </motion.p>
@@ -457,37 +586,33 @@ export default function LandingPage() {
                   variants={scaleIn}
                   transition={{ delay: i * 0.05 }}
                   className="rounded-[16px] p-5 flex flex-col gap-4"
-                  style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: `1px solid ${MINT}18`,
+                  }}
                 >
-                  {/* Stars */}
                   <div className="flex gap-0.5">
                     {[...Array(t.stars)].map((_, j) => (
                       <Star key={j} className="w-3.5 h-3.5 fill-current" style={{ color: "#f59e0b" }} />
                     ))}
                   </div>
-
-                  {/* Text */}
-                  <p className="text-sm leading-relaxed flex-1" style={{ color: "var(--foreground)" }}>
+                  <p className="text-sm leading-relaxed flex-1 text-white/80">
                     &ldquo;{t.text}&rdquo;
                   </p>
-
-                  {/* User */}
-                  <div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: "var(--border)" }}>
+                  <div className="flex items-center gap-3 pt-2 border-t" style={{ borderColor: `${MINT}14` }}>
                     <div
                       className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-                      style={{ background: "oklch(0.68 0.22 278 / 0.12)", color: "var(--primary)" }}
+                      style={{ background: `${MINT}18`, color: MINT }}
                     >
                       {t.avatar}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate">{t.name}</p>
-                      <p className="text-xs truncate" style={{ color: "var(--muted-foreground)" }}>
-                        {t.handle}
-                      </p>
+                      <p className="text-sm font-semibold truncate text-white">{t.name}</p>
+                      <p className="text-xs truncate" style={{ color: "rgba(255,255,255,0.40)" }}>{t.handle}</p>
                     </div>
                     <span
                       className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
-                      style={{ background: "oklch(0.68 0.22 278 / 0.10)", color: "var(--primary)", border: "1px solid oklch(0.68 0.22 278 / 0.20)" }}
+                      style={{ background: `${MINT}14`, color: MINT, border: `1px solid ${MINT}28` }}
                     >
                       {t.tag}
                     </span>
@@ -499,20 +624,23 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Why Choose Us ────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 px-4">
+      {/* ── Why Abati Logs ───────────────────────────────────────────────────── */}
+      <section className="relative z-10 py-16 sm:py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <InView>
             <motion.div
               variants={scaleIn}
               className="rounded-[20px] p-8 sm:p-12"
-              style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+              style={{
+                background: "rgba(0,229,160,0.04)",
+                border: `1px solid ${MINT}20`,
+              }}
             >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
                 <div>
                   <motion.h2
                     variants={fadeUp}
-                    className="text-3xl sm:text-4xl mb-4"
+                    className="text-3xl sm:text-4xl mb-4 text-white"
                     style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
                   >
                     Why Abati Logs?
@@ -520,9 +648,9 @@ export default function LandingPage() {
                   <motion.p
                     variants={fadeUp}
                     className="text-sm sm:text-base mb-6 leading-relaxed"
-                    style={{ color: "var(--muted-foreground)" }}
+                    style={{ color: "rgba(255,255,255,0.55)" }}
                   >
-                    We built this platform specifically for the Nigerian market with global reach.
+                    Built specifically for the Nigerian market with global reach.
                     Fast delivery, honest pricing, and real support — no bots, no delays.
                   </motion.p>
                   <motion.div variants={staggerContainer} className="space-y-3">
@@ -530,16 +658,12 @@ export default function LandingPage() {
                       "Paystack-powered wallet — instant funding",
                       "Two dedicated servers for redundancy",
                       "WhatsApp support available 24/7",
-                      "Numbers delivered in under 5 seconds",
-                      "NGN & USD pricing supported",
+                      "Numbers &amp; logs delivered in under 5 seconds",
+                      "NGN &amp; USD pricing supported",
                     ].map((item) => (
-                      <motion.div
-                        key={item}
-                        variants={fadeUp}
-                        className="flex items-center gap-3 text-sm"
-                      >
-                        <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: "var(--primary)" }} />
-                        <span>{item}</span>
+                      <motion.div key={item} variants={fadeUp} className="flex items-center gap-3 text-sm text-white/80">
+                        <CheckCircle className="w-4 h-4 flex-shrink-0" style={{ color: MINT }} />
+                        <span dangerouslySetInnerHTML={{ __html: item }} />
                       </motion.div>
                     ))}
                   </motion.div>
@@ -547,10 +671,10 @@ export default function LandingPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { icon: TrendingUp, value: "₦500", label: "Starting from", sub: "Per number" },
-                    { icon: Globe,      value: "50+",   label: "Countries",    sub: "Global coverage" },
-                    { icon: Clock,      value: "< 5s",  label: "OTP Speed",    sub: "Real-time delivery" },
-                    { icon: HeartHandshake, value: "24/7", label: "Support",   sub: "WhatsApp & chat" },
+                    { icon: TrendingUp,     value: "₦500",  label: "Starting from",  sub: "Per number" },
+                    { icon: Globe,          value: "50+",   label: "Countries",      sub: "Global coverage" },
+                    { icon: Clock,          value: "< 5s",  label: "OTP Speed",      sub: "Real-time delivery" },
+                    { icon: HeartHandshake, value: "24/7",  label: "Support",        sub: "WhatsApp & chat" },
                   ].map((s) => {
                     const Icon = s.icon;
                     return (
@@ -558,12 +682,12 @@ export default function LandingPage() {
                         key={s.label}
                         variants={scaleIn}
                         className="rounded-2xl p-4 text-center"
-                        style={{ background: "oklch(0.68 0.22 278 / 0.04)", border: "1px solid oklch(0.68 0.22 278 / 0.12)" }}
+                        style={{ background: `${MINT}08`, border: `1px solid ${MINT}18` }}
                       >
-                        <Icon className="w-6 h-6 mx-auto mb-2" style={{ color: "var(--primary)" }} />
-                        <p className="text-xl font-bold" style={{ fontFamily: "var(--font-heading)" }}>{s.value}</p>
-                        <p className="text-xs font-semibold mt-0.5">{s.label}</p>
-                        <p className="text-[10px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>{s.sub}</p>
+                        <Icon className="w-6 h-6 mx-auto mb-2" style={{ color: MINT }} />
+                        <p className="text-xl font-bold text-white" style={{ fontFamily: "var(--font-heading)" }}>{s.value}</p>
+                        <p className="text-xs font-semibold mt-0.5 text-white/70">{s.label}</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: "rgba(255,255,255,0.40)" }}>{s.sub}</p>
                       </motion.div>
                     );
                   })}
@@ -575,28 +699,28 @@ export default function LandingPage() {
       </section>
 
       {/* ── CTA Banner ───────────────────────────────────────────────────────── */}
-      <section className="py-16 sm:py-20 px-4">
+      <section className="relative z-10 py-16 sm:py-20 px-4">
         <div className="max-w-2xl mx-auto">
           <InView>
             <motion.div
               variants={scaleIn}
               className="rounded-[20px] p-10 sm:p-14 text-center"
-              style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+              style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${MINT}22` }}
             >
               <h2
-                className="text-3xl sm:text-4xl mb-4"
+                className="text-3xl sm:text-4xl mb-4 text-white"
                 style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
               >
                 Ready to Get Started?
               </h2>
-              <p className="mb-8 leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+              <p className="mb-8 leading-relaxed" style={{ color: "rgba(255,255,255,0.52)" }}>
                 Create your free account and get a virtual number in under a minute.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
                   href="/register"
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[10px] text-base font-bold transition-all hover:opacity-90 hover:-translate-y-0.5 active:scale-95"
-                  style={{ background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))", color: "#fff" }}
+                  style={{ background: `linear-gradient(135deg, ${MINT}, ${MINT_DARK})`, color: "#09090d" }}
                 >
                   Create Free Account
                   <ArrowRight className="w-4 h-4" />
@@ -606,7 +730,7 @@ export default function LandingPage() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[10px] text-base font-medium transition-all hover:-translate-y-0.5 active:scale-95"
-                  style={{ border: "1px solid rgba(255,255,255,0.12)", color: "var(--muted-foreground)" }}
+                  style={{ border: `1px solid ${MINT}28`, color: MINT, background: `${MINT}08` }}
                 >
                   Chat with Us
                 </a>
@@ -618,67 +742,55 @@ export default function LandingPage() {
 
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <footer
-        className="pt-14 pb-8 px-4"
-        style={{ borderTop: "1px solid var(--border)" }}
+        className="relative z-10 pt-14 pb-8 px-4"
+        style={{ borderTop: `1px solid ${MINT}14` }}
       >
         <div className="max-w-6xl mx-auto">
-          {/* Top columns */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 mb-12">
             {/* Brand */}
             <div className="col-span-2 sm:col-span-1">
               <Logo size="md" />
-              <p className="text-sm mt-3 leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
-                Nigeria&apos;s most reliable virtual number platform. USA &amp; global OTP numbers delivered instantly.
+              <p className="text-sm mt-3 leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
+                Nigeria&apos;s most reliable virtual number &amp; social log platform. Delivered instantly.
               </p>
               <div className="flex items-center gap-3 mt-4">
-                <a
-                  href="https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                  style={{ background: "oklch(0.68 0.22 278 / 0.12)", border: "1px solid oklch(0.68 0.22 278 / 0.20)" }}
-                  aria-label="WhatsApp"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
-                </a>
-                <a
-                  href="https://t.me/abatilogs"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                  style={{ background: "oklch(0.68 0.22 278 / 0.12)", border: "1px solid oklch(0.68 0.22 278 / 0.20)" }}
-                  aria-label="Telegram"
-                >
-                  <Send className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
-                </a>
-                <a
-                  href="mailto:support@abatilogs.com"
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
-                  style={{ background: "oklch(0.68 0.22 278 / 0.12)", border: "1px solid oklch(0.68 0.22 278 / 0.20)" }}
-                  aria-label="Email"
-                >
-                  <Mail className="w-3.5 h-3.5" style={{ color: "var(--primary)" }} />
-                </a>
+                {[
+                  { href: "https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL", icon: MessageSquare, label: "WhatsApp" },
+                  { href: "https://t.me/abatilogs", icon: Send, label: "Telegram" },
+                  { href: "mailto:support@abatilogs.com", icon: Mail, label: "Email" },
+                ].map(({ href, icon: Icon, label }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target={href.startsWith("mailto") ? undefined : "_blank"}
+                    rel="noopener noreferrer"
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:scale-110"
+                    style={{ background: `${MINT}14`, border: `1px solid ${MINT}24` }}
+                    aria-label={label}
+                  >
+                    <Icon className="w-3.5 h-3.5" style={{ color: MINT }} />
+                  </a>
+                ))}
               </div>
             </div>
 
             {/* Platform */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
                 Platform
               </p>
               <div className="space-y-2.5">
                 {[
-                  { label: "Dashboard", href: "/dashboard" },
-                  { label: "Buy Numbers", href: "/register" },
-                  { label: "SMS Inbox", href: "/dashboard/sms" },
-                  { label: "Pricing", href: "/register" },
+                  { label: "Dashboard",    href: "/dashboard" },
+                  { label: "Buy Numbers",  href: "/register" },
+                  { label: "Social Logs",  href: "/register" },
+                  { label: "SMS Inbox",    href: "/dashboard/sms" },
                 ].map((l) => (
                   <Link
                     key={l.label}
                     href={l.href}
-                    className="block text-sm transition-colors hover:text-foreground"
-                    style={{ color: "var(--muted-foreground)" }}
+                    className="block text-sm transition-colors hover:text-white"
+                    style={{ color: "rgba(255,255,255,0.45)" }}
                   >
                     {l.label}
                   </Link>
@@ -688,21 +800,21 @@ export default function LandingPage() {
 
             {/* Company */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "var(--muted-foreground)" }}>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
                 Company
               </p>
               <div className="space-y-2.5">
                 {[
-                  { label: "About Us", href: "/about" },
-                  { label: "Support", href: "/support" },
-                  { label: "Contact", href: "/contact" },
-                  { label: "Refund Policy", href: "/refunds" },
+                  { label: "About",        href: "#" },
+                  { label: "Contact",      href: "mailto:support@abatilogs.com" },
+                  { label: "Privacy",      href: "/privacy" },
+                  { label: "Terms",        href: "/terms" },
                 ].map((l) => (
                   <Link
                     key={l.label}
                     href={l.href}
-                    className="block text-sm transition-colors hover:text-foreground"
-                    style={{ color: "var(--muted-foreground)" }}
+                    className="block text-sm transition-colors hover:text-white"
+                    style={{ color: "rgba(255,255,255,0.45)" }}
                   >
                     {l.label}
                   </Link>
@@ -710,60 +822,52 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Legal */}
+            {/* Support */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "var(--muted-foreground)" }}>
-                Legal
+              <p className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: "rgba(255,255,255,0.35)" }}>
+                Support
               </p>
               <div className="space-y-2.5">
                 {[
-                  { label: "Terms of Service", href: "/terms" },
-                  { label: "Privacy Policy", href: "/privacy" },
-                  { label: "Cookie Policy", href: "/privacy" },
+                  { label: "WhatsApp Chat",  href: "https://api.whatsapp.com/send?phone=2349049386397" },
+                  { label: "WhatsApp Group", href: "https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL" },
+                  { label: "Telegram",       href: "https://t.me/abatilogs" },
+                  { label: "Email Us",       href: "mailto:support@abatilogs.com" },
                 ].map((l) => (
-                  <Link
+                  <a
                     key={l.label}
                     href={l.href}
-                    className="block text-sm transition-colors hover:text-foreground"
-                    style={{ color: "var(--muted-foreground)" }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-sm transition-colors hover:text-white"
+                    style={{ color: "rgba(255,255,255,0.45)" }}
                   >
                     {l.label}
-                  </Link>
+                  </a>
                 ))}
               </div>
-              {/* WhatsApp support CTA */}
-              <a
-                href="https://api.whatsapp.com/send?phone=2349049386397"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all hover:opacity-85"
-                style={{ background: "oklch(0.68 0.22 278 / 0.12)", color: "var(--primary)", border: "1px solid oklch(0.68 0.22 278 / 0.22)" }}
-              >
-                <MessageSquare className="w-3.5 h-3.5" />
-                24/7 WhatsApp Support
-              </a>
             </div>
           </div>
 
           {/* Bottom bar */}
           <div
-            className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6"
-            style={{ borderTop: "1px solid var(--border)" }}
+            className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4"
+            style={{ borderTop: `1px solid ${MINT}10` }}
           >
-            <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
+            <p className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>
               © {new Date().getFullYear()} Abati Logs. All rights reserved.
             </p>
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              <span className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-                Built with ♥ for Nigeria
-              </span>
+            <div className="flex items-center gap-1.5 text-xs" style={{ color: MINT }}>
+              <span
+                className="w-1.5 h-1.5 rounded-full animate-pulse"
+                style={{ background: MINT }}
+              />
+              All systems operational
             </div>
           </div>
         </div>
       </footer>
 
-      {/* ── Floating WhatsApp Support Button ──────────────────────────────────── */}
       <FloatingSupport />
     </div>
   );
