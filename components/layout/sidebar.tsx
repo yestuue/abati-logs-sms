@@ -83,12 +83,13 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                 active
-                  ? "text-primary-foreground"
+                  ? "text-primary"
                   : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
               style={active ? {
-                background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))",
-                boxShadow: "0 2px 8px oklch(0.68 0.22 278 / 0.30)",
+                background: "rgba(0,229,160,0.12)",
+                border: "1px solid rgba(0,229,160,0.22)",
+                color: "var(--primary)",
               } : {}}
             >
               <Icon className="w-4 h-4 flex-shrink-0" />

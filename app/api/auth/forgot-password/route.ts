@@ -44,9 +44,9 @@ export async function POST(req: Request) {
           auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
         }) as { sendMail: Function };
         await transporter.sendMail({
-          from: process.env.EMAIL_FROM ?? `LarryDigitals <noreply@larrydigitals.com>`,
+          from: process.env.EMAIL_FROM ?? `Abati Logs <noreply@abatilogs.com>`,
           to: normalised,
-          subject: "Reset your LarryDigitals password",
+          subject: "Reset your Abati Logs password",
           html: `
             <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
               <h2 style="margin:0 0 8px;font-size:22px">Password Reset</h2>

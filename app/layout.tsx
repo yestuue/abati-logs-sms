@@ -22,44 +22,44 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: {
-    default: "LarryDigitals — Virtual Numbers, Social Logs & OTP Platform",
-    template: "%s | LarryDigitals",
+    default: "Abati Logs — Virtual Numbers & OTP Platform",
+    template: "%s | Abati Logs",
   },
   description:
-    "Get instant virtual phone numbers from USA and 50+ countries. Buy premium social accounts. Receive OTPs in real time.",
-  keywords: ["virtual number", "OTP", "SMS", "LarryDigitals", "Nigeria", "social accounts"],
+    "Get instant virtual phone numbers from USA and 50+ countries. Receive OTPs in real time.",
+  keywords: ["virtual number", "OTP", "SMS", "Abati Logs", "Nigeria"],
   manifest: "/manifest.json",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
   },
   openGraph: {
-    title: "LarryDigitals — Virtual Numbers & Social Logs Platform",
+    title: "Abati Logs — Virtual Numbers & OTP Platform",
     description:
-      "Get instant virtual phone numbers from USA and 50+ countries. Buy premium social accounts. Receive OTPs in real time.",
-    url: "https://larrydigitals.com",
-    siteName: "LarryDigitals",
-    images: [{ url: "/logo.png", width: 1200, height: 630, alt: "LarryDigitals" }],
+      "Get instant virtual phone numbers from USA and 50+ countries. Receive OTPs in real time.",
+    url: "https://abatilogs.com",
+    siteName: "Abati Logs",
+    images: [{ url: "/logo.png", width: 1200, height: 630, alt: "Abati Logs" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "LarryDigitals — Virtual Numbers & Social Logs Platform",
+    title: "Abati Logs — Virtual Numbers & OTP Platform",
     description:
-      "Get instant virtual phone numbers from USA and 50+ countries. Buy premium social accounts.",
+      "Get instant virtual phone numbers from USA and 50+ countries. Receive OTPs in real time.",
     images: ["/logo.png"],
   },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "LarryDigitals",
+    title: "Abati Logs",
   },
 };
 
 export const viewport: Viewport = {
   themeColor: [
     { media: "(prefers-color-scheme: dark)",  color: "#09090d" },
-    { media: "(prefers-color-scheme: light)", color: "#7C3AED" },
+    { media: "(prefers-color-scheme: light)", color: "#00E5A0" },
   ],
   width: "device-width",
   initialScale: 1,

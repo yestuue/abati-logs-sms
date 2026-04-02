@@ -46,7 +46,7 @@ function LoginForm() {
     <div className="glass-card rounded-2xl p-6 space-y-5">
       <div>
         <h1 className="text-xl font-bold text-foreground" style={{ fontFamily: "var(--font-heading)" }}>
-          Sign in to LarryDigitals
+          Sign in to Abati Logs
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
           Access virtual numbers, social logs, and your wallet

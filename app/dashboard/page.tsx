@@ -11,14 +11,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export const metadata = { title: "Dashboard — LarryDigitals" };
+export const metadata = { title: "Dashboard" };
 
 const quickLinks = [
-  { label: "USA Numbers",   desc: "Buy US virtual numbers",     href: "/dashboard/buy",    icon: ShoppingCart, color: "oklch(0.68 0.22 278)" },
-  { label: "All Countries", desc: "50+ global countries",       href: "/dashboard/buy",    icon: Globe,        color: "oklch(0.55 0.20 200)" },
-  { label: "Social Logs",   desc: "Account marketplace",        href: "/dashboard/social", icon: ShoppingBag,  color: "oklch(0.60 0.20 340)" },
-  { label: "Wallet",        desc: "Fund & manage balance",      href: "/dashboard/wallet", icon: Wallet,       color: "oklch(0.68 0.22 80)"  },
-  { label: "History",       desc: "View all transactions",      href: "/dashboard/transactions", icon: History, color: "oklch(0.62 0.18 150)" },
+  { label: "USA Numbers",   desc: "Buy US virtual numbers",     href: "/dashboard/buy",    icon: ShoppingCart, color: "oklch(0.80 0.19 162)" },
+  { label: "All Countries", desc: "50+ global countries",       href: "/dashboard/buy",    icon: Globe,        color: "oklch(0.70 0.17 200)" },
+  { label: "Social Logs",   desc: "Account marketplace",        href: "/dashboard/social", icon: ShoppingBag,  color: "oklch(0.72 0.18 300)" },
+  { label: "Wallet",        desc: "Fund & manage balance",      href: "/dashboard/wallet", icon: Wallet,       color: "oklch(0.80 0.15 80)"  },
+  { label: "History",       desc: "View all transactions",      href: "/dashboard/transactions", icon: History, color: "oklch(0.72 0.16 162)" },
 ];
 
 export default async function DashboardPage() {
@@ -80,7 +80,7 @@ export default async function DashboardPage() {
           Welcome back, {firstName} 👋
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Here&apos;s a snapshot of your LarryDigitals account
+          Here&apos;s a snapshot of your Abati Logs account
         </p>
       </div>
 

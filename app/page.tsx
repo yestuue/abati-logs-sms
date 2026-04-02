@@ -96,7 +96,7 @@ const testimonials = [
     handle: "@adebayo_ok",
     avatar: "AO",
     stars: 5,
-    text: "LarryDigitals is hands down the best virtual number service I've used. Got my OTP in under 3 seconds. No stress, no lag. 100% recommend!",
+    text: "Abati Logs is hands down the best virtual number service I've used. Got my OTP in under 3 seconds. No stress, no lag. 100% recommend!",
     tag: "Verified User",
   },
   {
@@ -136,7 +136,7 @@ const testimonials = [
     handle: "@emeka_obi",
     avatar: "EO",
     stars: 5,
-    text: "Cheapest and most reliable virtual number service in Nigeria. I've tried others but LarryDigitals is superior in every way.",
+    text: "Cheapest and most reliable virtual number service in Nigeria. I've tried others but Abati Logs is superior in every way.",
     tag: "Long-term User",
   },
 ];
@@ -515,7 +515,7 @@ export default function LandingPage() {
                     className="text-3xl sm:text-4xl mb-4"
                     style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
                   >
-                    Why LarryDigitals?
+                    Why Abati Logs?
                   </motion.h2>
                   <motion.p
                     variants={fadeUp}
@@ -751,7 +751,7 @@ export default function LandingPage() {
             style={{ borderTop: "1px solid var(--border)" }}
           >
             <p className="text-xs" style={{ color: "var(--muted-foreground)" }}>
-              © {new Date().getFullYear()} LarryDigitals. All rights reserved.
+              © {new Date().getFullYear()} Abati Logs. All rights reserved.
             </p>
             <div className="flex items-center gap-4">
               <ThemeToggle />

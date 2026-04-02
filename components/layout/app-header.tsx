@@ -68,8 +68,8 @@ export function AppHeader({
             href="/dashboard/wallet"
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold transition-all hover:opacity-80"
             style={{
-              background: "oklch(0.68 0.22 278 / 0.12)",
-              border: "1px solid oklch(0.68 0.22 278 / 0.28)",
+              background: "rgba(0,229,160,0.10)",
+              border: "1px solid rgba(0,229,160,0.25)",
               color: "var(--primary)",
             }}
           >
@@ -88,7 +88,7 @@ export function AppHeader({
                 <AvatarFallback
                   className="text-xs font-bold"
                   style={{
-                    background: "oklch(0.68 0.22 278 / 0.18)",
+                    background: "rgba(0,229,160,0.15)",
                     color: "var(--primary)",
                   }}
                 >
