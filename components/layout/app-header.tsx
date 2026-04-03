@@ -101,7 +101,7 @@ export function AppHeader({
               <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="z-[100] bg-background border shadow-xl w-56">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col gap-0.5">
                 <p className="font-semibold text-sm">{userName}</p>
