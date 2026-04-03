@@ -21,11 +21,8 @@ const PERKS = [
 export default function RegisterPage() {
   const router = useRouter();
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
     username: "",
     email: "",
-    phone: "",
     password: "",
     confirm: "",
   });
@@ -40,10 +37,6 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!form.firstName.trim() || !form.lastName.trim()) {
-      toast.error("Please enter your first and last name");
-      return;
-    }
     if (!form.username.trim()) {
       toast.error("Please choose a username");
       return;
@@ -59,12 +52,11 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`;
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name: fullName,
+        username: form.username,
         email: form.email,
         password: form.password,
       }),
@@ -162,32 +154,6 @@ export default function RegisterPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Name row */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input
-                    id="firstName"
-                    placeholder="John"
-                    value={form.firstName}
-                    onChange={(e) => update("firstName", e.target.value)}
-                    required
-                    autoComplete="given-name"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input
-                    id="lastName"
-                    placeholder="Doe"
-                    value={form.lastName}
-                    onChange={(e) => update("lastName", e.target.value)}
-                    required
-                    autoComplete="family-name"
-                  />
-                </div>
-              </div>
-
               <div className="space-y-1.5">
                 <Label htmlFor="username">Username</Label>
                 <Input
@@ -210,18 +176,6 @@ export default function RegisterPage() {
                   onChange={(e) => update("email", e.target.value)}
                   required
                   autoComplete="email"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="+2348012345678"
-                  value={form.phone}
-                  onChange={(e) => update("phone", e.target.value)}
-                  autoComplete="tel"
                 />
               </div>
 
