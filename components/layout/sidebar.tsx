@@ -4,11 +4,11 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, MessageSquare, Settings,
   LogOut, Shield, BarChart3, Users, Server, Phone,
-  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch,
+  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch, ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/components/theme-provider";
@@ -48,6 +48,8 @@ interface SidebarProps {
 export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === "ADMIN";
   const nav = variant === "admin" ? adminNav : userNav;
 
   const isActive = (href: string) => {
@@ -132,6 +134,22 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
           >
             <LayoutDashboard className="w-4 h-4" />
             User Dashboard
+          </Link>
+        )}
+
+        {variant === "user" && isAdmin && (
+          <Link
+            href="/admin"
+            onClick={onNavigate}
+            className="flex items-center gap-3 px-3 py-2.5 mt-1 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+            style={{
+              color: "oklch(0.72 0.17 150)",
+              background: "oklch(0.72 0.17 150 / 0.10)",
+              border: "1px solid oklch(0.72 0.17 150 / 0.20)",
+            }}
+          >
+            <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+            Admin Management
           </Link>
         )}
 
