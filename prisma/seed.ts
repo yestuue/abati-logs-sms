@@ -58,6 +58,7 @@ async function main() {
     where:  { email: adminEmail },
     update: {},
     create: {
+      username:      "admin",
       name:          "Abati Admin",
       email:         adminEmail,
       password:      await bcrypt.hash("admin123456", 12),
