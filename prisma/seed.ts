@@ -53,18 +53,18 @@ async function main() {
   }
 
   // Admin user
-  const adminEmail = "admin@abatilogs.com";
+  const adminEmail = "growthprofesors@gmail.com";
   await prisma.user.upsert({
     where:  { email: adminEmail },
-    update: {},
+    update: { role: "ADMIN" },
     create: {
       username:      "admin",
       name:          "Abati Admin",
       email:         adminEmail,
-      password:      await bcrypt.hash("admin123456", 12),
+      password:      await bcrypt.hash("AbatiLogs2026", 12),
       role:          "ADMIN",
       isVerified:    true,
-      walletBalance: 10000,
+      walletBalance: 0,
     },
   });
   console.log("✅ Admin user ready: admin@abatilogs.com / admin123456");
