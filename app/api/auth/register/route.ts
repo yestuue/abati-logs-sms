@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const schema = z.object({
-  name: z.string().min(2).max(80),
+  username: z.string().min(3).max(30),
   email: z.string().email(),
   password: z.string().min(6),
 });
@@ -21,8 +21,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, email, password } = parsed.data;
+    const { username, email, password } = parsed.data;
     const normalizedEmail = email.toLowerCase().trim();
+    const normalizedUsername = username.trim().toLowerCase();
 
     // Explicit connect — surfaces connection errors clearly before any query
     try {
@@ -57,7 +58,7 @@ export async function POST(req: Request) {
 
     const user = await prisma.user.create({
       data: {
-        name: name.trim(),
+        username: normalizedUsername,
         email: normalizedEmail,
         password: hashed,
         role: "USER",
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
       },
       select: {
         id: true,
-        name: true,
+        username: true,
         email: true,
         role: true,
         walletBalance: true,
