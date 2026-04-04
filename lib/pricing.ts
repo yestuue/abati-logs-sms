@@ -21,7 +21,8 @@ export async function calculatePrice(
   ]);
 
   const config = specific ?? global;
-  if (!config) return basePrice;
+  // No config at all — apply a 30% default markup
+  if (!config) return Math.ceil(basePrice * 1.3);
 
   const afterFixed = basePrice + config.fixedMarkup;
   const afterPercent = afterFixed * (1 + config.percentMarkup / 100);

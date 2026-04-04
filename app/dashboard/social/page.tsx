@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 
-type Category = "All" | "Facebook" | "Instagram" | "TikTok" | "Twitter/X" | "Gmail" | "Other";
+type Category = "All" | "Facebook" | "Instagram" | "TikTok" | "Twitter/X" | "Gmail" | "Texting Apps" | "VPN" | "Other";
 type SortKey  = "newest" | "price-low" | "price-high" | "most-stock";
 
 interface Product {
@@ -35,20 +35,35 @@ const PRODUCTS: Product[] = [
   { id: "p8",  title: "Twitter/X Aged Accounts",      description: "2019–2021 aged accounts with tweet history.",                       category: "Twitter/X", price: 900,  stock: 40,  rating: 4.4 },
   { id: "p9",  title: "USA Gmail Accounts",           description: "US-based Gmail with phone verification.",                           category: "Gmail",     price: 600,  stock: 200, rating: 4.3 },
   { id: "p10", title: "UK Gmail PVA",                 description: "Phone verified UK Gmail accounts, full access.",                    category: "Gmail",     price: 700,  stock: 90,  rating: 4.6 },
-  { id: "p11", title: "LinkedIn Sales Navigator",     description: "Aged LinkedIn with Sales Nav, 500+ connections.",                   category: "Other",     price: 4500, stock: 5,   rating: 4.9, badge: "Hot" },
-  { id: "p12", title: "Snapchat Verified Accounts",   description: "Phone-verified Snapchat accounts ready for outreach.",              category: "Other",     price: 800,  stock: 35,  rating: 4.2 },
+  { id: "p11", title: "LinkedIn Sales Navigator",     description: "Aged LinkedIn with Sales Nav, 500+ connections.",                   category: "Other",        price: 4500, stock: 5,   rating: 4.9, badge: "Hot" },
+  { id: "p12", title: "Snapchat Verified Accounts",   description: "Phone-verified Snapchat accounts ready for outreach.",              category: "Other",        price: 800,  stock: 35,  rating: 4.2 },
+  // Texting Apps
+  { id: "p13", title: "Google Voice Accounts",        description: "US Google Voice numbers, full SMS & call access.",                  category: "Texting Apps", price: 950,  stock: 60,  rating: 4.6, badge: "Popular" },
+  { id: "p14", title: "TextNow Accounts",             description: "Active TextNow accounts with US numbers, email verified.",          category: "Texting Apps", price: 500,  stock: 110, rating: 4.3 },
+  { id: "p15", title: "Talkatone Accounts",           description: "Phone-verified Talkatone with US number, ready to use.",            category: "Texting Apps", price: 450,  stock: 75,  rating: 4.1 },
+  { id: "p16", title: "TextPlus Accounts",            description: "Verified TextPlus accounts with dedicated US/CA numbers.",          category: "Texting Apps", price: 420,  stock: 90,  rating: 4.0 },
+  { id: "p17", title: "NextPlus Accounts",            description: "NextPlus with US virtual number, SMS-ready, full access.",          category: "Texting Apps", price: 430,  stock: 55,  rating: 4.2 },
+  // VPN Services
+  { id: "p18", title: "NordVPN Premium",              description: "1-year NordVPN subscription, multi-device, all servers.",           category: "VPN",          price: 3200, stock: 20,  rating: 4.9, badge: "Top Rated" },
+  { id: "p19", title: "ExpressVPN 1-Year",            description: "Full ExpressVPN access, 94 countries, no-logs policy.",             category: "VPN",          price: 3800, stock: 18,  rating: 4.8 },
+  { id: "p20", title: "Surfshark Unlimited",          description: "Unlimited devices, Surfshark CleanWeb, 100+ countries.",            category: "VPN",          price: 2400, stock: 30,  rating: 4.7, badge: "Hot" },
+  { id: "p21", title: "PIA (Private Internet Access)", description: "10 simultaneous connections, kill switch, no-log VPN.",            category: "VPN",          price: 2200, stock: 25,  rating: 4.5 },
+  { id: "p22", title: "HMA VPN",                     description: "HMA Premium with IP Shuffle, works with streaming platforms.",       category: "VPN",          price: 1900, stock: 40,  rating: 4.3 },
+  { id: "p23", title: "CyberGhost VPN",               description: "7 simultaneous connections, dedicated streaming servers.",          category: "VPN",          price: 2100, stock: 35,  rating: 4.4 },
 ];
 
-const CATEGORIES: Category[] = ["All", "Facebook", "Instagram", "TikTok", "Twitter/X", "Gmail", "Other"];
-const ICONS: Record<Category, string> = { All: "🌐", Facebook: "📘", Instagram: "📸", TikTok: "🎵", "Twitter/X": "🐦", Gmail: "📧", Other: "🔗" };
+const CATEGORIES: Category[] = ["All", "Facebook", "Instagram", "TikTok", "Twitter/X", "Gmail", "Texting Apps", "VPN", "Other"];
+const ICONS: Record<Category, string> = { All: "🌐", Facebook: "📘", Instagram: "📸", TikTok: "🎵", "Twitter/X": "🐦", Gmail: "📧", "Texting Apps": "💬", VPN: "🔒", Other: "🔗" };
 const COLORS: Record<Category, string> = {
-  All:         "oklch(0.80 0.19 162)",
-  Facebook:    "oklch(0.55 0.18 240)",
-  Instagram:   "oklch(0.62 0.22 345)",
-  TikTok:      "oklch(0.52 0.20 20)",
-  "Twitter/X": "oklch(0.62 0.16 220)",
-  Gmail:       "oklch(0.58 0.22 27)",
-  Other:       "oklch(0.65 0.16 280)",
+  All:           "oklch(0.80 0.19 162)",
+  Facebook:      "oklch(0.55 0.18 240)",
+  Instagram:     "oklch(0.62 0.22 345)",
+  TikTok:        "oklch(0.52 0.20 20)",
+  "Twitter/X":   "oklch(0.62 0.16 220)",
+  Gmail:         "oklch(0.58 0.22 27)",
+  "Texting Apps":"oklch(0.62 0.18 190)",
+  VPN:           "oklch(0.58 0.20 260)",
+  Other:         "oklch(0.65 0.16 280)",
 };
 const MINT      = "oklch(0.80 0.19 162)";
 const MINT_DARK = "oklch(0.68 0.17 162)";
@@ -133,8 +148,10 @@ function BuyModal({ product, walletBalance, onClose }: { product: Product; walle
 }
 
 function ProductCard({ product, onBuy }: { product: Product; onBuy: (p: Product) => void }) {
-  const accent     = COLORS[product.category];
-  const outOfStock = product.stock === 0;
+  const accent      = COLORS[product.category];
+  const outOfStock  = product.stock === 0;
+  const [showPrice, setShowPrice] = useState(false);
+
   return (
     <motion.div layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.25 }}>
       <Card className="h-full flex flex-col overflow-hidden hover:scale-[1.01] transition-all duration-200" style={{ border: "1px solid var(--border)" }}>
@@ -157,14 +174,36 @@ function ProductCard({ product, onBuy }: { product: Product; onBuy: (p: Product)
             <span className="flex items-center gap-1"><Package className="w-3 h-3" />{outOfStock ? "Out of stock" : `${product.stock} in stock`}</span>
           </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-border/50">
-            <span className="font-extrabold text-base" style={{ color: accent, fontFamily: "var(--font-heading)" }}>{fmt(product.price)}</span>
-            {/* Mint green Buy Now — high contrast in both light and dark mode */}
-            <Button size="sm" disabled={outOfStock} onClick={() => onBuy(product)}
-              style={outOfStock
+          <div className="pt-2 border-t border-border/50 space-y-2">
+            {/* Price — hidden until "Check Price" is clicked */}
+            <div
+              className="flex items-center justify-center rounded-xl py-2 cursor-pointer transition-all"
+              style={showPrice
+                ? { background: `${accent}12`, border: `1px solid ${accent}28` }
+                : { background: "var(--muted)", border: "1px solid var(--border)" }}
+              onClick={() => { if (!showPrice) setShowPrice(true); }}
+            >
+              {showPrice ? (
+                <span className="font-extrabold text-base" style={{ color: accent, fontFamily: "var(--font-heading)" }}>
+                  {fmt(product.price)}
+                </span>
+              ) : (
+                <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  👁 Check Price
+                </span>
+              )}
+            </div>
+
+            <Button
+              size="sm"
+              className="w-full"
+              disabled={outOfStock || !showPrice}
+              onClick={() => onBuy(product)}
+              style={outOfStock || !showPrice
                 ? { background: "var(--muted)", color: "var(--muted-foreground)" }
-                : { ...MINT_BTN, boxShadow: `0 2px 8px ${MINT}40` }}>
-              {outOfStock ? "Sold Out" : "Buy Now"}
+                : { ...MINT_BTN, boxShadow: `0 2px 8px ${MINT}40` }}
+            >
+              {outOfStock ? "Sold Out" : showPrice ? "Buy Now" : "Select Service"}
             </Button>
           </div>
         </CardContent>

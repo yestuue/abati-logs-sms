@@ -85,15 +85,16 @@ model Transaction {
 }
 
 model Log {
-  id        String    @id @default(cuid())
-  category  String
-  username  String
-  password  String
-  email     String?
-  emailPass String?
-  twoFA     String?
-  status    LogStatus @default(AVAILABLE)
-  createdAt DateTime  @default(now())
+  id          String    @id @default(cuid())
+  category    String
+  subCategory String?
+  username    String
+  password    String
+  email       String?
+  emailPass   String?
+  twoFA       String?
+  status      LogStatus @default(AVAILABLE)
+  createdAt   DateTime  @default(now())
 }
 
 model PriceConfig {
