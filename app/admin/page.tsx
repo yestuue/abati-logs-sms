@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Users, Phone, MessageSquare, DollarSign,
   Activity, Server, TrendingUp, ArrowUpRight,
-  ShoppingCart, Wallet, UserPlus, Clock,
+  ShoppingCart, Wallet, UserPlus, Clock, Package,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
@@ -44,6 +44,7 @@ export default async function AdminPage() {
   let totalRevenue     = 0;
   let todayRevenueAmt  = 0;
   let monthRevenueAmt  = 0;
+  let totalLogs        = 0;
 
   // Dates pre-converted to strings — no raw Date objects in JSX
   let recentUsers: {
@@ -59,7 +60,7 @@ export default async function AdminPage() {
   let recentTransactions: {
     id: string; amount: number; currency: string; type: string;
     status: string; createdAtStr: string;
-    userName: string;
+    userName: string; userEmail: string;
   }[] = [];
 
   try {
@@ -68,7 +69,7 @@ export default async function AdminPage() {
     const [
       _totalUsers, _totalNumbers, _assigned, _available,
       _totalSms, _unreadSms, revenue, _users,
-      _configs, _txns, todayRev, monthRev,
+      _configs, _txns, todayRev, monthRev, _totalLogs,
     ] = await Promise.all([
       prisma.user.count(),
       prisma.virtualNumber.count(),
@@ -88,7 +89,7 @@ export default async function AdminPage() {
         take: 8,
         select: {
           id: true, amount: true, currency: true, type: true, status: true, createdAt: true,
-          user: { select: { name: true, email: true } },
+          user: { select: { name: true, email: true, username: true } },
         },
       }),
       prisma.transaction.aggregate({
@@ -99,6 +100,7 @@ export default async function AdminPage() {
         where: { status: "SUCCESS", createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
         _sum: { amount: true },
       }),
+      prisma.log.count({ where: { status: "AVAILABLE" } }),
     ]);
 
     console.log("[AdminPage] queries done — users:", _totalUsers, "txns:", _txns.length);
@@ -112,6 +114,7 @@ export default async function AdminPage() {
     totalRevenue     = revenue._sum.amount ?? 0;
     todayRevenueAmt  = todayRev._sum.amount ?? 0;
     monthRevenueAmt  = monthRev._sum.amount ?? 0;
+    totalLogs        = _totalLogs;
 
     // Convert dates to strings immediately — never let a Date object reach JSX
     recentUsers = _users.map((u) => ({
@@ -138,7 +141,8 @@ export default async function AdminPage() {
       type: String(tx.type),
       status: String(tx.status),
       createdAtStr: toStr(tx.createdAt),
-      userName: tx.user?.name ?? tx.user?.email ?? "Unknown user",
+      userName: tx.user?.name ?? tx.user?.username ?? tx.user?.email ?? "Unknown user",
+      userEmail: tx.user?.email ?? "",
     }));
 
   } catch (err) {
@@ -180,6 +184,15 @@ export default async function AdminPage() {
       color: "text-amber-500",
       bg: "bg-amber-500/10",
       href: "/admin/revenue",
+    },
+    {
+      label: "Log Inventory",
+      value: totalLogs.toLocaleString(),
+      sub: "Available logs in stock",
+      icon: Package,
+      color: "text-emerald-400",
+      bg: "bg-emerald-400/10",
+      href: "/admin/inventory",
     },
   ];
 
@@ -361,7 +374,8 @@ export default async function AdminPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{tx.userName}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground truncate">{tx.userEmail}</p>
+                      <p className="text-[10px] text-muted-foreground">
                         {tx.type.replace(/_/g, " ")} · {tx.createdAtStr}
                       </p>
                     </div>
