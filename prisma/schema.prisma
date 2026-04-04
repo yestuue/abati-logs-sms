@@ -84,6 +84,15 @@ model Transaction {
   user      User              @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
+model PriceConfig {
+  id            String   @id @default(cuid())
+  serviceName   String   @unique
+  category      String?
+  fixedMarkup   Float    @default(0)
+  percentMarkup Float    @default(0)
+  updatedAt     DateTime @updatedAt
+}
+
 model GlobalSettings {
   id              String   @id @default(cuid())
   siteName        String   @default("Abati Logs & SMS")
