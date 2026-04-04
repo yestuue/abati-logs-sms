@@ -84,6 +84,18 @@ model Transaction {
   user      User              @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
+model Log {
+  id        String    @id @default(cuid())
+  category  String
+  username  String
+  password  String
+  email     String?
+  emailPass String?
+  twoFA     String?
+  status    LogStatus @default(AVAILABLE)
+  createdAt DateTime  @default(now())
+}
+
 model PriceConfig {
   id            String   @id @default(cuid())
   serviceName   String   @unique
@@ -145,6 +157,11 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+enum LogStatus {
+  AVAILABLE
+  SOLD
 }
 
 enum Role {
