@@ -14,6 +14,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import Link from "next/link";
+import { CATEGORY_GROUPS, type CategoryGroup } from "@/lib/categories";
 
 type Category = "All" | "Facebook" | "Instagram" | "TikTok" | "Twitter/X" | "Gmail" | "Texting Apps" | "VPN" | "Other";
 type SortKey  = "newest" | "price-low" | "price-high" | "most-stock";
@@ -288,7 +289,43 @@ export default function SocialLogsPage() {
           <p className="font-semibold">No products found</p>
           <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or filters</p>
         </div>
+      ) : category === "All" && !search ? (
+        // Grouped view — only when browsing all with no search query
+        <div className="space-y-10">
+          {(Object.entries(CATEGORY_GROUPS) as [CategoryGroup, { icon: string; categories: readonly string[] }][]).map(([groupName, group]) => {
+            const groupProducts = filtered.filter((p) =>
+              group.categories.includes(p.category as never) ||
+              // Map page categories to group categories
+              (groupName === "Social Logs" && ["Facebook", "Instagram", "Twitter/X", "TikTok", "Gmail", "Other"].includes(p.category)) ||
+              (groupName === "Texting Apps" && p.category === "Texting Apps") ||
+              (groupName === "VPN Services" && p.category === "VPN")
+            );
+            if (groupProducts.length === 0) return null;
+            return (
+              <div key={groupName}>
+                <div className="flex items-center gap-3 mb-4 pb-3 border-b border-border/50">
+                  <span className="text-xl">{group.icon}</span>
+                  <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: "var(--font-heading)" }}>
+                    {groupName}
+                  </h2>
+                  <span
+                    className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: `${MINT}14`, color: MINT, border: `1px solid ${MINT}28` }}
+                  >
+                    {groupProducts.length} products
+                  </span>
+                </div>
+                <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  <AnimatePresence mode="popLayout">
+                    {groupProducts.map((p) => <ProductCard key={p.id} product={p} onBuy={setBuyTarget} />)}
+                  </AnimatePresence>
+                </motion.div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
+        // Flat grid — when a specific category is selected or search is active
         <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           <AnimatePresence mode="popLayout">
             {filtered.map((p) => <ProductCard key={p.id} product={p} onBuy={setBuyTarget} />)}
