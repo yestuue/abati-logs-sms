@@ -16,15 +16,11 @@ import { Badge } from "@/components/ui/badge";
 type Category = "Facebook" | "Instagram" | "TikTok" | "Twitter/X" | "Gmail" | "LinkedIn" | "Snapchat" | "Other";
 
 interface ParsedLog {
-  line: number;
-  category: string;
   username: string;
   password: string;
-  recoveryEmail: string;
-  twoFAKey: string;
-  raw: string;
-  valid: boolean;
-  error?: string;
+  email: string | null;
+  emailPass: string | null;
+  twoFA: string | null;
 }
 
 interface Session {
@@ -67,52 +63,34 @@ const MINT_DARK = "oklch(0.68 0.17 162)";
 const MINT_BTN  = { background: `linear-gradient(135deg, ${MINT}, ${MINT_DARK})`, color: "#09090d", fontWeight: 700 } as const;
 
 // ── Parser ────────────────────────────────────────────────────────────────────
-// Expected format: Category | Username | Password | Recovery Email | 2FA Key
-// Category and 2FA Key are optional — at minimum Username | Password must be present
-function parseLogs(raw: string): ParsedLog[] {
-  return raw
+// Expected format: Username | Password | Email | EmailPass | 2FA
+// Only Username and Password are required; other fields are optional.
+// Lines starting with '#' are treated as comments and skipped.
+function parseLogs(text: string): ParsedLog[] {
+  return text
     .split("\n")
-    .map((line, i) => line.trim())
-    .filter((line) => line.length > 0 && !line.startsWith("#"))
-    .map((line, i) => {
+    .filter((line) => line.trim() && !line.startsWith("#"))
+    .map((line) => {
       const parts = line.split("|").map((p) => p.trim());
-
-      if (parts.length < 2) {
-        return { line: i + 1, category: "", username: "", password: "", recoveryEmail: "", twoFAKey: "", raw: line, valid: false, error: "Must have at least Username | Password" };
-      }
-
-      // Support 2-field (user|pass), 3-field (+recovery), 4-field (+2fa), 5-field (cat+all)
-      let category = "", username = "", password = "", recoveryEmail = "", twoFAKey = "";
-
-      if (parts.length >= 5) {
-        [category, username, password, recoveryEmail, twoFAKey] = parts;
-      } else if (parts.length === 4) {
-        [username, password, recoveryEmail, twoFAKey] = parts;
-      } else if (parts.length === 3) {
-        [username, password, recoveryEmail] = parts;
-      } else {
-        [username, password] = parts;
-      }
-
-      if (!username || !password) {
-        return { line: i + 1, category, username, password, recoveryEmail, twoFAKey, raw: line, valid: false, error: "Username and Password are required" };
-      }
-
-      return { line: i + 1, category, username, password, recoveryEmail, twoFAKey, raw: line, valid: true };
-    });
+      if (parts.length < 2 || !parts[0] || !parts[1]) return null;
+      return {
+        username:  parts[0],
+        password:  parts[1],
+        email:     parts[2] || null,
+        emailPass: parts[3] || null,
+        twoFA:     parts[4] || null,
+      };
+    })
+    .filter((entry): entry is ParsedLog => entry !== null);
 }
 
 // ── Parse Preview Table ───────────────────────────────────────────────────────
 function PreviewTable({ logs }: { logs: ParsedLog[] }) {
-  const valid   = logs.filter((l) => l.valid).length;
-  const invalid = logs.filter((l) => !l.valid).length;
-
   return (
     <div className="space-y-3">
       {/* Summary bar */}
       <div className="flex items-center gap-3 text-xs font-semibold">
-        <span style={{ color: MINT }}>✓ {valid} valid</span>
-        {invalid > 0 && <span className="text-red-400">✗ {invalid} errors</span>}
+        <span style={{ color: MINT }}>✓ {logs.length} valid</span>
         <span className="text-muted-foreground ml-auto">{logs.length} total rows</span>
       </div>
 
@@ -121,30 +99,20 @@ function PreviewTable({ logs }: { logs: ParsedLog[] }) {
         <table className="w-full text-xs">
           <thead>
             <tr style={{ background: "var(--muted)", borderBottom: "1px solid var(--border)" }}>
-              {["#", "Status", "Username", "Password", "Recovery Email", "2FA Key"].map((h) => (
+              {["#", "Username", "Password", "Email", "Email Pass", "2FA"].map((h) => (
                 <th key={h} className="text-left px-3 py-2 font-semibold text-muted-foreground whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {logs.map((log) => (
-              <tr
-                key={log.line}
-                style={{
-                  background: log.valid ? "transparent" : "oklch(0.53 0.22 27 / 0.06)",
-                  borderBottom: "1px solid var(--border)",
-                }}
-              >
-                <td className="px-3 py-2 text-muted-foreground">{log.line}</td>
-                <td className="px-3 py-2">
-                  {log.valid
-                    ? <span style={{ color: MINT }}>✓</span>
-                    : <span title={log.error} className="text-red-400 cursor-help">✗</span>}
-                </td>
-                <td className="px-3 py-2 font-mono max-w-[140px] truncate">{log.username || "—"}</td>
-                <td className="px-3 py-2 font-mono max-w-[120px] truncate text-muted-foreground">{log.password ? "••••••••" : "—"}</td>
-                <td className="px-3 py-2 text-muted-foreground max-w-[160px] truncate">{log.recoveryEmail || "—"}</td>
-                <td className="px-3 py-2 font-mono text-muted-foreground max-w-[100px] truncate">{log.twoFAKey || "—"}</td>
+            {logs.map((log, i) => (
+              <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}>
+                <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                <td className="px-3 py-2 font-mono max-w-[140px] truncate">{log.username}</td>
+                <td className="px-3 py-2 font-mono max-w-[120px] truncate text-muted-foreground">••••••••</td>
+                <td className="px-3 py-2 text-muted-foreground max-w-[160px] truncate">{log.email || "—"}</td>
+                <td className="px-3 py-2 text-muted-foreground max-w-[120px] truncate">{log.emailPass || "—"}</td>
+                <td className="px-3 py-2 font-mono text-muted-foreground max-w-[100px] truncate">{log.twoFA || "—"}</td>
               </tr>
             ))}
           </tbody>
@@ -169,19 +137,17 @@ export default function AdminInventoryPage() {
     if (!rawText.trim()) { toast.error("Paste some log data first."); return; }
     const result = parseLogs(rawText);
     setParsed(result);
-    const valid = result.filter((l) => l.valid).length;
-    if (valid === 0) {
-      toast.error("No valid rows found — check your format.");
+    if (result.length === 0) {
+      toast.error("No valid rows found — check your format (Username|Password required).");
     } else {
-      toast.success(`Parsed ${result.length} rows — ${valid} valid, ${result.length - valid} errors.`);
+      toast.success(`Parsed ${result.length} valid row${result.length !== 1 ? "s" : ""}.`);
     }
   }
 
   async function handleUpload() {
-    if (!sessionName.trim())              { toast.error("Enter a session name."); return; }
-    if (!parsed || parsed.length === 0)   { toast.error("Parse the data first."); return; }
-    const valid = parsed.filter((l) => l.valid);
-    if (valid.length === 0)               { toast.error("No valid rows to upload."); return; }
+    if (!sessionName.trim())            { toast.error("Enter a session name."); return; }
+    if (!parsed || parsed.length === 0) { toast.error("Parse the data first."); return; }
+    const valid = parsed;
 
     setUploading(true);
 
@@ -193,10 +159,11 @@ export default function AdminInventoryPage() {
           sessionName: sessionName.trim(),
           category,
           logs: valid.map((l) => ({
-            username: l.username,
-            password: l.password,
-            email: l.recoveryEmail || undefined,
-            twoFA: l.twoFAKey || undefined,
+            username:  l.username,
+            password:  l.password,
+            email:     l.email     || undefined,
+            emailPass: l.emailPass || undefined,
+            twoFA:     l.twoFA     || undefined,
           })),
         }),
       });
@@ -220,7 +187,7 @@ export default function AdminInventoryPage() {
           name: sessionName.trim(),
           category,
           uploadedAt: new Date().toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" }),
-          count: data.uploaded,
+          count: data.uploaded ?? valid.length,
           logs: valid,
         },
         ...prev,
@@ -360,7 +327,7 @@ export default function AdminInventoryPage() {
               className="flex-1 font-bold"
               style={MINT_BTN}
               onClick={handleUpload}
-              disabled={uploading || !parsed || parsed.filter((l) => l.valid).length === 0}
+              disabled={uploading || !parsed || parsed.length === 0}
             >
               {uploading ? (
                 <><Loader2 className="w-4 h-4 animate-spin mr-1.5" />Uploading…</>
