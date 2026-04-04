@@ -178,29 +178,62 @@ export default function AdminInventoryPage() {
   }
 
   async function handleUpload() {
-    if (!sessionName.trim())    { toast.error("Enter a session name."); return; }
-    if (!parsed || parsed.length === 0) { toast.error("Parse the data first."); return; }
+    if (!sessionName.trim())              { toast.error("Enter a session name."); return; }
+    if (!parsed || parsed.length === 0)   { toast.error("Parse the data first."); return; }
     const valid = parsed.filter((l) => l.valid);
-    if (valid.length === 0)    { toast.error("No valid rows to upload."); return; }
+    if (valid.length === 0)               { toast.error("No valid rows to upload."); return; }
 
     setUploading(true);
-    await new Promise((r) => setTimeout(r, 1600)); // simulate API call
 
-    const newSession: Session = {
-      id: `sess-${Date.now()}`,
-      name: sessionName.trim(),
-      category,
-      uploadedAt: new Date().toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" }),
-      count: valid.length,
-      logs: valid,
-    };
+    try {
+      const res = await fetch("/api/admin/logs/bulk-upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionName: sessionName.trim(),
+          category,
+          logs: valid.map((l) => ({
+            username: l.username,
+            password: l.password,
+            email: l.recoveryEmail || undefined,
+            twoFA: l.twoFAKey || undefined,
+          })),
+        }),
+      });
 
-    setSessions((prev) => [newSession, ...prev]);
-    setSessionName("");
-    setRawText("");
-    setParsed(null);
-    setUploading(false);
-    toast.success(`${valid.length} logs uploaded to "${newSession.name}"`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error ?? "Upload failed");
+        return;
+      }
+
+      toast.success(data.message);
+      if (data.skipped > 0) {
+        toast.warning(`${data.skipped} row(s) skipped — missing username or password`);
+      }
+
+      // Reflect the new session in the local list
+      setSessions((prev) => [
+        {
+          id: `sess-${Date.now()}`,
+          name: sessionName.trim(),
+          category,
+          uploadedAt: new Date().toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" }),
+          count: data.uploaded,
+          logs: valid,
+        },
+        ...prev,
+      ]);
+
+      setSessionName("");
+      setRawText("");
+      setParsed(null);
+    } catch {
+      toast.error("Network error. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   }
 
   function deleteSession(id: string) {
