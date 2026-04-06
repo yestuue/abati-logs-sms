@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { sendSMS } from "@/lib/sms";
 
 export async function GET() {
-  const testPhoneNumber = "[REPLACE_WITH_YOUR_PHONE_NUMBER]";
-  const message = "Abati Test: Your SMS API is now active!";
+  const testPhoneNumber = "[YOUR_PHONE_NUMBER]";
+  const message = "Abati Live Test: Your SMS API is now fully integrated!";
 
   try {
     const result = await sendSMS(testPhoneNumber, message);
