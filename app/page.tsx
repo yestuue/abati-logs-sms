@@ -4,7 +4,6 @@ import Link from "next/link";
 import { motion, useInView } from "framer-motion";
 import { Logo } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { NumbersShowcase } from "@/components/landing/numbers-showcase";
 import { FloatingSupport } from "@/components/landing/floating-support";
 import {
   ArrowRight, CheckCircle, Zap, Globe, MessageSquare, Shield,
@@ -389,7 +388,6 @@ export default function LandingPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               {services.map((s, i) => {
-                const Icon = s.icon;
                 return (
                   <motion.div
                     key={s.title}
@@ -438,23 +436,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Numbers Showcase ─────────────────────────────────────────────────── */}
-      <section className="relative z-10 py-10 sm:py-14 px-4">
-        <div className="max-w-5xl mx-auto">
-          <InView>
-            <motion.p
-              variants={fadeIn}
-              className="text-center text-[10px] sm:text-xs font-semibold uppercase tracking-widest mb-6"
-              style={{ color: "rgba(255,255,255,0.35)" }}
-            >
-              Sample Available Numbers
-            </motion.p>
-            <motion.div variants={fadeUp}>
-              <NumbersShowcase />
-            </motion.div>
-          </InView>
-        </div>
-      </section>
 
       {/* ── Features ─────────────────────────────────────────────────────────── */}
       <section className="relative z-10 py-16 sm:py-20 px-4">
