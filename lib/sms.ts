@@ -13,8 +13,8 @@ const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
  */
 export async function sendSMS(to: string, message: string) {
   if (!client) {
-    console.warn("[Twilio] Client not initialized. Check TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.");
-    return;
+    console.error("[Twilio Error] Client not initialized. Missing TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN in Vercel.");
+    return null;
   }
 
   try {
@@ -26,7 +26,7 @@ export async function sendSMS(to: string, message: string) {
     console.log(`[Twilio] SMS successfully sent to ${to}. SID: ${response.sid}`);
     return response;
   } catch (error) {
-    console.error("[Twilio] Failed to send SMS:", error);
+    console.error("[Twilio Error] Failed to send SMS to", to, "Details:", error);
     return null; // Return null instead of throwing to prevent application crashes
   }
 }
