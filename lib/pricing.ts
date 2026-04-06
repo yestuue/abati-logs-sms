@@ -1,5 +1,16 @@
 import { prisma } from "@/lib/prisma";
 
+const EXCHANGE_RATE = 1500; // USD → NGN
+const ADMIN_MARGIN  = 1.35; // 35% profit margin
+
+/**
+ * Converts a USD provider price to a final NGN user price.
+ * Formula: Math.ceil(basePriceUSD * EXCHANGE_RATE * ADMIN_MARGIN)
+ */
+export function calculateFinalNGN(basePriceUSD: number): number {
+  return Math.ceil(basePriceUSD * EXCHANGE_RATE * ADMIN_MARGIN);
+}
+
 /**
  * Calculates the final selling price for a service.
  *

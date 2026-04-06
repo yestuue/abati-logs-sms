@@ -14,7 +14,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 import Link from "next/link";
+import Image from "next/image";
 import { CATEGORY_GROUPS, type CategoryGroup } from "@/lib/categories";
+import { getServiceLogo, getServiceEmoji } from "@/lib/service-logos";
 
 type Category = "All" | "Facebook" | "Instagram" | "TikTok" | "Twitter/X" | "Gmail" | "Texting Apps" | "VPN" | "Other";
 type SortKey  = "newest" | "price-low" | "price-high" | "most-stock";
@@ -148,24 +150,59 @@ function BuyModal({ product, walletBalance, onClose }: { product: Product; walle
   );
 }
 
+function ServiceLogo({ name, size = 40 }: { name: string; size?: number }) {
+  const logo    = getServiceLogo(name);
+  const emoji   = getServiceEmoji(name);
+  const [failed, setFailed] = useState(false);
+
+  if (logo && !failed) {
+    return (
+      <Image
+        src={logo}
+        alt={name}
+        width={size}
+        height={size}
+        onError={() => setFailed(true)}
+        className="rounded-xl object-cover flex-shrink-0"
+        style={{ width: size, height: size }}
+        unoptimized
+      />
+    );
+  }
+
+  return (
+    <div
+      className="rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+      style={{ width: size, height: size, background: "var(--muted)", border: "1px solid var(--border)" }}
+    >
+      {emoji}
+    </div>
+  );
+}
+
 function ProductCard({ product, onBuy }: { product: Product; onBuy: (p: Product) => void }) {
   const accent      = COLORS[product.category];
   const outOfStock  = product.stock === 0;
   const [showPrice, setShowPrice] = useState(false);
+
+  // Derive the service name from the title for logo lookup
+  const serviceKey = product.title.split(" ")[0];
 
   return (
     <motion.div layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.25 }}>
       <Card className="h-full flex flex-col overflow-hidden hover:scale-[1.01] transition-all duration-200" style={{ border: "1px solid var(--border)" }}>
         <div className="h-1" style={{ background: `linear-gradient(90deg, ${accent}, ${accent}88)` }} />
         <CardContent className="p-4 flex flex-col flex-1 gap-3">
-          <div>
-            <div className="flex items-center gap-1.5 mb-1">
-              <span className="text-base">{ICONS[product.category]}</span>
-              {product.badge && (
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md" style={{ background: `${accent}22`, color: accent }}>{product.badge}</span>
-              )}
+          <div className="flex items-start gap-3">
+            <ServiceLogo name={serviceKey} size={40} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                {product.badge && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md" style={{ background: `${accent}22`, color: accent }}>{product.badge}</span>
+                )}
+              </div>
+              <p className="text-sm font-semibold text-foreground leading-snug">{product.title}</p>
             </div>
-            <p className="text-sm font-semibold text-foreground leading-snug">{product.title}</p>
           </div>
 
           <p className="text-xs text-muted-foreground flex-1 line-clamp-2">{product.description}</p>
