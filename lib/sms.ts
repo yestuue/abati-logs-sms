@@ -9,9 +9,9 @@ const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
 /**
  * Sends an SMS (Welcome or OTP) using Twilio.
  * @param to The recipient's phone number
- * @param body The SMS message to send
+ * @param message The SMS message to send
  */
-export async function sendSMS(to: string, body: string) {
+export async function sendSMS(to: string, message: string) {
   if (!client) {
     console.warn("[Twilio] Client not initialized. Check TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN.");
     return;
@@ -19,7 +19,7 @@ export async function sendSMS(to: string, body: string) {
 
   try {
     const response = await client.messages.create({
-      body,
+      body: message,
       from: process.env.TWILIO_PHONE_NUMBER || "Abati", // Defaults to 'Abati' branding if a number isn't explicitly mandated
       to,
     });
@@ -27,6 +27,6 @@ export async function sendSMS(to: string, body: string) {
     return response;
   } catch (error) {
     console.error("[Twilio] Failed to send SMS:", error);
-    throw error;
+    return null; // Return null instead of throwing to prevent application crashes
   }
 }
