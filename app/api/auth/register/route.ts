@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { sendSMS } from "@/lib/sms";
 
 const schema = z.object({
   username: z.string().min(3).max(30),
   email: z.string().email(),
   password: z.string().min(6),
+  phone: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -21,7 +23,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { username, email, password } = parsed.data;
+    const { username, email, password, phone } = parsed.data;
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedUsername = username.trim().toLowerCase();
 
@@ -75,6 +77,17 @@ export async function POST(req: Request) {
         walletCurrency: true,
       },
     });
+
+    // Attempt to send a Welcome SMS if a phone number was provided
+    if (phone) {
+      try {
+        const message = `Welcome to Abati, ${normalizedUsername}! Your account has been successfully created.`;
+        await sendSMS(phone, message);
+      } catch (smsError) {
+        // Catch SMS errors (e.g., Twilio trial restrictions) so the registration doesn't fail
+        console.error("[register] Non-fatal: Twilio SMS failed to send:", smsError);
+      }
+    }
 
     return NextResponse.json(
       { success: true, user },
