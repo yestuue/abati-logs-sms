@@ -27,6 +27,6 @@ export async function sendSMS(to: string, message: string) {
     return response;
   } catch (error) {
     console.error("[Twilio Error] Failed to send SMS to", to, "Details:", error);
-    return null; // Return null instead of throwing to prevent application crashes
+    throw error; // Throw the error so the test route can catch and display it
   }
 }

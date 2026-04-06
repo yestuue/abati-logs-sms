@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { sendSMS } from "@/lib/sms";
 
 export async function GET() {
-  const testPhoneNumber = "[REPLACE_WITH_YOUR_PHONE_NUMBER]";
+  const testPhoneNumber = "+2349049386397";
   const message = "Abati Live Test: SMS is working!";
 
   try {
@@ -17,10 +17,10 @@ export async function GET() {
         { status: 500 }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("[Test Route Error] Exception in GET handler:", error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : "Unknown error occurred" },
+      { success: false, error: error.message },
       { status: 500 }
     );
   }
