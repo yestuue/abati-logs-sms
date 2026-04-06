@@ -1,54 +1,40 @@
 /**
- * Maps service/category names to their logo file paths.
- * Place the actual image files in /public/logos/.
- * Falls back to an emoji when no logo file exists.
+ * Maps service/category names to icons8 CDN URLs.
+ * No local files needed — icons load instantly from the CDN.
+ * If a service has no entry, ServiceLogo falls back to a Lucide Globe icon.
  */
 
 export const SERVICE_LOGO_MAP: Record<string, string> = {
   // Social
-  "Facebook":    "/logos/facebook.png",
-  "Instagram":   "/logos/instagram.png",
-  "Twitter":     "/logos/twitter.png",
-  "Twitter/X":   "/logos/twitter.png",
-  "TikTok":      "/logos/tiktok.png",
-  "Snapchat":    "/logos/snapchat.png",
-  "Gmail":       "/logos/gmail.png",
-  "LinkedIn":    "/logos/linkedin.png",
-  // Texting apps
-  "Google Voice": "/logos/google-voice.png",
-  "TextNow":      "/logos/textnow.png",
-  "Talkatone":    "/logos/talkatone.png",
-  "TextPlus":     "/logos/textplus.png",
-  "NextPlus":     "/logos/nextplus.png",
-  // VPN
-  "NordVPN":      "/logos/nordvpn.png",
-  "Nord VPN":     "/logos/nordvpn.png",
-  "ExpressVPN":   "/logos/expressvpn.png",
-  "Express VPN":  "/logos/expressvpn.png",
-  "Surfshark":    "/logos/surfshark.png",
-  "PIA":          "/logos/pia.png",
-  "HMA":          "/logos/hma.png",
-  "HMA VPN":      "/logos/hma.png",
-  "CyberGhost":   "/logos/cyberghost.png",
+  "Facebook":      "https://img.icons8.com/color/48/facebook-new.png",
+  "Instagram":     "https://img.icons8.com/color/48/instagram-new.png",
+  "TikTok":        "https://img.icons8.com/color/48/tiktok.png",
+  "Twitter":       "https://img.icons8.com/color/48/twitterx--v2.png",
+  "Twitter/X":     "https://img.icons8.com/color/48/twitterx--v2.png",
+  "Snapchat":      "https://img.icons8.com/color/48/snapchat.png",
+  "Gmail":         "https://img.icons8.com/color/48/gmail-new.png",
+  "LinkedIn":      "https://img.icons8.com/color/48/linkedin.png",
   // Messaging
-  "WhatsApp":     "/logos/whatsapp.png",
-  "Telegram":     "/logos/telegram.png",
-};
-
-export const SERVICE_EMOJI_FALLBACK: Record<string, string> = {
-  "Facebook": "📘", "Instagram": "📸", "Twitter": "🐦", "Twitter/X": "🐦",
-  "TikTok": "🎵", "Snapchat": "👻", "Gmail": "📧", "LinkedIn": "💼",
-  "Google Voice": "📞", "TextNow": "💬", "Talkatone": "📱", "TextPlus": "💬",
-  "NextPlus": "📲", "WhatsApp": "🟢", "Telegram": "✈️",
-  "NordVPN": "🔒", "Nord VPN": "🔒", "ExpressVPN": "🛡️", "Express VPN": "🛡️",
-  "Surfshark": "🦈", "PIA": "🔐", "HMA": "🐴", "HMA VPN": "🐴",
-  "CyberGhost": "👻",
+  "WhatsApp":      "https://img.icons8.com/color/48/whatsapp.png",
+  "Telegram":      "https://img.icons8.com/color/48/telegram-app.png",
+  // Texting apps — use best available icon, phone as fallback for lesser-known apps
+  "Google Voice":  "https://img.icons8.com/color/48/google-voice.png",
+  "TextNow":       "https://img.icons8.com/color/48/phone.png",
+  "Talkatone":     "https://img.icons8.com/color/48/phone.png",
+  "TextPlus":      "https://img.icons8.com/color/48/phone.png",
+  "NextPlus":      "https://img.icons8.com/color/48/phone.png",
+  // VPN
+  "NordVPN":       "https://img.icons8.com/color/48/nordvpn.png",
+  "Nord VPN":      "https://img.icons8.com/color/48/nordvpn.png",
+  "ExpressVPN":    "https://img.icons8.com/color/48/expressvpn.png",
+  "Express VPN":   "https://img.icons8.com/color/48/expressvpn.png",
+  "Surfshark":     "https://img.icons8.com/color/48/surfshark.png",
+  "PIA":           "https://img.icons8.com/color/48/vpn.png",
+  "HMA":           "https://img.icons8.com/color/48/vpn.png",
+  "HMA VPN":       "https://img.icons8.com/color/48/vpn.png",
+  "CyberGhost":    "https://img.icons8.com/color/48/vpn.png",
 };
 
 export function getServiceLogo(name: string): string | null {
   return SERVICE_LOGO_MAP[name] ?? null;
-}
-
-export function getServiceEmoji(name: string): string {
-  return SERVICE_EMOJI_FALLBACK[name] ?? "🔗";
 }

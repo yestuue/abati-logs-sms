@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Filter, ShoppingBag, Star, Package, X,
-  ChevronDown, AlertCircle, Loader2, Check, Wallet,
+  ChevronDown, AlertCircle, Loader2, Check, Wallet, Globe,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { CATEGORY_GROUPS, type CategoryGroup } from "@/lib/categories";
-import { getServiceLogo, getServiceEmoji } from "@/lib/service-logos";
+import { getServiceLogo } from "@/lib/service-logos";
 
 type Category = "All" | "Facebook" | "Instagram" | "TikTok" | "Twitter/X" | "Gmail" | "Texting Apps" | "VPN" | "Other";
 type SortKey  = "newest" | "price-low" | "price-high" | "most-stock";
@@ -151,31 +151,32 @@ function BuyModal({ product, walletBalance, onClose }: { product: Product; walle
 }
 
 function ServiceLogo({ name, size = 40 }: { name: string; size?: number }) {
-  const logo    = getServiceLogo(name);
-  const emoji   = getServiceEmoji(name);
+  const logo = getServiceLogo(name);
   const [failed, setFailed] = useState(false);
 
   if (logo && !failed) {
     return (
       <Image
         src={logo}
-        alt={name}
+        alt={`${name} logo`}
         width={size}
         height={size}
         onError={() => setFailed(true)}
-        className="rounded-xl object-cover flex-shrink-0"
+        className="rounded-xl object-contain flex-shrink-0"
         style={{ width: size, height: size }}
         unoptimized
       />
     );
   }
 
+  // Lucide Globe fallback — shown when no CDN logo is mapped or the request failed
   return (
     <div
-      className="rounded-xl flex items-center justify-center text-xl flex-shrink-0"
+      className="rounded-xl flex items-center justify-center flex-shrink-0"
       style={{ width: size, height: size, background: "var(--muted)", border: "1px solid var(--border)" }}
+      title={name}
     >
-      {emoji}
+      <Globe className="w-5 h-5 text-muted-foreground" />
     </div>
   );
 }
