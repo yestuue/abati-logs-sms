@@ -1,24 +1,13 @@
 export async function sendSMS(to: string, message: string) {
-  const apiKey = process.env.TERMII_API_KEY;
-  const senderId = process.env.TERMII_SENDER_ID;
-
-  if (!apiKey) {
-    throw new Error("Missing TERMII_API_KEY");
-  }
-
-  if (!senderId) {
-    throw new Error("Missing TERMII_SENDER_ID");
-  }
-
   const response = await fetch("https://api.ng.termii.com/api/sms/send", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      api_key: apiKey,
+      api_key: "tsk_EP9brYsIxZFKKDFjbintAq3gVj",
       to,
-      from: senderId,
+      from: "N-Alert",
       sms: message,
       type: "plain",
       channel: "generic",
