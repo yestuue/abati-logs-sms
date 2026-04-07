@@ -20,6 +20,13 @@ export function formatCurrency(amount: number, currency: "NGN" | "USD" = "NGN") 
   }).format(amount);
 }
 
+/** Normalizes user-typed service names for number search (e.g. common typos). */
+export function normalizeServiceSearchQuery(raw: string): string {
+  let s = raw.trim().toLowerCase();
+  s = s.replace(/\bwhasapp\b/gi, "whatsapp");
+  return s.replace(/\s+/g, " ").trim();
+}
+
 export function formatDate(date: Date | string) {
   return new Intl.DateTimeFormat("en-NG", {
     dateStyle: "medium",

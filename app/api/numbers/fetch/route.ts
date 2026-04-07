@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import type { Prisma } from "@prisma/client";
+import { normalizeServiceSearchQuery } from "@/lib/utils";
 
-// GET /api/numbers/fetch?server=SERVER1|SERVER2
+// GET /api/numbers/fetch?server=SERVER1|SERVER2&q=optional filter
 export async function GET(req: Request) {
   const session = await auth();
   if (!session) {
@@ -11,6 +13,7 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const server = searchParams.get("server") as "SERVER1" | "SERVER2" | null;
+  const q = normalizeServiceSearchQuery(searchParams.get("q") ?? "");
 
   if (!server || !["SERVER1", "SERVER2"].includes(server)) {
     return NextResponse.json(
@@ -29,8 +32,17 @@ export async function GET(req: Request) {
     });
   }
 
+  const where: Prisma.VirtualNumberWhereInput = { server, status: "AVAILABLE" };
+  if (q.length >= 2) {
+    where.OR = [
+      { country: { contains: q, mode: "insensitive" } },
+      { number: { contains: q } },
+      { countryCode: { contains: q, mode: "insensitive" } },
+    ];
+  }
+
   const numbers = await prisma.virtualNumber.findMany({
-    where: { server, status: "AVAILABLE" },
+    where,
     orderBy: { createdAt: "asc" },
     take: 50,
     select: {

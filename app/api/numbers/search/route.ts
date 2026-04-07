@@ -51,7 +51,8 @@ export async function GET(req: Request) {
   }
 
   const { searchParams } = new URL(req.url);
-  const service  = (searchParams.get("service") ?? "").toLowerCase().trim();
+  let service = (searchParams.get("service") ?? "").toLowerCase().trim();
+  service = service.replace(/\bwhasapp\b/g, "whatsapp");
   const country  = (searchParams.get("country") ?? "US").toUpperCase();
   const limit    = Math.min(parseInt(searchParams.get("limit") ?? "20"), 50);
 
@@ -84,14 +85,17 @@ export async function GET(req: Request) {
     const twilio = await res.json() as { available_phone_numbers: TwilioNumber[] };
     const numbers = twilio.available_phone_numbers ?? [];
 
+    const priceNGN = calculateFinalNGN(1);
+    const priceUSD = Math.round((priceNGN / 1500) * 100) / 100;
+
     const results = numbers.map((n) => ({
       phoneNumber:  n.phone_number,
       friendlyName: n.friendly_name,
       region:       n.region ?? n.locality ?? "",
       country:      n.iso_country,
       smsEnabled:   n.capabilities?.SMS ?? false,
-      // Twilio charges ~$1 USD/month per number; apply our margin on top
-      priceNGN:     calculateFinalNGN(1),
+      priceNGN,
+      priceUSD,
     }));
 
     return NextResponse.json({ numbers: results, service, total: results.length });

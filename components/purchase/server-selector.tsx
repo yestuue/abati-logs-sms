@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Phone,
@@ -11,7 +11,6 @@ import {
   ShoppingCart,
   Wallet,
   AlertCircle,
-  MessageSquare,
   X,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +25,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, normalizeServiceSearchQuery } from "@/lib/utils";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -39,6 +38,8 @@ interface NumberItem {
   server: "SERVER1" | "SERVER2";
   priceNGN: number;
   priceUSD: number;
+  /** Inventory rows can be purchased; provider search rows are availability-only. */
+  source: "inventory" | "provider";
 }
 
 interface ServerSelectorProps {
@@ -69,6 +70,8 @@ const SERVER_INFO = {
 
 type Carrier = "any" | "att" | "tmobile";
 
+const MIN_SERVICE_QUERY_LEN = 2;
+
 const CARRIERS: { value: Carrier; label: string; premium: boolean }[] = [
   { value: "any",     label: "Any Carrier",    premium: false },
   { value: "att",     label: "AT&T (+35%)",    premium: true  },
@@ -83,8 +86,6 @@ export function ServerSelector({
 }: ServerSelectorProps) {
   const router = useRouter();
   const [activeServer, setActiveServer] = useState<"SERVER1" | "SERVER2">("SERVER1");
-  // Cache results per server so switching is instant after first load
-  const cache = useRef<Partial<Record<"SERVER1" | "SERVER2", NumberItem[]>>>({});
   const [numbers, setNumbers] = useState<NumberItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -93,46 +94,103 @@ export function ServerSelector({
   const [copied, setCopied] = useState<string | null>(null);
   const [carrier, setCarrier] = useState<Carrier>("any");
 
-  const fetchNumbers = useCallback(
-    async (server: "SERVER1" | "SERVER2", force = false) => {
-      // Return cached data instantly if available and not forced
-      if (!force && cache.current[server]) {
-        setNumbers(cache.current[server]!);
+  const activeServerConfig = serverConfigs.find((c) => c.server === activeServer);
+  const isDisabled = activeServerConfig ? !activeServerConfig.isEnabled : false;
+
+  const performSearch = useCallback(async (rawQuery: string) => {
+    const normalized = normalizeServiceSearchQuery(rawQuery);
+    if (normalized.length < MIN_SERVICE_QUERY_LEN) {
+      setNumbers([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      if (activeServer === "SERVER1") {
+        const res = await fetch(
+          `/api/numbers/search?service=${encodeURIComponent(normalized)}&limit=30`,
+          { cache: "no-store" }
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.error ?? "Search failed");
+          setNumbers([]);
+          return;
+        }
+        const rows = (data.numbers ?? []) as {
+          phoneNumber: string;
+          friendlyName: string;
+          region: string;
+          country: string;
+          priceNGN: number;
+          priceUSD: number;
+        }[];
+        setNumbers(
+          rows.map((r) => ({
+            id: `provider:${r.phoneNumber}`,
+            number: r.phoneNumber,
+            country: r.region ? `${r.region} (${r.country})` : r.country,
+            countryCode: r.country,
+            dialCode: "+1",
+            server: "SERVER1" as const,
+            priceNGN: r.priceNGN,
+            priceUSD: r.priceUSD,
+            source: "provider" as const,
+          }))
+        );
         return;
       }
-      setLoading(true);
-      setNumbers([]);
-      try {
-        const res = await fetch(`/api/numbers/fetch?server=${server}`);
-        const data = await res.json();
-        const nums = data.numbers ?? [];
-        cache.current[server] = nums;
-        setNumbers(nums);
-      } catch {
-        toast.error("Failed to load numbers");
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
 
-  // Switch server: clear search + load from cache or network
+      const res = await fetch(
+        `/api/numbers/fetch?server=SERVER2&q=${encodeURIComponent(normalized)}`,
+        { cache: "no-store" }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Search failed");
+        setNumbers([]);
+        return;
+      }
+      const nums = (data.numbers ?? []) as (Omit<NumberItem, "source" | "dialCode"> & {
+        dialCode?: string | null;
+      })[];
+      setNumbers(
+        nums.map((n) => ({
+          ...n,
+          dialCode: n.dialCode ?? "",
+          source: "inventory" as const,
+        }))
+      );
+    } catch {
+      toast.error("Search failed");
+      setNumbers([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeServer]);
+
   function switchServer(srv: "SERVER1" | "SERVER2") {
     if (srv === activeServer) return;
     setActiveServer(srv);
     setSearch("");
+    setNumbers([]);
   }
 
   useEffect(() => {
-    fetchNumbers(activeServer);
-  }, [activeServer, fetchNumbers]);
+    if (isDisabled) return;
+    const trimmed = search.trim();
+    if (trimmed.length < MIN_SERVICE_QUERY_LEN) {
+      setNumbers([]);
+      setLoading(false);
+      return;
+    }
+    const t = window.setTimeout(() => {
+      void performSearch(search);
+    }, 400);
+    return () => window.clearTimeout(t);
+  }, [search, activeServer, isDisabled, performSearch]);
 
-  const filtered = numbers.filter(
-    (n) =>
-      n.number.includes(search) ||
-      n.country.toLowerCase().includes(search.toLowerCase())
-  );
+  const queryReady = search.trim().length >= MIN_SERVICE_QUERY_LEN;
 
   // Apply +35% carrier premium for specific carriers
   const carrierPremiumMultiplier = CARRIERS.find((c) => c.value === carrier)?.premium ? 1.35 : 1.0;
@@ -143,6 +201,7 @@ export function ServerSelector({
 
   async function handlePurchase() {
     if (!selected) return;
+    if (selected.source === "provider") return;
     setBuying(true);
     const basePrice = walletCurrency === "USD" ? selected.priceUSD : selected.priceNGN;
     const price = getPriceWithCarrier(basePrice);
@@ -183,9 +242,6 @@ export function ServerSelector({
     toast.success("Copied!");
     setTimeout(() => setCopied(null), 2000);
   }
-
-  const config = serverConfigs.find((c) => c.server === activeServer);
-  const isDisabled = config ? !config.isEnabled : false;
 
   return (
     <div className="space-y-4">
@@ -330,7 +386,8 @@ export function ServerSelector({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 flex-shrink-0"
-                onClick={() => fetchNumbers(activeServer, true)}
+                disabled={!queryReady}
+                onClick={() => queryReady && void performSearch(search)}
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
               </Button>
@@ -340,7 +397,7 @@ export function ServerSelector({
             <div className="relative mt-2">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Search by number, country or service…"
+                placeholder="Type a service name (e.g. WhatsApp, Telegram)…"
                 className="pl-8 pr-8 h-9 text-sm"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -357,45 +414,32 @@ export function ServerSelector({
           </CardHeader>
 
           <CardContent className="p-0">
-            {loading ? (
+            {!queryReady ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center px-6">
+                <Search className="w-7 h-7 text-muted-foreground mb-3 opacity-60" />
+                <p className="text-sm font-medium text-foreground mb-1">Search by service</p>
+                <p className="text-xs text-muted-foreground max-w-sm">
+                  Enter at least {MIN_SERVICE_QUERY_LEN} characters (e.g. WhatsApp). Results load from our SMS provider
+                  {activeServer === "SERVER2" ? " inventory" : ""} after you stop typing.
+                </p>
+              </div>
+            ) : loading ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Loading numbers...</p>
+                <p className="text-sm text-muted-foreground">Searching…</p>
               </div>
-            ) : filtered.length === 0 ? (
+            ) : numbers.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center px-6">
                 <Phone className="w-7 h-7 text-muted-foreground mb-3" />
-                {search ? (
-                  <>
-                    <p className="text-sm font-medium text-foreground mb-1">
-                      No results for &ldquo;{search}&rdquo;
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      This service may not be available yet. Request it and we&apos;ll add it.
-                    </p>
-                    <a
-                      href="https://api.whatsapp.com/send?phone=2349049386397"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all hover:opacity-85"
-                      style={{
-                        background: "oklch(0.68 0.22 278 / 0.12)",
-                        color: "var(--primary)",
-                        border: "1px solid oklch(0.68 0.22 278 / 0.25)",
-                      }}
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      Request &ldquo;{search}&rdquo; on WhatsApp
-                    </a>
-                  </>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No available numbers right now</p>
-                )}
+                <p className="text-sm font-medium text-foreground">No results found</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Try another service name or check back later.
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-0">
                 <AnimatePresence initial={false}>
-                  {filtered.map((n, i) => (
+                  {numbers.map((n, i) => (
                     <motion.div
                       key={n.id}
                       initial={{ opacity: 0, y: 6 }}
@@ -452,6 +496,12 @@ export function ServerSelector({
 
           {selected && (
             <div className="space-y-4">
+              {selected.source === "provider" && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 text-sm text-amber-200">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  Provider availability preview — purchase uses inventory numbers (try Server 2 search or contact support).
+                </div>
+              )}
               <div className="p-4 rounded-xl bg-muted/50 border border-border/30 space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Number</span>
@@ -510,7 +560,12 @@ export function ServerSelector({
             <Button
               variant="brand"
               onClick={handlePurchase}
-              disabled={buying || !selected || walletBalance < getPriceWithCarrier(selected?.priceNGN ?? 0)}
+              disabled={
+                buying ||
+                !selected ||
+                selected.source === "provider" ||
+                walletBalance < getPriceWithCarrier(selected?.priceNGN ?? 0)
+              }
             >
               {buying ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
