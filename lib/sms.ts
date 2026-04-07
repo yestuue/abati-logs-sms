@@ -33,13 +33,11 @@ export async function sendSMS(to: string, message: string) {
   }
 
   if (!response.ok) {
+    const fallback = "Termii API request failed";
     const errorMessage =
-      typeof data === "object" &&
-      data !== null &&
-      "message" in data &&
-      typeof (data as { message: unknown }).message === "string"
-        ? (data as { message: string }).message
-        : "Termii API request failed";
+      typeof data === "object" && data !== null
+        ? JSON.stringify(data)
+        : fallback;
     throw new Error(errorMessage);
   }
 

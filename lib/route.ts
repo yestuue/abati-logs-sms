@@ -8,15 +8,7 @@ export async function GET() {
 
   try {
     const result = await sendSMS(testPhoneNumber, message);
-
-    if (result) {
-      return NextResponse.json({ success: true, message: "SMS sent successfully!", data: result });
-    } else {
-      return NextResponse.json(
-        { success: false, error: "Failed to send SMS. Check your server console for Twilio errors." },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json({ success: true, message: "SMS sent successfully!", data: result });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : "Unknown error occurred" },

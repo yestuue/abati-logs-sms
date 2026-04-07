@@ -7,7 +7,7 @@ export async function GET() {
 
   try {
     const result = await sendSMS(to, message);
-    return NextResponse.json({ success: true, data: result });
+    return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : String(error) },

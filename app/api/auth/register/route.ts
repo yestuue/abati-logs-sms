@@ -84,8 +84,8 @@ export async function POST(req: Request) {
         const message = `Welcome to Abati, ${normalizedUsername}! Your account has been successfully created.`;
         await sendSMS(phone, message);
       } catch (smsError) {
-        // Catch SMS errors (e.g., Twilio trial restrictions) so the registration doesn't fail
-        console.error("[register] Non-fatal: Twilio SMS failed to send:", smsError);
+        // Keep registration successful even if SMS delivery fails.
+        console.error("[register] Non-fatal: Termii SMS failed to send:", smsError);
       }
     }
 
