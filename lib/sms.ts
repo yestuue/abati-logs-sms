@@ -1,32 +1,44 @@
-import twilio from "twilio";
-
-// Initialize the Twilio client safely
-const client = process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN 
-  ? twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN) 
-  : null;
-
 /**
- * Sends an SMS (Welcome or OTP) using Twilio.
+ * Sends an SMS (Welcome or OTP) using Termii.
  * @param to The recipient's phone number
  * @param message The SMS message to send
  * @param fromNumber Optional specific from number
  */
 export async function sendSMS(to: string, message: string, fromNumber?: string) {
-  if (!client) {
-    console.error("[Twilio Error] Client not initialized. Missing TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN in Vercel.");
+  const apiKey = process.env.TERMII_API_KEY;
+
+  if (!apiKey) {
+    console.error("[Termii Error] Client not initialized. Missing TERMII_API_KEY in Vercel.");
     return null;
   }
 
   try {
-    const response = await client.messages.create({
-      body: message,
-      from: fromNumber || process.env.TWILIO_PHONE_NUMBER,
-      to,
+    const response = await fetch("https://api.ng.termii.com/api/sms/send", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        to,
+        from: fromNumber || process.env.TERMII_SENDER_ID || "ABATI",
+        sms: message,
+        type: "plain",
+        channel: "generic",
+        api_key: apiKey,
+      }),
     });
-    console.log(`[Twilio] SMS successfully sent to ${to}. SID: ${response.sid}`);
-    return response;
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("[Termii Error] Failed to send SMS to", to, "Details:", data);
+      throw new Error(data.message || "Termii API Error");
+    }
+
+    console.log(`[Termii] SMS successfully sent to ${to}. Message ID: ${data.message_id}`);
+    return data;
   } catch (error) {
-    console.error("[Twilio Error] Failed to send SMS to", to, "Details:", error);
+    console.error("[Termii Error] Failed to send SMS to", to, "Details:", error);
     throw error; // Throw the error so the test route can catch and display it
   }
 }
