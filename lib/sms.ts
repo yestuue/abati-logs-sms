@@ -12,6 +12,8 @@ export async function sendSMS(to: string, message: string, fromNumber?: string) 
     return null;
   }
 
+  console.log('Sending with key starting with:', process.env.TERMII_API_KEY?.substring(0, 4));
+
   try {
     const response = await fetch("https://api.ng.termii.com/api/sms/send", {
       method: "POST",
@@ -24,7 +26,7 @@ export async function sendSMS(to: string, message: string, fromNumber?: string) 
         sms: message,
         type: "plain",
         channel: "generic",
-        api_key: apiKey,
+        api_key: process.env.TERMII_API_KEY,
       }),
     });
 
