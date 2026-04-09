@@ -145,6 +145,8 @@ export function ServerSelector({
   const [server2Country, setServer2Country] = useState("usa");
   const [countrySearch, setCountrySearch] = useState("");
   const [countryOpen, setCountryOpen] = useState(false);
+  const [preferredAreaCode, setPreferredAreaCode] = useState("");
+  const [preserveSelectionOnNextEmpty, setPreserveSelectionOnNextEmpty] = useState(false);
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [activeAssignments, setActiveAssignments] = useState<ActiveAssignment[]>([]);
   const [loadingActive, setLoadingActive] = useState(false);
@@ -253,11 +255,14 @@ export function ServerSelector({
     setSelectedService(null);
     setCountrySearch("");
     setCountryOpen(false);
+    setPreferredAreaCode("");
+    setPreserveSelectionOnNextEmpty(false);
   }
 
   function selectServiceRow(row: ServiceSearchResult) {
     // Replace old selection immediately with the newly clicked service.
     setSelectedService(row);
+    setPreserveSelectionOnNextEmpty(true);
     setSearch("");
     setServiceResults([]);
   }
@@ -269,6 +274,8 @@ export function ServerSelector({
     setSelectedService(null);
     setCountrySearch("");
     setCountryOpen(false);
+    setPreferredAreaCode("");
+    setPreserveSelectionOnNextEmpty(false);
   }
 
   useEffect(() => {
@@ -277,9 +284,14 @@ export function ServerSelector({
     if (trimmed.length < MIN_SERVICE_QUERY_LEN) {
       setServiceResults([]);
       setNumbers([]);
-      setSelectedService(null);
-      setCountrySearch("");
-      setCountryOpen(false);
+      if (preserveSelectionOnNextEmpty) {
+        setPreserveSelectionOnNextEmpty(false);
+      } else {
+        setSelectedService(null);
+        setCountrySearch("");
+        setCountryOpen(false);
+        setPreferredAreaCode("");
+      }
       setLoading(false);
       return;
     }
@@ -288,7 +300,7 @@ export function ServerSelector({
       void performSearch(search, countrySlug);
     }, 400);
     return () => window.clearTimeout(t);
-  }, [search, activeServer, server2Country, isDisabled, performSearch]);
+  }, [search, activeServer, server2Country, isDisabled, performSearch, preserveSelectionOnNextEmpty]);
 
   useEffect(() => {
     void loadActiveAssignments();
@@ -395,9 +407,15 @@ export function ServerSelector({
 
   // Apply +35% carrier premium for specific carriers
   const carrierPremiumMultiplier = CARRIERS.find((c) => c.value === carrier)?.premium ? 1.35 : 1.0;
+  const areaCodePremiumMultiplier =
+    activeServer === "SERVER1" && preferredAreaCode.trim().length > 0 ? 1.5 : 1.0;
 
   function getPriceWithCarrier(basePrice: number) {
     return Math.ceil(basePrice * carrierPremiumMultiplier);
+  }
+
+  function getServer1Price(basePrice: number) {
+    return Math.ceil(basePrice * carrierPremiumMultiplier * areaCodePremiumMultiplier);
   }
 
   async function handlePurchase() {
@@ -654,7 +672,7 @@ export function ServerSelector({
                               <span className="text-[13px] font-semibold text-violet-700 dark:text-violet-300 shrink-0">
                                 ₦
                                 {(activeServer === "SERVER1"
-                                  ? getPriceWithCarrier(row.priceNGN)
+                                  ? getServer1Price(row.priceNGN)
                                   : row.priceNGN
                                 ).toLocaleString()}
                               </span>
@@ -724,6 +742,25 @@ export function ServerSelector({
             </div>
           )}
 
+          {activeServer === "SERVER1" && selectedService && (
+            <div className="w-full max-w-[354px] mx-auto lg:max-w-none space-y-2 mb-2">
+              <Label className="text-sm font-medium text-[#2D2D2D] dark:text-zinc-100">
+                Preferred Area Code (Optional)
+              </Label>
+              <Input
+                value={preferredAreaCode}
+                placeholder="e.g. 415"
+                className="h-10 text-black dark:text-zinc-100 bg-white dark:bg-zinc-900 border-zinc-200"
+                onChange={(e) => setPreferredAreaCode(e.target.value.replace(/\D/g, "").slice(0, 3))}
+              />
+              {preferredAreaCode.trim() && (
+                <p className="text-xs text-slate-700 dark:text-zinc-300">
+                  Area code premium applied: +50%
+                </p>
+              )}
+            </div>
+          )}
+
           <Card className="w-full max-w-[354px] mx-auto lg:max-w-none rounded-2xl border border-zinc-200/90 dark:border-zinc-900 mb-8 mt-2 shadow-sm">
             <CardHeader className="pb-2 border-b border-zinc-100 dark:border-zinc-800">
               <CardTitle className="text-[15px] font-semibold text-slate-900 dark:text-zinc-100">
@@ -752,7 +789,7 @@ export function ServerSelector({
                       <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
                         ({selectedService.availableCount} available) · ₦
                         {(activeServer === "SERVER1"
-                          ? getPriceWithCarrier(selectedService.priceNGN)
+                          ? getServer1Price(selectedService.priceNGN)
                           : selectedService.priceNGN
                         ).toLocaleString()}
                       </p>
