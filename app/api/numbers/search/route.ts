@@ -1,40 +1,44 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { calculateFinalNGN } from "@/lib/pricing";
+import {
+  computeSmsDisplayPriceNgn,
+  fiveSimFetch,
+  getFiveSimApiBase,
+} from "@/lib/sms-provider";
+import { normalizeServiceSearchQuery } from "@/lib/utils";
 
-// Twilio credentials from environment
-const ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID;
-const AUTH_TOKEN  = process.env.TWILIO_AUTH_TOKEN;
-
-// Map service names → typical area codes for availability searches
-const SERVICE_AREA_CODE: Record<string, string> = {
-  whatsapp:    "415",
-  telegram:    "646",
-  facebook:    "212",
-  instagram:   "310",
-  tiktok:      "312",
-  gmail:       "408",
-  google:      "408",
-  textplus:    "917",
-  textnow:     "720",
-  talkatone:   "213",
-  nextplus:    "469",
-  "google voice": "650",
+type FiveSimGuestProduct = {
+  Category?: string;
+  Qty?: number;
+  Price?: number;
 };
 
-interface TwilioNumber {
-  friendly_name: string;
-  phone_number: string;
-  lata: string | null;
-  rate_center: string | null;
-  locality: string | null;
-  region: string | null;
-  iso_country: string;
-  capabilities: {
-    voice: boolean;
-    SMS: boolean;
-    MMS: boolean;
+function matchesServiceQuery(key: string, query: string): boolean {
+  const k = key.toLowerCase();
+  const q = query.toLowerCase().trim();
+  if (!q) return false;
+  if (k.includes(q)) return true;
+  const parts = q.split(/\s+/).filter(Boolean);
+  return parts.every((p) => k.includes(p));
+}
+
+function formatServiceLabel(key: string): string {
+  const lower = key.toLowerCase();
+  const map: Record<string, string> = {
+    whatsapp: "WhatsApp",
+    telegram: "Telegram",
+    instagram: "Instagram",
+    facebook: "Facebook",
+    tiktok: "TikTok",
+    google: "Google",
+    gmail: "Gmail",
   };
+  if (map[lower]) return map[lower];
+  return key
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
 }
 
 export async function GET(req: Request) {
@@ -43,64 +47,71 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!ACCOUNT_SID || !AUTH_TOKEN) {
+  if (!process.env.FIVE_SIM_API_KEY) {
     return NextResponse.json(
-      { error: "Twilio credentials not configured" },
+      { error: "FIVE_SIM_API_KEY not configured" },
       { status: 503 }
     );
   }
 
   const { searchParams } = new URL(req.url);
-  let service = (searchParams.get("service") ?? "").toLowerCase().trim();
-  service = service.replace(/\bwhasapp\b/g, "whatsapp");
-  const country  = (searchParams.get("country") ?? "US").toUpperCase();
-  const limit    = Math.min(parseInt(searchParams.get("limit") ?? "20"), 50);
+  let query = normalizeServiceSearchQuery(searchParams.get("service") ?? searchParams.get("q") ?? "");
+  const country = (searchParams.get("country") ?? process.env.FIVE_SIM_GUEST_COUNTRY ?? "usa")
+    .toLowerCase()
+    .trim();
+  const operator = (searchParams.get("operator") ?? process.env.FIVE_SIM_GUEST_OPERATOR ?? "any")
+    .toLowerCase()
+    .trim();
+  const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "30", 10) || 30, 1), 50);
 
-  const areaCode = SERVICE_AREA_CODE[service] ?? "";
-  const base64   = Buffer.from(`${ACCOUNT_SID}:${AUTH_TOKEN}`).toString("base64");
+  if (query.length < 2) {
+    return NextResponse.json({ services: [], query, total: 0 });
+  }
 
-  const url = new URL(
-    `https://api.twilio.com/2010-04-01/Accounts/${ACCOUNT_SID}/AvailablePhoneNumbers/${country}/Local.json`
-  );
-  url.searchParams.set("SmsEnabled", "true");
-  url.searchParams.set("PageSize",   String(limit));
-  if (areaCode) url.searchParams.set("AreaCode", areaCode);
+  const base = getFiveSimApiBase();
+  const url = `${base}/guest/products/${encodeURIComponent(country)}/${encodeURIComponent(operator)}`;
 
   try {
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Basic ${base64}` },
-      // Next.js 15: never cache Twilio availability — numbers change in real time
-      cache: "no-store",
-    });
+    const res = await fiveSimFetch(url);
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      console.error("[numbers/search] Twilio error:", err);
+      console.error("[numbers/search] 5SIM guest products error:", err);
       return NextResponse.json(
-        { error: err.message ?? "Failed to fetch numbers from Twilio" },
+        { error: typeof err === "object" && err && "message" in err ? String((err as { message: string }).message) : "Failed to fetch 5SIM products" },
         { status: res.status }
       );
     }
 
-    const twilio = await res.json() as { available_phone_numbers: TwilioNumber[] };
-    const numbers = twilio.available_phone_numbers ?? [];
+    const data = (await res.json()) as Record<string, FiveSimGuestProduct>;
 
-    const priceNGN = calculateFinalNGN(1);
-    const priceUSD = Math.round((priceNGN / 1500) * 100) / 100;
+    const services = Object.entries(data)
+      .filter(([key]) => matchesServiceQuery(key, query))
+      .map(([key, v]) => {
+        const priceUsd = typeof v?.Price === "number" ? v.Price : Number(v?.Price) || 0;
+        const qty = typeof v?.Qty === "number" ? v.Qty : Number(v?.Qty) || 0;
+        const category = typeof v?.Category === "string" ? v.Category : "";
+        return {
+          key,
+          name: formatServiceLabel(key),
+          category,
+          qty,
+          priceUsd,
+          priceNGN: computeSmsDisplayPriceNgn(priceUsd),
+        };
+      })
+      .sort((a, b) => b.qty - a.qty)
+      .slice(0, limit);
 
-    const results = numbers.map((n) => ({
-      phoneNumber:  n.phone_number,
-      friendlyName: n.friendly_name,
-      region:       n.region ?? n.locality ?? "",
-      country:      n.iso_country,
-      smsEnabled:   n.capabilities?.SMS ?? false,
-      priceNGN,
-      priceUSD,
-    }));
-
-    return NextResponse.json({ numbers: results, service, total: results.length });
+    return NextResponse.json({
+      services,
+      query,
+      country,
+      operator,
+      total: services.length,
+    });
   } catch (err) {
     console.error("[numbers/search] Network error:", err);
-    return NextResponse.json({ error: "Network error contacting Twilio" }, { status: 502 });
+    return NextResponse.json({ error: "Network error contacting 5SIM" }, { status: 502 });
   }
 }

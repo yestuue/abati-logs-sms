@@ -79,14 +79,6 @@ type Carrier = "any" | "att" | "tmobile";
 
 const MIN_SERVICE_QUERY_LEN = 2;
 
-function toServiceLabel(value: string): string {
-  return value
-    .split(" ")
-    .filter(Boolean)
-    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-    .join(" ");
-}
-
 const CARRIERS: { value: Carrier; label: string; premium: boolean }[] = [
   { value: "any",     label: "Any Carrier",    premium: false },
   { value: "att",     label: "AT&T (+35%)",    premium: true  },
@@ -123,63 +115,49 @@ export function ServerSelector({
 
     setLoading(true);
     try {
-      if (activeServer === "SERVER1") {
-        const res = await fetch(
-          `/api/numbers/search?service=${encodeURIComponent(normalized)}&limit=30`,
-          { cache: "no-store" }
-        );
-        const data = await res.json();
-        if (!res.ok) {
-          toast.error(data.error ?? "Search failed");
-          setNumbers([]);
-          setServiceResults([]);
-          return;
-        }
-        const rows = (data.numbers ?? []) as {
-          phoneNumber: string;
-          friendlyName: string;
-          region: string;
-          country: string;
-          priceNGN: number;
-          priceUSD: number;
-        }[];
-        setNumbers(
-          rows.map((r) => ({
-            id: `provider:${r.phoneNumber}`,
-            number: r.phoneNumber,
-            country: r.region ? `${r.region} (${r.country})` : r.country,
-            countryCode: r.country,
-            dialCode: "+1",
-            server: "SERVER1" as const,
-            priceNGN: r.priceNGN,
-            priceUSD: r.priceUSD,
-            source: "provider" as const,
-          }))
-        );
-        const priceFromProvider = rows[0]?.priceNGN ?? 0;
-        setServiceResults([
-          {
-            id: `service:${normalized}`,
-            serviceName: toServiceLabel(normalized),
-            availableCount: rows.length,
-            priceNGN: getPriceWithCarrier(priceFromProvider),
-          },
-        ]);
-        return;
-      }
-
-      const res = await fetch(
-        `/api/numbers/fetch?server=SERVER2&q=${encodeURIComponent(normalized)}`,
+      const searchRes = await fetch(
+        `/api/numbers/search?service=${encodeURIComponent(normalized)}&limit=30`,
         { cache: "no-store" }
       );
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? "Search failed");
+      const searchData = await searchRes.json();
+      if (!searchRes.ok) {
+        toast.error(searchData.error ?? "Search failed");
         setNumbers([]);
         setServiceResults([]);
         return;
       }
-      const nums = (data.numbers ?? []) as (Omit<NumberItem, "source" | "dialCode"> & {
+
+      const svcRows = (searchData.services ?? []) as {
+        key: string;
+        name: string;
+        qty: number;
+        priceNGN: number;
+      }[];
+      setServiceResults(
+        svcRows.map((s) => ({
+          id: `service:${s.key}`,
+          serviceName: s.name,
+          availableCount: s.qty,
+          priceNGN: s.priceNGN,
+        }))
+      );
+
+      if (activeServer === "SERVER1") {
+        setNumbers([]);
+        return;
+      }
+
+      const invRes = await fetch(
+        `/api/numbers/fetch?server=SERVER2&q=${encodeURIComponent(normalized)}`,
+        { cache: "no-store" }
+      );
+      const invData = await invRes.json();
+      if (!invRes.ok) {
+        toast.error(invData.error ?? "Failed to load inventory");
+        setNumbers([]);
+        return;
+      }
+      const nums = (invData.numbers ?? []) as (Omit<NumberItem, "source" | "dialCode"> & {
         dialCode?: string | null;
       })[];
       setNumbers(
@@ -189,15 +167,6 @@ export function ServerSelector({
           source: "inventory" as const,
         }))
       );
-      const basePrice = nums[0]?.priceNGN ?? 0;
-      setServiceResults([
-        {
-          id: `service:${normalized}`,
-          serviceName: toServiceLabel(normalized),
-          availableCount: nums.length,
-          priceNGN: getPriceWithCarrier(basePrice),
-        },
-      ]);
     } catch {
       toast.error("Search failed");
       setNumbers([]);
@@ -400,7 +369,7 @@ export function ServerSelector({
 
       {/* Number list card */}
       {isDisabled ? (
-        <Card>
+        <Card className="w-full max-w-[370px] mx-auto lg:max-w-none">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <AlertCircle className="w-8 h-8 text-amber-400 mb-3" />
             <p className="font-medium">Server Temporarily Offline</p>
@@ -410,15 +379,15 @@ export function ServerSelector({
           </CardContent>
         </Card>
       ) : (
-        <Card className="overflow-hidden rounded-2xl border border-zinc-200/90 dark:border-zinc-800">
+        <Card className="w-full max-w-[354px] mx-auto lg:max-w-none overflow-hidden rounded-2xl border border-zinc-200/90 dark:border-zinc-800">
           <CardHeader className="pb-2 bg-gradient-to-b from-violet-50/50 to-white dark:from-violet-950/20 dark:to-transparent border-b border-zinc-100 dark:border-zinc-900">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <CardTitle className="text-[15px] flex items-center gap-2 font-semibold">
+                <CardTitle className="text-[14px] flex items-center gap-1.5 font-semibold">
                   <span>{SERVER_INFO[activeServer].icon}</span>
                   {SERVER_INFO[activeServer].label} — {SERVER_INFO[activeServer].sublabel}
                 </CardTitle>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
+                <p className="text-[10.5px] text-muted-foreground mt-0.5 leading-snug">
                   {SERVER_INFO[activeServer].description}
                 </p>
               </div>
@@ -434,11 +403,12 @@ export function ServerSelector({
             </div>
 
             {/* Search */}
-            <div className="relative mt-2">
+            <p className="text-[12px] font-medium text-zinc-600 dark:text-zinc-400 mt-1">Select Service</p>
+            <div className="relative mt-1.5">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400 pointer-events-none" />
               <Input
-                placeholder="Type a service name (e.g. WhatsApp, Telegram)…"
-                className="pl-8 pr-8 h-9 text-[12px] rounded-xl border-zinc-200 bg-white/95 focus-visible:ring-violet-400/40"
+                placeholder="Search: WhatsApp, Telegram, Google…"
+                className="pl-8 pr-8 h-9 text-[11.5px] rounded-xl border-zinc-200 bg-white/95 focus-visible:ring-violet-400/40"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -451,6 +421,26 @@ export function ServerSelector({
                 </button>
               )}
             </div>
+
+            <div
+              className="mt-3 rounded-xl border p-3 shadow-[0_2px_10px_rgba(124,58,237,0.06)]"
+              style={{
+                background: "linear-gradient(180deg, rgba(245,243,255,0.92), rgba(255,255,255,1))",
+                borderColor: "rgba(139,92,246,0.22)",
+              }}
+            >
+              <h3 className="text-[12.5px] font-semibold text-violet-700 dark:text-violet-300 mb-1.5">
+                How it works
+              </h3>
+              <ul className="space-y-1 text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-300">
+                <li>- Select a service and click Get Number — number slot appears instantly</li>
+                <li>- Credits are only charged if you receive a verification code</li>
+                <li>- Cancel after 1 minute if no code arrives — full refund</li>
+                <li>- If no OTP before expiry — automatic full refund</li>
+                <li>- After OTP received — 10 extra minutes grace period</li>
+                <li>- Carrier or area code preference adds +35% to the price</li>
+              </ul>
+            </div>
           </CardHeader>
 
           <CardContent className="p-0">
@@ -459,8 +449,8 @@ export function ServerSelector({
                 <Search className="w-7 h-7 text-muted-foreground mb-3 opacity-60" />
                 <p className="text-sm font-medium text-foreground mb-1">Search by service</p>
                 <p className="text-xs text-muted-foreground max-w-sm">
-                  Enter at least {MIN_SERVICE_QUERY_LEN} characters (e.g. WhatsApp). Results load from our SMS provider
-                  {activeServer === "SERVER2" ? " inventory" : ""} after you stop typing.
+                  Enter at least {MIN_SERVICE_QUERY_LEN} characters (e.g. WhatsApp). Services load from 5SIM after you stop typing
+                  {activeServer === "SERVER2" ? "; inventory numbers show when available." : "."}
                 </p>
               </div>
             ) : loading ? (
@@ -477,98 +467,86 @@ export function ServerSelector({
                 </p>
               </div>
             ) : (
-              <div className="space-y-2.5 p-3">
+              <div className="space-y-2 p-2">
                 {serviceResults.map((row) => (
                   <div
                     key={row.id}
-                    className="rounded-xl border px-3 py-2.5 flex items-center justify-between gap-3 shadow-[0_2px_10px_rgba(0,0,0,0.04)]"
+                    className="rounded-xl border px-2.5 py-2 flex items-center justify-between gap-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
                     style={{
                       background: "linear-gradient(180deg, rgba(245,243,255,0.95), rgba(255,255,255,1))",
                       borderColor: "rgba(139,92,246,0.18)",
                     }}
                   >
                     <div className="min-w-0">
-                      <p className="text-[13px] font-medium text-zinc-800 dark:text-zinc-100 truncate">
+                      <p className="text-[12px] font-medium text-zinc-800 dark:text-zinc-100 truncate">
                         {row.serviceName}
                       </p>
-                      <p className="text-[11px] text-emerald-600">({row.availableCount} available)</p>
+                      <p className="text-[10px] text-emerald-600">({row.availableCount} available)</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-[13px] font-semibold text-violet-600 dark:text-violet-300">
-                        ₦{row.priceNGN.toLocaleString()}
+                      <p className="text-[12px] font-semibold text-violet-600 dark:text-violet-300">
+                        ₦
+                        {(activeServer === "SERVER1"
+                          ? getPriceWithCarrier(row.priceNGN)
+                          : row.priceNGN
+                        ).toLocaleString()}
                       </p>
                       <p className="text-[10px] text-zinc-400">price</p>
                     </div>
                   </div>
                 ))}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border-t border-zinc-100 dark:border-zinc-900 pt-2">
-                <AnimatePresence initial={false}>
-                  {numbers.map((n, i) => (
-                    <motion.div
-                      key={n.id}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.97 }}
-                      transition={{ duration: 0.15, delay: Math.min(i * 0.025, 0.2) }}
-                      onClick={() => setSelected(n)}
-                      className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-violet-50/60 dark:hover:bg-violet-950/20 transition-colors border-b border-zinc-100 dark:border-zinc-900 last:border-0 sm:odd:border-r sm:border-zinc-100 dark:sm:border-zinc-900"
-                    >
-                      <div className="text-xl flex-shrink-0">{SERVER_INFO[activeServer].icon}</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-mono font-semibold text-foreground">
-                          {n.number}
-                        </p>
-                        <p className="text-[11px] text-zinc-500">{n.country}</p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-[13px] font-semibold text-violet-600 dark:text-violet-300">
-                          ₦{getPriceWithCarrier(n.priceNGN).toLocaleString()}
-                        </p>
-                        <p className="text-[10px] text-zinc-400">
-                          {carrierPremiumMultiplier > 1 && (
-                            <span className="line-through mr-1 opacity-60">₦{n.priceNGN.toLocaleString()}</span>
-                          )}
-                          ${getPriceWithCarrier(n.priceUSD).toFixed(2)}
-                        </p>
-                      </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); copyNumber(n.number); }}
-                        className="p-1.5 rounded-lg hover:bg-violet-100/80 dark:hover:bg-violet-900/30 transition-colors text-zinc-400"
-                      >
-                        {copied === n.number ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                </div>
+                {activeServer === "SERVER2" && numbers.length > 0 && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border-t border-zinc-100 dark:border-zinc-900 pt-1.5">
+                    <AnimatePresence initial={false}>
+                      {numbers.map((n, i) => (
+                        <motion.div
+                          key={n.id}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.97 }}
+                          transition={{ duration: 0.15, delay: Math.min(i * 0.025, 0.2) }}
+                          onClick={() => setSelected(n)}
+                          className="flex items-center gap-2 px-2.5 py-2 cursor-pointer hover:bg-violet-50/60 dark:hover:bg-violet-950/20 transition-colors border-b border-zinc-100 dark:border-zinc-900 last:border-0 sm:odd:border-r sm:border-zinc-100 dark:sm:border-zinc-900"
+                        >
+                          <div className="text-xl flex-shrink-0">{SERVER_INFO[activeServer].icon}</div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[12px] font-mono font-semibold text-foreground">
+                              {n.number}
+                            </p>
+                            <p className="text-[10px] text-zinc-500">{n.country}</p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-[12px] font-semibold text-violet-600 dark:text-violet-300">
+                              ₦{getPriceWithCarrier(n.priceNGN).toLocaleString()}
+                            </p>
+                            <p className="text-[10px] text-zinc-400">
+                              {carrierPremiumMultiplier > 1 && (
+                                <span className="line-through mr-1 opacity-60">₦{n.priceNGN.toLocaleString()}</span>
+                              )}
+                              ${getPriceWithCarrier(n.priceUSD).toFixed(2)}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); copyNumber(n.number); }}
+                            className="p-1.5 rounded-lg hover:bg-violet-100/80 dark:hover:bg-violet-900/30 transition-colors text-zinc-400"
+                          >
+                            {copied === n.number ? (
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
       )}
-
-      <div
-        className="rounded-2xl border p-4 sm:p-5 shadow-[0_8px_22px_rgba(124,58,237,0.06)]"
-        style={{
-          background: "linear-gradient(180deg, rgba(245,243,255,0.9), rgba(255,255,255,1))",
-          borderColor: "rgba(139,92,246,0.2)",
-        }}
-      >
-        <h3 className="text-[13px] font-semibold text-violet-700 dark:text-violet-300 mb-2.5">How it works</h3>
-        <ul className="space-y-1.5 text-[12px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-          <li>- Select a service and click Get Number — number slot appears instantly</li>
-          <li>- Credits are only charged if you receive a verification code</li>
-          <li>- Cancel after 1 minute if no code arrives — full refund</li>
-          <li>- If no OTP before expiry — automatic full refund</li>
-          <li>- After OTP received — 10 extra minutes grace period</li>
-          <li>- Carrier or area code preference adds +35% to the price</li>
-        </ul>
-      </div>
 
       {/* Purchase dialog */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
