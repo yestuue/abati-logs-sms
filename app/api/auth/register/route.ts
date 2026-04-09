@@ -84,6 +84,9 @@ export async function POST(req: Request) {
 
     try {
       user = await prisma.$transaction(async (tx) => {
+        const existingUsersCount = await tx.user.count();
+        const role = existingUsersCount === 0 ? "ADMIN" : "USER";
+
         await tx.verificationToken.deleteMany({
           where: { identifier: normalizedEmail },
         });
@@ -94,7 +97,7 @@ export async function POST(req: Request) {
             name: normalizedUsername,
             email: normalizedEmail,
             password: hashed,
-            role: "USER",
+            role,
             isVerified: true,
             walletBalance: 0,
             walletCurrency: "NGN",
