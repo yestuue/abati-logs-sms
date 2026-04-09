@@ -2,6 +2,8 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+
+/** Credentials + JWT: sign-in reads User from Prisma only. Supabase Auth is not used. */
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
@@ -34,9 +36,10 @@ export const {
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
+        const normalizedEmail = email.toLowerCase().trim();
 
         const user = await prisma.user.findUnique({
-          where: { email },
+          where: { email: normalizedEmail },
         });
 
         if (!user || !user.password) return null;

@@ -23,6 +23,7 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     username: "",
     email: "",
+    phone: "",
     password: "",
     confirm: "",
   });
@@ -59,6 +60,7 @@ export default function RegisterPage() {
         username: form.username,
         email: form.email,
         password: form.password,
+        ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
       }),
     });
     const data = await res.json();
@@ -72,7 +74,7 @@ export default function RegisterPage() {
     toast.success("Account created! Signing you in…");
 
     await signIn("credentials", {
-      email: form.email,
+      email: form.email.trim().toLowerCase(),
       password: form.password,
       redirect: false,
     });
@@ -177,6 +179,21 @@ export default function RegisterPage() {
                   required
                   autoComplete="email"
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="reg-phone">Phone (optional)</Label>
+                <Input
+                  id="reg-phone"
+                  type="tel"
+                  placeholder="+234… — for Welcome to Abati SMS (Termii)"
+                  value={form.phone}
+                  onChange={(e) => update("phone", e.target.value)}
+                  autoComplete="tel"
+                />
+                <p className="text-[11px] text-muted-foreground">
+                  If provided, we send one welcome SMS via Termii. No Supabase sign-up.
+                </p>
               </div>
 
               <div className="space-y-1.5">

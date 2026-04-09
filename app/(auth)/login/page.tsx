@@ -28,7 +28,11 @@ function LoginForm() {
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
 
     setLoading(true);
-    const res = await signIn("credentials", { email, password, redirect: false });
+    const res = await signIn("credentials", {
+      email: email.trim().toLowerCase(),
+      password,
+      redirect: false,
+    });
 
     if (res?.error) {
       toast.error("Invalid email or password", {

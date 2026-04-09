@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { sendSMS } from "@/lib/sms";
+
+/** Registration is Prisma + bcrypt only. NextAuth uses Credentials + JWT; Supabase Auth is not used here. */
 
 const schema = z.object({
   username: z.string().min(3).max(30),
@@ -56,35 +59,87 @@ export async function POST(req: Request) {
       );
     }
 
-    const hashed = await bcrypt.hash(password, 12);
-
-    const user = await prisma.user.create({
-      data: {
-        username: normalizedUsername,
-        email: normalizedEmail,
-        password: hashed,
-        role: "USER",
-        isVerified: true,
-        walletBalance: 0,
-        walletCurrency: "NGN",
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        role: true,
-        walletBalance: true,
-        walletCurrency: true,
-      },
+    const usernameTaken = await prisma.user.findUnique({
+      where: { username: normalizedUsername },
+      select: { id: true },
     });
 
-    // Attempt to send a Welcome SMS if a phone number was provided
-    if (phone) {
+    if (usernameTaken) {
+      return NextResponse.json(
+        { error: "This username is already taken" },
+        { status: 409 }
+      );
+    }
+
+    const hashed = await bcrypt.hash(password, 12);
+
+    let user: {
+      id: string;
+      username: string;
+      email: string;
+      role: string;
+      walletBalance: number;
+      walletCurrency: string;
+    };
+
+    try {
+      user = await prisma.$transaction(async (tx) => {
+        await tx.verificationToken.deleteMany({
+          where: { identifier: normalizedEmail },
+        });
+
+        return tx.user.create({
+          data: {
+            username: normalizedUsername,
+            name: normalizedUsername,
+            email: normalizedEmail,
+            password: hashed,
+            role: "USER",
+            isVerified: true,
+            walletBalance: 0,
+            walletCurrency: "NGN",
+          },
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            role: true,
+            walletBalance: true,
+            walletCurrency: true,
+          },
+        });
+      });
+    } catch (e) {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+        const target = (e.meta?.target as string[] | undefined) ?? [];
+        const field = Array.isArray(target) ? target.join(",") : "";
+        if (field.includes("email")) {
+          return NextResponse.json(
+            { error: "An account with this email already exists" },
+            { status: 409 }
+          );
+        }
+        if (field.includes("username")) {
+          return NextResponse.json(
+            { error: "This username is already taken" },
+            { status: 409 }
+          );
+        }
+        return NextResponse.json(
+          { error: "Registration failed: that email or username is already in use" },
+          { status: 409 }
+        );
+      }
+      throw e;
+    }
+
+    const welcomeMessage =
+      "Welcome to Abati! Your account has been successfully created.";
+
+    if (phone?.trim()) {
       try {
-        const message = `Welcome to Abati, ${normalizedUsername}! Your account has been successfully created.`;
-        await sendSMS(phone, message);
+        await sendSMS(phone.trim(), welcomeMessage);
       } catch (smsError) {
-        // Keep registration successful even if SMS delivery fails.
         console.error("[register] Non-fatal: Termii SMS failed to send:", smsError);
       }
     }
