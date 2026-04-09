@@ -97,11 +97,23 @@ type Carrier = "any" | "att" | "tmobile";
 
 const MIN_SERVICE_QUERY_LEN = 2;
 
-const CARRIERS: { value: Carrier; label: string; premium: boolean }[] = [
-  { value: "any",     label: "Any Carrier",    premium: false },
-  { value: "att",     label: "AT&T (+35%)",    premium: true  },
-  { value: "tmobile", label: "T-Mobile (+35%)", premium: true  },
+const CARRIERS: { value: Carrier; label: string }[] = [
+  { value: "any", label: "Any Carrier" },
+  { value: "att", label: "AT&T" },
+  { value: "tmobile", label: "T-Mobile" },
 ];
+
+/** US area codes: comma-separated 3-digit blocks, e.g. 212, 646, 917 */
+function parseUsAreaCodes(raw: string): string[] {
+  return raw
+    .split(",")
+    .map((s) => s.trim().replace(/\D/g, ""))
+    .filter((d) => d.length === 3);
+}
+
+function sanitizeAreaCodeInput(raw: string): string {
+  return raw.replace(/[^\d,]/g, "");
+}
 
 const HOW_IT_WORKS_RULES = [
   "Select a service and click Get Number — number slot appears instantly",
@@ -405,26 +417,29 @@ export function ServerSelector({
     return c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q);
   });
 
-  // Apply +35% carrier premium for specific carriers
-  const carrierPremiumMultiplier = CARRIERS.find((c) => c.value === carrier)?.premium ? 1.35 : 1.0;
-  const areaCodePremiumMultiplier =
-    activeServer === "SERVER1" && preferredAreaCode.trim().length > 0 ? 1.5 : 1.0;
-
-  function getPriceWithCarrier(basePrice: number) {
-    return Math.ceil(basePrice * carrierPremiumMultiplier);
-  }
+  const parsedAreaCodes = parseUsAreaCodes(preferredAreaCode);
+  const hasAreaCode = activeServer === "SERVER1" && parsedAreaCodes.length > 0;
+  const hasSpecificCarrier = carrier !== "any";
+  const server1PremiumActive =
+    activeServer === "SERVER1" && (hasAreaCode || hasSpecificCarrier);
+  const premiumMultiplier = server1PremiumActive ? 1.35 : 1;
 
   function getServer1Price(basePrice: number) {
-    return Math.ceil(basePrice * carrierPremiumMultiplier * areaCodePremiumMultiplier);
+    return Math.round(basePrice * premiumMultiplier);
+  }
+
+  /** Wallet charge for inventory purchase (API debits DB `priceNGN` only). */
+  function getPurchasePriceNGN(item: NumberItem) {
+    return item.priceNGN;
   }
 
   async function handlePurchase() {
     if (!selected) return;
     if (selected.source === "provider") return;
     setBuying(true);
-    const basePrice = walletCurrency === "USD" ? selected.priceUSD : selected.priceNGN;
-    const price = getPriceWithCarrier(basePrice);
-    if (walletBalance < price) {
+    const purchaseAmount =
+      walletCurrency === "USD" ? selected.priceUSD : getPurchasePriceNGN(selected);
+    if (walletBalance < purchaseAmount) {
       toast.error("Insufficient wallet balance. Please top up first.");
       setBuying(false);
       return;
@@ -540,9 +555,9 @@ export function ServerSelector({
           style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
         >
           <p className="text-xs font-semibold text-foreground mb-2.5">
-            Carrier Preference
+            Carrier preference
             <span className="text-muted-foreground font-normal ml-1.5">
-              (specific carriers add a +35% premium)
+              (optional — specific carrier or area codes below adds one +35% premium, not stacked)
             </span>
           </p>
           <div className="flex gap-2 flex-wrap">
@@ -569,9 +584,9 @@ export function ServerSelector({
               </button>
             ))}
           </div>
-          {carrierPremiumMultiplier > 1 && (
-            <p className="text-xs mt-2" style={{ color: "oklch(0.68 0.22 278)" }}>
-              ⚡ +35% carrier premium applied to all prices below
+          {server1PremiumActive && (
+            <p className="text-xs mt-2 font-medium text-amber-700 dark:text-amber-400">
+              +35% preference premium applied to USA prices below (carrier and/or area codes — not stacked)
             </p>
           )}
         </div>
@@ -669,7 +684,13 @@ export function ServerSelector({
                                   ({row.availableCount} available)
                                 </p>
                               </div>
-                              <span className="text-[13px] font-semibold text-violet-700 dark:text-violet-300 shrink-0">
+                              <span
+                                className={`text-[13px] font-semibold shrink-0 ${
+                                  activeServer === "SERVER1" && server1PremiumActive
+                                    ? "text-amber-600 dark:text-amber-400"
+                                    : "text-violet-700 dark:text-violet-300"
+                                }`}
+                              >
                                 ₦
                                 {(activeServer === "SERVER1"
                                   ? getServer1Price(row.priceNGN)
@@ -749,13 +770,21 @@ export function ServerSelector({
               </Label>
               <Input
                 value={preferredAreaCode}
-                placeholder="e.g. 415"
+                placeholder="e.g. 212, 646, 917"
                 className="h-10 text-black dark:text-zinc-100 bg-white dark:bg-zinc-900 border-zinc-200"
-                onChange={(e) => setPreferredAreaCode(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                onChange={(e) => setPreferredAreaCode(sanitizeAreaCodeInput(e.target.value))}
               />
-              {preferredAreaCode.trim() && (
-                <p className="text-xs text-slate-700 dark:text-zinc-300">
-                  Area code premium applied: +50%
+              <p className="text-[11px] text-slate-500 dark:text-zinc-500">
+                US area codes only — digits and commas. One +35% premium if you enter any code (combined with carrier preference, not stacked).
+              </p>
+              {preferredAreaCode.trim() && parsedAreaCodes.length === 0 && (
+                <p className="text-xs text-slate-600 dark:text-zinc-400">
+                  Add full 3-digit codes (e.g. 212) — incomplete segments are ignored for pricing.
+                </p>
+              )}
+              {parsedAreaCodes.length > 0 && (
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                  {parsedAreaCodes.length} code{parsedAreaCodes.length === 1 ? "" : "s"} · +35% reflected in prices below
                 </p>
               )}
             </div>
@@ -786,7 +815,13 @@ export function ServerSelector({
                           {flagFromIso2(selectedCountry.iso2)} {selectedCountry.name}
                         </p>
                       )}
-                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                      <p
+                        className={`text-[11px] font-medium mt-0.5 ${
+                          activeServer === "SERVER1" && server1PremiumActive
+                            ? "text-amber-700 dark:text-amber-400"
+                            : "text-emerald-700 dark:text-emerald-400"
+                        }`}
+                      >
                         ({selectedService.availableCount} available) · ₦
                         {(activeServer === "SERVER1"
                           ? getServer1Price(selectedService.priceNGN)
@@ -996,19 +1031,15 @@ export function ServerSelector({
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm border-t border-border/30 pt-2 mt-2">
-                  <span className="font-medium">Base Price</span>
-                  <span className="text-muted-foreground">₦{selected.priceNGN.toLocaleString()}</span>
+                  <span className="font-medium">Price</span>
+                  <span className="text-muted-foreground">
+                    ₦{getPurchasePriceNGN(selected).toLocaleString()}
+                  </span>
                 </div>
-                {carrierPremiumMultiplier > 1 && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium" style={{ color: "oklch(0.68 0.22 278)" }}>Carrier Premium</span>
-                    <span style={{ color: "oklch(0.68 0.22 278)" }}>+35%</span>
-                  </div>
-                )}
                 <div className="flex items-center justify-between text-sm border-t border-border/30 pt-2">
                   <span className="font-bold">Total</span>
                   <span className="font-bold text-primary text-base">
-                    ₦{getPriceWithCarrier(selected.priceNGN).toLocaleString()}
+                    ₦{getPurchasePriceNGN(selected).toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -1017,14 +1048,17 @@ export function ServerSelector({
                 <span className="text-muted-foreground">Wallet Balance After</span>
                 <span
                   className={`font-semibold ${
-                    walletBalance < getPriceWithCarrier(selected.priceNGN) ? "text-destructive" : "text-emerald-400"
+                    walletBalance < getPurchasePriceNGN(selected) ? "text-destructive" : "text-emerald-400"
                   }`}
                 >
-                  {formatCurrency(Math.max(0, walletBalance - getPriceWithCarrier(selected.priceNGN)), "NGN")}
+                  {formatCurrency(
+                    Math.max(0, walletBalance - getPurchasePriceNGN(selected)),
+                    "NGN"
+                  )}
                 </span>
               </div>
 
-              {walletBalance < getPriceWithCarrier(selected.priceNGN) && (
+              {walletBalance < getPurchasePriceNGN(selected) && (
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   Insufficient balance. Please top up your wallet first.
@@ -1042,7 +1076,7 @@ export function ServerSelector({
                 buying ||
                 !selected ||
                 selected.source === "provider" ||
-                walletBalance < getPriceWithCarrier(selected?.priceNGN ?? 0)
+                walletBalance < getPurchasePriceNGN(selected)
               }
             >
               {buying ? (
