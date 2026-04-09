@@ -5,6 +5,7 @@ import {
   Phone,
   Copy,
   Check,
+  CheckCircle2,
   Loader2,
   Search,
   RefreshCw,
@@ -12,11 +13,13 @@ import {
   Wallet,
   AlertCircle,
   X,
+  Clock,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -25,9 +28,15 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { formatCurrency, normalizeServiceSearchQuery } from "@/lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { formatCurrency, formatCountdown, normalizeServiceSearchQuery } from "@/lib/utils";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 
 interface NumberItem {
   id: string;
@@ -44,9 +53,24 @@ interface NumberItem {
 
 interface ServiceSearchResult {
   id: string;
+  serviceKey: string;
   serviceName: string;
   availableCount: number;
   priceNGN: number;
+}
+
+interface ActiveAssignment {
+  id: string;
+  number: string;
+  country: string;
+  server: string;
+  expiresAt: string | null;
+  lastSms: { body: string; createdAt: string } | null;
+}
+
+interface CountryOption {
+  slug: string;
+  name: string;
 }
 
 interface ServerSelectorProps {
@@ -85,13 +109,26 @@ const CARRIERS: { value: Carrier; label: string; premium: boolean }[] = [
   { value: "tmobile", label: "T-Mobile (+35%)", premium: true  },
 ];
 
+const HOW_IT_WORKS_RULES = [
+  "Select a service and click Get Number — number slot appears instantly",
+  "Credits are only charged if you receive a verification code",
+  "Cancel after 1 minute if no code arrives — full refund",
+  "If no OTP before expiry — automatic full refund",
+  "After OTP received — 10 extra minutes grace period",
+  "Carrier or area code preference adds +35% to the price",
+] as const;
+
+function extractOtp(body: string): string | null {
+  const m = body.match(/\b\d{4,8}\b/);
+  return m ? m[0] : null;
+}
+
 export function ServerSelector({
   walletBalance,
   walletCurrency,
   serverConfigs,
   userId: _userId,
 }: ServerSelectorProps) {
-  const router = useRouter();
   const [activeServer, setActiveServer] = useState<"SERVER1" | "SERVER2">("SERVER1");
   const [numbers, setNumbers] = useState<NumberItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -101,59 +138,75 @@ export function ServerSelector({
   const [copied, setCopied] = useState<string | null>(null);
   const [carrier, setCarrier] = useState<Carrier>("any");
   const [serviceResults, setServiceResults] = useState<ServiceSearchResult[]>([]);
+  const [selectedService, setSelectedService] = useState<ServiceSearchResult | null>(null);
+  const [server2Country, setServer2Country] = useState("usa");
+  const [countries, setCountries] = useState<CountryOption[]>([]);
+  const [activeAssignments, setActiveAssignments] = useState<ActiveAssignment[]>([]);
+  const [loadingActive, setLoadingActive] = useState(false);
 
   const activeServerConfig = serverConfigs.find((c) => c.server === activeServer);
   const isDisabled = activeServerConfig ? !activeServerConfig.isEnabled : false;
 
-  const performSearch = useCallback(async (rawQuery: string) => {
-    const normalized = normalizeServiceSearchQuery(rawQuery);
-    if (normalized.length < MIN_SERVICE_QUERY_LEN) {
-      setNumbers([]);
-      setServiceResults([]);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const searchRes = await fetch(
-        `/api/numbers/search?service=${encodeURIComponent(normalized)}&limit=30`,
-        { cache: "no-store" }
-      );
-      const searchData = await searchRes.json();
-      if (!searchRes.ok) {
-        toast.error(searchData.error ?? "Search failed");
-        setNumbers([]);
+  const performSearch = useCallback(
+    async (rawQuery: string, countrySlug: string) => {
+      const normalized = normalizeServiceSearchQuery(rawQuery);
+      if (normalized.length < MIN_SERVICE_QUERY_LEN) {
         setServiceResults([]);
         return;
       }
 
-      const svcRows = (searchData.services ?? []) as {
-        key: string;
-        name: string;
-        qty: number;
-        priceNGN: number;
-      }[];
-      setServiceResults(
-        svcRows.map((s) => ({
+      setLoading(true);
+      try {
+        const searchRes = await fetch(
+          `/api/numbers/search?service=${encodeURIComponent(normalized)}&limit=30&country=${encodeURIComponent(countrySlug)}`,
+          { cache: "no-store" }
+        );
+        const searchData = await searchRes.json();
+        if (!searchRes.ok) {
+          toast.error(searchData.error ?? "Search failed");
+          setServiceResults([]);
+          return;
+        }
+
+        const svcRows = (searchData.services ?? []) as {
+          key: string;
+          name: string;
+          qty: number;
+          priceNGN: number;
+        }[];
+        const mapped: ServiceSearchResult[] = svcRows.map((s) => ({
           id: `service:${s.key}`,
+          serviceKey: s.key,
           serviceName: s.name,
           availableCount: s.qty,
           priceNGN: s.priceNGN,
-        }))
-      );
+        }));
+        setServiceResults(mapped);
 
-      if (activeServer === "SERVER1") {
-        setNumbers([]);
-        return;
+        setSelectedService((prev) => {
+          if (!prev) return null;
+          const row = mapped.find((m) => m.serviceKey === prev.serviceKey);
+          if (!row) return prev;
+          return { ...row };
+        });
+      } catch {
+        toast.error("Search failed");
+        setServiceResults([]);
+      } finally {
+        setLoading(false);
       }
+    },
+    []
+  );
 
+  const loadInventoryServer2 = useCallback(async (serviceKey: string) => {
+    try {
       const invRes = await fetch(
-        `/api/numbers/fetch?server=SERVER2&q=${encodeURIComponent(normalized)}`,
+        `/api/numbers/fetch?server=SERVER2&q=${encodeURIComponent(serviceKey)}`,
         { cache: "no-store" }
       );
       const invData = await invRes.json();
       if (!invRes.ok) {
-        toast.error(invData.error ?? "Failed to load inventory");
         setNumbers([]);
         return;
       }
@@ -168,13 +221,23 @@ export function ServerSelector({
         }))
       );
     } catch {
-      toast.error("Search failed");
       setNumbers([]);
-      setServiceResults([]);
-    } finally {
-      setLoading(false);
     }
-  }, [activeServer]);
+  }, []);
+
+  const loadActiveAssignments = useCallback(async () => {
+    setLoadingActive(true);
+    try {
+      const res = await fetch("/api/user/active-numbers", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) return;
+      setActiveAssignments((data.numbers ?? []) as ActiveAssignment[]);
+    } catch {
+      /* ignore */
+    } finally {
+      setLoadingActive(false);
+    }
+  }, []);
 
   function switchServer(srv: "SERVER1" | "SERVER2") {
     if (srv === activeServer) return;
@@ -182,22 +245,110 @@ export function ServerSelector({
     setSearch("");
     setNumbers([]);
     setServiceResults([]);
+    setSelectedService(null);
+  }
+
+  function selectServiceRow(row: ServiceSearchResult) {
+    setSelectedService(row);
+    setSearch("");
+    setServiceResults([]);
   }
 
   useEffect(() => {
     if (isDisabled) return;
     const trimmed = search.trim();
     if (trimmed.length < MIN_SERVICE_QUERY_LEN) {
-      setNumbers([]);
       setServiceResults([]);
       setLoading(false);
       return;
     }
+    const countrySlug = activeServer === "SERVER1" ? "usa" : server2Country;
     const t = window.setTimeout(() => {
-      void performSearch(search);
+      void performSearch(search, countrySlug);
     }, 400);
     return () => window.clearTimeout(t);
-  }, [search, activeServer, isDisabled, performSearch]);
+  }, [search, activeServer, server2Country, isDisabled, performSearch]);
+
+  useEffect(() => {
+    void loadActiveAssignments();
+    const id = window.setInterval(() => void loadActiveAssignments(), 15000);
+    return () => window.clearInterval(id);
+  }, [loadActiveAssignments]);
+
+  useEffect(() => {
+    if (activeServer !== "SERVER2") return;
+    let cancelled = false;
+    void (async () => {
+      const res = await fetch("/api/numbers/countries", { cache: "no-store" });
+      const data = await res.json();
+      if (!cancelled && res.ok) {
+        setCountries((data.countries ?? []) as CountryOption[]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeServer]);
+
+  useEffect(() => {
+    if (activeServer === "SERVER1") {
+      setNumbers([]);
+      return;
+    }
+    if (!selectedService) {
+      setNumbers([]);
+      return;
+    }
+    void loadInventoryServer2(selectedService.serviceKey);
+  }, [activeServer, selectedService, loadInventoryServer2]);
+
+  useEffect(() => {
+    if (activeServer !== "SERVER2" || !selectedService?.serviceKey) return;
+    const key = selectedService.serviceKey;
+    if (key.length < MIN_SERVICE_QUERY_LEN) return;
+    let cancelled = false;
+    const t = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const searchRes = await fetch(
+            `/api/numbers/search?service=${encodeURIComponent(key)}&limit=10&country=${encodeURIComponent(server2Country)}`,
+            { cache: "no-store" }
+          );
+          const searchData = await searchRes.json();
+          if (!searchRes.ok || cancelled) return;
+          const svcRows = (searchData.services ?? []) as {
+            key: string;
+            name: string;
+            qty: number;
+            priceNGN: number;
+          }[];
+          const row = svcRows.find((s) => s.key === key);
+          if (row && !cancelled) {
+            setSelectedService({
+              id: `service:${row.key}`,
+              serviceKey: row.key,
+              serviceName: row.name,
+              availableCount: row.qty,
+              priceNGN: row.priceNGN,
+            });
+          }
+        } catch {
+          /* ignore */
+        }
+      })();
+    }, 300);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [server2Country, activeServer, selectedService?.serviceKey]);
+
+  useEffect(() => {
+    if (countries.length === 0) return;
+    setServer2Country((prev) =>
+      countries.some((c) => c.slug === prev) ? prev : countries[0]!.slug
+    );
+  }, [countries]);
 
   const queryReady = search.trim().length >= MIN_SERVICE_QUERY_LEN;
 
@@ -236,7 +387,7 @@ export function ServerSelector({
       } else if (data.success) {
         toast.success(`${selected.number} assigned to your account!`);
         setSelected(null);
-        router.push("/dashboard");
+        void loadActiveAssignments();
       }
     } catch {
       toast.error("Network error. Try again.");
@@ -253,7 +404,7 @@ export function ServerSelector({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Wallet balance */}
       <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 border border-border/30">
         <Wallet className="w-4 h-4 text-primary" />
@@ -367,7 +518,7 @@ export function ServerSelector({
         </div>
       )}
 
-      {/* Number list card */}
+      {/* Numbers flow: search → active numbers → rules */}
       {isDisabled ? (
         <Card className="w-full max-w-[370px] mx-auto lg:max-w-none">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
@@ -379,173 +530,331 @@ export function ServerSelector({
           </CardContent>
         </Card>
       ) : (
-        <Card className="w-full max-w-[354px] mx-auto lg:max-w-none overflow-hidden rounded-2xl border border-zinc-200/90 dark:border-zinc-800">
-          <CardHeader className="pb-2 bg-gradient-to-b from-violet-50/50 to-white dark:from-violet-950/20 dark:to-transparent border-b border-zinc-100 dark:border-zinc-900">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <CardTitle className="text-[14px] flex items-center gap-1.5 font-semibold">
-                  <span>{SERVER_INFO[activeServer].icon}</span>
-                  {SERVER_INFO[activeServer].label} — {SERVER_INFO[activeServer].sublabel}
-                </CardTitle>
-                <p className="text-[10.5px] text-muted-foreground mt-0.5 leading-snug">
-                  {SERVER_INFO[activeServer].description}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 flex-shrink-0"
-                disabled={!queryReady}
-                onClick={() => queryReady && void performSearch(search)}
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              </Button>
-            </div>
-
-            {/* Search */}
-            <p className="text-[12px] font-medium text-zinc-600 dark:text-zinc-400 mt-1">Select Service</p>
-            <div className="relative mt-1.5">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400 pointer-events-none" />
-              <Input
-                placeholder="Search: WhatsApp, Telegram, Google…"
-                className="pl-8 pr-8 h-9 text-[11.5px] rounded-xl border-zinc-200 bg-white/95 focus-visible:ring-violet-400/40"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              {search && (
-                <button
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 transition-colors"
-                  onClick={() => setSearch("")}
+        <>
+          <Card className="relative z-30 w-full max-w-[354px] mx-auto lg:max-w-none overflow-visible rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-card shadow-sm">
+            <CardHeader className="pb-3 bg-gradient-to-b from-violet-50/50 to-white dark:from-violet-950/20 dark:to-transparent border-b border-zinc-100 dark:border-zinc-900">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle className="text-[14px] flex items-center gap-1.5 font-semibold text-slate-900 dark:text-zinc-100">
+                    <span>{SERVER_INFO[activeServer].icon}</span>
+                    {SERVER_INFO[activeServer].label} — {SERVER_INFO[activeServer].sublabel}
+                  </CardTitle>
+                  <p className="text-[10.5px] text-slate-600 dark:text-zinc-400 mt-0.5 leading-snug">
+                    {SERVER_INFO[activeServer].description}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 flex-shrink-0"
+                  disabled={!queryReady}
+                  onClick={() =>
+                    queryReady &&
+                    void performSearch(
+                      search,
+                      activeServer === "SERVER1" ? "usa" : server2Country
+                    )
+                  }
                 >
-                  <X className="w-3 h-3" />
-                </button>
-              )}
-            </div>
+                  <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+                </Button>
+              </div>
 
-            <div
-              className="mt-3 rounded-xl border p-3 shadow-[0_2px_10px_rgba(124,58,237,0.06)]"
-              style={{
-                background: "linear-gradient(180deg, rgba(245,243,255,0.92), rgba(255,255,255,1))",
-                borderColor: "rgba(139,92,246,0.22)",
-              }}
-            >
-              <h3 className="text-[12.5px] font-semibold text-violet-700 dark:text-violet-300 mb-1.5">
-                How it works
-              </h3>
-              <ul className="space-y-1 text-[11px] leading-relaxed text-zinc-600 dark:text-zinc-300">
-                <li>- Select a service and click Get Number — number slot appears instantly</li>
-                <li>- Credits are only charged if you receive a verification code</li>
-                <li>- Cancel after 1 minute if no code arrives — full refund</li>
-                <li>- If no OTP before expiry — automatic full refund</li>
-                <li>- After OTP received — 10 extra minutes grace period</li>
-                <li>- Carrier or area code preference adds +35% to the price</li>
-              </ul>
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-0">
-            {!queryReady ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-                <Search className="w-7 h-7 text-muted-foreground mb-3 opacity-60" />
-                <p className="text-sm font-medium text-foreground mb-1">Search by service</p>
-                <p className="text-xs text-muted-foreground max-w-sm">
-                  Enter at least {MIN_SERVICE_QUERY_LEN} characters (e.g. WhatsApp). Services load from 5SIM after you stop typing
-                  {activeServer === "SERVER2" ? "; inventory numbers show when available." : "."}
-                </p>
-              </div>
-            ) : loading ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Searching…</p>
-              </div>
-            ) : serviceResults.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center px-6">
-                <Phone className="w-7 h-7 text-muted-foreground mb-3" />
-                <p className="text-sm font-medium text-foreground">No results found</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Try another service name or check back later.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2 p-2">
-                {serviceResults.map((row) => (
-                  <div
-                    key={row.id}
-                    className="rounded-xl border px-2.5 py-2 flex items-center justify-between gap-2.5 shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-                    style={{
-                      background: "linear-gradient(180deg, rgba(245,243,255,0.95), rgba(255,255,255,1))",
-                      borderColor: "rgba(139,92,246,0.18)",
-                    }}
+              <p className="text-[12px] font-medium text-slate-700 dark:text-zinc-300 mt-2">
+                Select Service
+              </p>
+              <div className="relative z-40 mt-1.5">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400 pointer-events-none z-10" />
+                <Input
+                  placeholder="Search: WhatsApp, Telegram, Google…"
+                  className="relative z-10 pl-8 pr-8 h-9 text-[11.5px] rounded-xl border-zinc-200 bg-white dark:bg-zinc-950 focus-visible:ring-violet-400/40"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  autoComplete="off"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 text-zinc-400 hover:text-zinc-700 transition-colors"
+                    onClick={() => setSearch("")}
                   >
-                    <div className="min-w-0">
-                      <p className="text-[12px] font-medium text-zinc-800 dark:text-zinc-100 truncate">
-                        {row.serviceName}
-                      </p>
-                      <p className="text-[10px] text-emerald-600">({row.availableCount} available)</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-[12px] font-semibold text-violet-600 dark:text-violet-300">
-                        ₦
-                        {(activeServer === "SERVER1"
-                          ? getPriceWithCarrier(row.priceNGN)
-                          : row.priceNGN
-                        ).toLocaleString()}
-                      </p>
-                      <p className="text-[10px] text-zinc-400">price</p>
-                    </div>
-                  </div>
-                ))}
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
 
-                {activeServer === "SERVER2" && numbers.length > 0 && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 border-t border-zinc-100 dark:border-zinc-900 pt-1.5">
-                    <AnimatePresence initial={false}>
-                      {numbers.map((n, i) => (
-                        <motion.div
-                          key={n.id}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, scale: 0.97 }}
-                          transition={{ duration: 0.15, delay: Math.min(i * 0.025, 0.2) }}
-                          onClick={() => setSelected(n)}
-                          className="flex items-center gap-2 px-2.5 py-2 cursor-pointer hover:bg-violet-50/60 dark:hover:bg-violet-950/20 transition-colors border-b border-zinc-100 dark:border-zinc-900 last:border-0 sm:odd:border-r sm:border-zinc-100 dark:sm:border-zinc-900"
-                        >
-                          <div className="text-xl flex-shrink-0">{SERVER_INFO[activeServer].icon}</div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] font-mono font-semibold text-foreground">
-                              {n.number}
-                            </p>
-                            <p className="text-[10px] text-zinc-500">{n.country}</p>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-[12px] font-semibold text-violet-600 dark:text-violet-300">
-                              ₦{getPriceWithCarrier(n.priceNGN).toLocaleString()}
-                            </p>
-                            <p className="text-[10px] text-zinc-400">
-                              {carrierPremiumMultiplier > 1 && (
-                                <span className="line-through mr-1 opacity-60">₦{n.priceNGN.toLocaleString()}</span>
-                              )}
-                              ${getPriceWithCarrier(n.priceUSD).toFixed(2)}
-                            </p>
-                          </div>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); copyNumber(n.number); }}
-                            className="p-1.5 rounded-lg hover:bg-violet-100/80 dark:hover:bg-violet-900/30 transition-colors text-zinc-400"
-                          >
-                            {copied === n.number ? (
-                              <Check className="w-3.5 h-3.5 text-emerald-400" />
-                            ) : (
-                              <Copy className="w-3.5 h-3.5" />
-                            )}
-                          </button>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
+                {queryReady && (loading || serviceResults.length > 0) && (
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-[60] rounded-xl border border-zinc-200 bg-white dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
+                    {loading ? (
+                      <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-600 dark:text-zinc-400">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Searching…
+                      </div>
+                    ) : serviceResults.length === 0 ? (
+                      <div className="py-8 px-4 text-center text-sm text-slate-600 dark:text-zinc-400">
+                        No results found
+                      </div>
+                    ) : (
+                      <ul className="py-1">
+                        {serviceResults.map((row) => (
+                          <li key={row.id}>
+                            <button
+                              type="button"
+                              className="w-full flex items-center justify-between gap-2 px-3 py-2.5 text-left hover:bg-violet-50 dark:hover:bg-violet-950/30 transition-colors border-b border-zinc-100 dark:border-zinc-800 last:border-0"
+                              onClick={() => selectServiceRow(row)}
+                            >
+                              <div className="min-w-0">
+                                <p className="text-[13px] font-medium text-slate-900 dark:text-zinc-100 truncate">
+                                  {row.serviceName}
+                                </p>
+                                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                  ({row.availableCount} available)
+                                </p>
+                              </div>
+                              <span className="text-[13px] font-semibold text-violet-700 dark:text-violet-300 shrink-0">
+                                ₦
+                                {(activeServer === "SERVER1"
+                                  ? getPriceWithCarrier(row.priceNGN)
+                                  : row.priceNGN
+                                ).toLocaleString()}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="p-3 pt-0">
+              {!queryReady && (
+                <p className="text-center text-xs text-slate-500 dark:text-zinc-500 py-2">
+                  Type at least {MIN_SERVICE_QUERY_LEN} characters to search services.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {activeServer === "SERVER2" && selectedService && (
+            <div className="w-full max-w-[354px] mx-auto lg:max-w-none space-y-2 mb-2">
+              <Label className="text-sm font-medium text-[#2D2D2D] dark:text-zinc-100">
+                Select country
+              </Label>
+              {countries.length === 0 ? (
+                <p className="text-xs text-slate-600 dark:text-zinc-500 py-2">Loading countries…</p>
+              ) : (
+                <Select value={server2Country} onValueChange={setServer2Country}>
+                  <SelectTrigger className="h-10 rounded-xl bg-white dark:bg-zinc-950 border-zinc-200">
+                    <SelectValue placeholder="Choose location" />
+                  </SelectTrigger>
+                  <SelectContent className="z-[80] max-h-60" position="popper">
+                    {countries.map((c) => (
+                      <SelectItem key={c.slug} value={c.slug}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
+
+          <Card className="w-full max-w-[354px] mx-auto lg:max-w-none rounded-2xl border border-zinc-200/90 dark:border-zinc-900 mb-8 mt-2 shadow-sm">
+            <CardHeader className="pb-2 border-b border-zinc-100 dark:border-zinc-800">
+              <CardTitle className="text-[15px] font-semibold text-slate-900 dark:text-zinc-100">
+                Active Numbers
+              </CardTitle>
+              <p className="text-[11px] text-slate-600 dark:text-zinc-400">
+                Your assigned lines, countdown, and latest OTP
+              </p>
+            </CardHeader>
+            <CardContent className="p-3 space-y-4">
+              {selectedService && (
+                <div className="rounded-xl border border-violet-300/60 bg-violet-50/80 dark:bg-violet-950/25 dark:border-violet-800 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-300">
+                        Selected service
+                      </p>
+                      <p className="text-[14px] font-semibold text-[#2D2D2D] dark:text-zinc-100">
+                        {selectedService.serviceName}
+                      </p>
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
+                        ({selectedService.availableCount} available) · ₦
+                        {(activeServer === "SERVER1"
+                          ? getPriceWithCarrier(selectedService.priceNGN)
+                          : selectedService.priceNGN
+                        ).toLocaleString()}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="brand"
+                      className="shrink-0 text-xs"
+                      onClick={() => {
+                        const el = document.getElementById("abati-buy-inventory");
+                        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                        else {
+                          toast.info(
+                            activeServer === "SERVER2"
+                              ? "Inventory will appear here when numbers are in stock for this service."
+                              : "Use Server 2 to pick a number from inventory."
+                          );
+                        }
+                      }}
+                    >
+                      Get Number
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {loadingActive && activeAssignments.length === 0 ? (
+                <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-600 dark:text-zinc-400">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading…
+                </div>
+              ) : activeAssignments.length === 0 ? (
+                <div className="text-center py-8 px-4">
+                  <Phone className="w-8 h-8 mx-auto text-zinc-400 mb-2" />
+                  <p className="text-sm font-medium text-[#2D2D2D] dark:text-zinc-200">No active numbers yet</p>
+                  <p className="text-xs text-slate-600 dark:text-zinc-500 mt-1">
+                    Buy a number below to receive OTPs here.
+                  </p>
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {activeAssignments.map((a) => {
+                    const otp = a.lastSms?.body ? extractOtp(a.lastSms.body) : null;
+                    return (
+                      <li
+                        key={a.id}
+                        className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/50 p-3"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="font-mono text-sm font-semibold text-[#2D2D2D] dark:text-zinc-100">
+                              {a.number}
+                            </p>
+                            <p className="text-[11px] text-slate-600 dark:text-zinc-400">{a.country}</p>
+                            <div className="flex items-center gap-1 mt-1 text-[11px] text-slate-700 dark:text-zinc-300">
+                              <Clock className="w-3 h-3 shrink-0" />
+                              {a.expiresAt
+                                ? `Expires in ${formatCountdown(a.expiresAt)}`
+                                : "No expiry set"}
+                            </div>
+                          </div>
+                          <Badge variant={a.server === "SERVER1" ? "info" : "success"} className="shrink-0 text-[10px]">
+                            {a.server === "SERVER1" ? "🇺🇸 S1" : "🌍 S2"}
+                          </Badge>
+                        </div>
+                        <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
+                          <div>
+                            <p className="text-[10px] uppercase text-slate-500 dark:text-zinc-500 font-medium">
+                              Latest OTP
+                            </p>
+                            <p className="text-lg font-bold tracking-wide text-violet-700 dark:text-violet-300 font-mono">
+                              {otp ?? "—"}
+                            </p>
+                          </div>
+                          {otp && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-8 text-xs"
+                              onClick={() => void copyNumber(otp)}
+                            >
+                              Copy OTP
+                            </Button>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          {activeServer === "SERVER2" && selectedService && numbers.length > 0 && (
+            <Card
+              id="abati-buy-inventory"
+              className="w-full max-w-[354px] mx-auto lg:max-w-none rounded-2xl border border-zinc-200/90 dark:border-zinc-800 overflow-hidden mb-8"
+            >
+              <CardHeader className="pb-2 border-b border-zinc-100 dark:border-zinc-800">
+                <CardTitle className="text-[14px] font-semibold text-slate-900 dark:text-zinc-100">
+                  Available numbers
+                </CardTitle>
+                <p className="text-[11px] text-slate-600 dark:text-zinc-400">Tap a row to purchase</p>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-0">
+                  <AnimatePresence initial={false}>
+                    {numbers.map((n, i) => (
+                      <motion.div
+                        key={n.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.97 }}
+                        transition={{ duration: 0.15, delay: Math.min(i * 0.025, 0.2) }}
+                        onClick={() => setSelected(n)}
+                        className="flex items-center gap-2 px-3 py-2.5 cursor-pointer hover:bg-violet-50/60 dark:hover:bg-violet-950/20 transition-colors border-b border-zinc-100 dark:border-zinc-900 last:border-0 sm:odd:border-r sm:border-zinc-100 dark:sm:border-zinc-900"
+                      >
+                        <div className="text-lg flex-shrink-0">{SERVER_INFO[activeServer].icon}</div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[12px] font-mono font-semibold text-[#2D2D2D] dark:text-zinc-100">
+                            {n.number}
+                          </p>
+                          <p className="text-[10px] text-slate-600 dark:text-zinc-500">{n.country}</p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-[12px] font-semibold text-violet-600 dark:text-violet-300">
+                            ₦{n.priceNGN.toLocaleString()}
+                          </p>
+                          <p className="text-[10px] text-zinc-500">${n.priceUSD.toFixed(2)}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void copyNumber(n.number);
+                          }}
+                          className="p-1.5 rounded-lg hover:bg-violet-100/80 dark:hover:bg-violet-900/30 transition-colors text-zinc-400"
+                        >
+                          {copied === n.number ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="w-full max-w-[354px] mx-auto lg:max-w-none rounded-2xl border border-violet-200/70 dark:border-violet-900/50 bg-[#F3F0FF] dark:bg-violet-950/30 px-4 py-4 mb-8 shadow-sm">
+            <h3 className="text-sm font-semibold text-[#2D2D2D] dark:text-zinc-100 mb-3">How it works</h3>
+            <ul className="space-y-2.5">
+              {HOW_IT_WORKS_RULES.map((rule) => (
+                <li
+                  key={rule}
+                  className="flex gap-2.5 text-[13px] leading-snug text-[#2D2D2D] dark:text-zinc-100"
+                >
+                  <CheckCircle2
+                    className="w-4 h-4 flex-shrink-0 text-violet-700 dark:text-violet-400 mt-0.5"
+                    aria-hidden
+                  />
+                  <span>{rule}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
       )}
 
       {/* Purchase dialog */}
