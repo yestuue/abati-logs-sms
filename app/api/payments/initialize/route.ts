@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { initializeTransaction } from "@/lib/paystack";
+import { finalNumberPurchasePriceNGN, normalizePurchaseCarrier } from "@/lib/number-purchase-price";
 import { generateReference } from "@/lib/utils";
 import { z } from "zod";
 
@@ -9,6 +10,8 @@ const schema = z.object({
   type: z.enum(["WALLET_TOPUP", "NUMBER_PURCHASE"]),
   amount: z.number().positive(),
   numberId: z.string().optional(),
+  carrier: z.enum(["any", "att", "tmobile"]).optional(),
+  areaCodes: z.string().max(200).optional(),
 });
 
 export async function POST(req: Request) {
@@ -22,7 +25,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    const { type, amount, numberId } = parsed.data;
+    const { type, amount, numberId, carrier: carrierRaw, areaCodes: areaCodesRaw } = parsed.data;
     const userId = session.user.id;
     const email = session.user.email;
 
@@ -36,7 +39,23 @@ export async function POST(req: Request) {
       if (!number) {
         return NextResponse.json({ error: "Number not available" }, { status: 400 });
       }
-      if ((user?.walletBalance ?? 0) < number.priceNGN) {
+
+      const carrier = normalizePurchaseCarrier(carrierRaw);
+      const areaCodes = areaCodesRaw ?? "";
+      const chargeNGN = finalNumberPurchasePriceNGN(number.priceNGN, {
+        server: number.server,
+        carrier,
+        areaCodesRaw: areaCodes,
+      });
+
+      if (Math.round(amount) !== chargeNGN) {
+        return NextResponse.json(
+          { error: "Price mismatch. Refresh and try again." },
+          { status: 400 }
+        );
+      }
+
+      if ((user?.walletBalance ?? 0) < chargeNGN) {
         return NextResponse.json({ error: "Insufficient wallet balance" }, { status: 400 });
       }
 
@@ -46,7 +65,7 @@ export async function POST(req: Request) {
       await prisma.$transaction([
         prisma.user.update({
           where: { id: userId },
-          data: { walletBalance: { decrement: number.priceNGN } },
+          data: { walletBalance: { decrement: chargeNGN } },
         }),
         prisma.virtualNumber.update({
           where: { id: numberId },
@@ -55,13 +74,14 @@ export async function POST(req: Request) {
         prisma.transaction.create({
           data: {
             userId,
-            amount: number.priceNGN,
+            amount: chargeNGN,
             currency: "NGN",
             reference,
             status: "SUCCESS",
             type: "NUMBER_PURCHASE",
             server: number.server,
             numberId,
+            metadata: { carrier, areaCodes, basePriceNGN: number.priceNGN },
           },
         }),
       ]);

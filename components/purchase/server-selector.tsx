@@ -29,6 +29,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { formatCurrency, formatCountdown, normalizeServiceSearchQuery } from "@/lib/utils";
+import {
+  finalNumberPurchasePriceNGN,
+  parseUsAreaCodes,
+} from "@/lib/number-purchase-price";
 import { toast } from "sonner";
 
 interface NumberItem {
@@ -102,14 +106,6 @@ const CARRIERS: { value: Carrier; label: string }[] = [
   { value: "att", label: "AT&T" },
   { value: "tmobile", label: "T-Mobile" },
 ];
-
-/** US area codes: comma-separated 3-digit blocks, e.g. 212, 646, 917 */
-function parseUsAreaCodes(raw: string): string[] {
-  return raw
-    .split(",")
-    .map((s) => s.trim().replace(/\D/g, ""))
-    .filter((d) => d.length === 3);
-}
 
 function sanitizeAreaCodeInput(raw: string): string {
   return raw.replace(/[^\d,]/g, "");
@@ -428,18 +424,30 @@ export function ServerSelector({
     return Math.round(basePrice * premiumMultiplier);
   }
 
-  /** Wallet charge for inventory purchase (API debits DB `priceNGN` only). */
   function getPurchasePriceNGN(item: NumberItem) {
-    return item.priceNGN;
+    return finalNumberPurchasePriceNGN(item.priceNGN, {
+      server: item.server,
+      carrier,
+      areaCodesRaw: preferredAreaCode,
+    });
+  }
+
+  /** Compare wallet balance to debit (NGN or USD-proportional). */
+  function getPurchaseWalletDebit(item: NumberItem): number {
+    const finalNGN = getPurchasePriceNGN(item);
+    if (walletCurrency !== "USD") return finalNGN;
+    const base = item.priceNGN;
+    if (base <= 0) return item.priceUSD;
+    return Math.round(((item.priceUSD * finalNGN) / base) * 100) / 100;
   }
 
   async function handlePurchase() {
     if (!selected) return;
     if (selected.source === "provider") return;
     setBuying(true);
-    const purchaseAmount =
-      walletCurrency === "USD" ? selected.priceUSD : getPurchasePriceNGN(selected);
-    if (walletBalance < purchaseAmount) {
+    const finalNGN = getPurchasePriceNGN(selected);
+    const purchaseDebit = getPurchaseWalletDebit(selected);
+    if (walletBalance < purchaseDebit) {
       toast.error("Insufficient wallet balance. Please top up first.");
       setBuying(false);
       return;
@@ -451,7 +459,9 @@ export function ServerSelector({
         body: JSON.stringify({
           type: "NUMBER_PURCHASE",
           numberId: selected.id,
-          amount: selected.priceNGN,
+          amount: finalNGN,
+          carrier,
+          areaCodes: preferredAreaCode,
         }),
       });
       const data = await res.json();
@@ -687,7 +697,7 @@ export function ServerSelector({
                               <span
                                 className={`text-[13px] font-semibold shrink-0 ${
                                   activeServer === "SERVER1" && server1PremiumActive
-                                    ? "text-amber-600 dark:text-amber-400"
+                                    ? "text-amber-500"
                                     : "text-violet-700 dark:text-violet-300"
                                 }`}
                               >
@@ -801,10 +811,22 @@ export function ServerSelector({
             </CardHeader>
             <CardContent className="p-3 space-y-4">
               {selectedService && (
-                <div className="rounded-xl border border-violet-300/60 bg-violet-50/80 dark:bg-violet-950/25 dark:border-violet-800 p-3">
+                <div
+                  className={
+                    activeServer === "SERVER1" && server1PremiumActive
+                      ? "rounded-xl border border-amber-500/50 bg-amber-50/80 dark:bg-amber-950/25 p-3"
+                      : "rounded-xl border border-violet-300/60 bg-violet-50/80 dark:bg-violet-950/25 dark:border-violet-800 p-3"
+                  }
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-300">
+                      <p
+                        className={
+                          activeServer === "SERVER1" && server1PremiumActive
+                            ? "text-[11px] font-semibold uppercase tracking-wide text-amber-500"
+                            : "text-[11px] font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-300"
+                        }
+                      >
                         Selected service
                       </p>
                       <p className="text-[14px] font-semibold text-[#2D2D2D] dark:text-zinc-100">
@@ -818,7 +840,7 @@ export function ServerSelector({
                       <p
                         className={`text-[11px] font-medium mt-0.5 ${
                           activeServer === "SERVER1" && server1PremiumActive
-                            ? "text-amber-700 dark:text-amber-400"
+                            ? "text-amber-500"
                             : "text-emerald-700 dark:text-emerald-400"
                         }`}
                       >
@@ -1031,11 +1053,17 @@ export function ServerSelector({
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between text-sm border-t border-border/30 pt-2 mt-2">
-                  <span className="font-medium">Price</span>
+                  <span className="font-medium">Base</span>
                   <span className="text-muted-foreground">
-                    ₦{getPurchasePriceNGN(selected).toLocaleString()}
+                    ₦{Math.round(selected.priceNGN).toLocaleString()}
                   </span>
                 </div>
+                {getPurchasePriceNGN(selected) > Math.round(selected.priceNGN) && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-amber-500">Preference premium</span>
+                    <span className="font-medium text-amber-500">+35%</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between text-sm border-t border-border/30 pt-2">
                   <span className="font-bold">Total</span>
                   <span className="font-bold text-primary text-base">
@@ -1048,17 +1076,19 @@ export function ServerSelector({
                 <span className="text-muted-foreground">Wallet Balance After</span>
                 <span
                   className={`font-semibold ${
-                    walletBalance < getPurchasePriceNGN(selected) ? "text-destructive" : "text-emerald-400"
+                    walletBalance < getPurchaseWalletDebit(selected)
+                      ? "text-destructive"
+                      : "text-emerald-400"
                   }`}
                 >
                   {formatCurrency(
-                    Math.max(0, walletBalance - getPurchasePriceNGN(selected)),
-                    "NGN"
+                    Math.max(0, walletBalance - getPurchaseWalletDebit(selected)),
+                    walletCurrency
                   )}
                 </span>
               </div>
 
-              {walletBalance < getPurchasePriceNGN(selected) && (
+              {walletBalance < getPurchaseWalletDebit(selected) && (
                 <div className="flex items-center gap-2 p-3 rounded-xl bg-destructive/10 border border-destructive/20 text-sm text-destructive">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" />
                   Insufficient balance. Please top up your wallet first.
@@ -1076,7 +1106,7 @@ export function ServerSelector({
                 buying ||
                 !selected ||
                 selected.source === "provider" ||
-                walletBalance < getPurchasePriceNGN(selected)
+                walletBalance < getPurchaseWalletDebit(selected)
               }
             >
               {buying ? (

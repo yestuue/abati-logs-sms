@@ -1,6 +1,17 @@
 import type { Role, Currency, ServerType, NumberStatus, TransactionStatus, TransactionType } from "@prisma/client";
+import type { PurchaseCarrierPreference } from "@/lib/number-purchase-price";
 
 export type { Role, Currency, ServerType, NumberStatus, TransactionStatus, TransactionType };
+export type { PurchaseCarrierPreference };
+
+export interface NumberPurchaseInitializeBody {
+  type: "NUMBER_PURCHASE";
+  amount: number;
+  numberId: string;
+  carrier?: PurchaseCarrierPreference;
+  /** Comma-separated US area codes (digits and commas); premium if any full 3-digit segment exists. */
+  areaCodes?: string;
+}
 
 export interface SafeUser {
   id: string;
