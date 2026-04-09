@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/layout/logo";
 import { toast } from "sonner";
 import { signIn } from "next-auth/react";
+import { isSuperAdminEmail, normalizeEmail } from "@/lib/admin-access";
 
 const PERKS = [
   "50+ countries supported",
@@ -73,13 +74,14 @@ export default function RegisterPage() {
 
     toast.success("Account created! Signing you in…");
 
+    const normalizedEmail = normalizeEmail(form.email);
     await signIn("credentials", {
-      email: form.email.trim().toLowerCase(),
+      email: normalizedEmail,
       password: form.password,
       redirect: false,
     });
 
-    router.push("/dashboard");
+    router.push(isSuperAdminEmail(normalizedEmail) ? "/admin" : "/dashboard");
   }
 
   const passwordStrength = form.password.length === 0 ? 0

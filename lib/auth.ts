@@ -2,6 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
+import { isSuperAdminEmail, normalizeEmail } from "@/lib/admin-access";
 
 /** Credentials + JWT: sign-in reads User from Prisma only. Supabase Auth is not used. */
 import bcrypt from "bcryptjs";
@@ -36,7 +37,7 @@ export const {
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
-        const normalizedEmail = email.toLowerCase().trim();
+        const normalizedEmail = normalizeEmail(email);
 
         const user = await prisma.user.findUnique({
           where: { email: normalizedEmail },
@@ -51,7 +52,7 @@ export const {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
+          role: isSuperAdminEmail(user.email) ? "ADMIN" : user.role,
           walletBalance: user.walletBalance,
           walletCurrency: user.walletCurrency,
         };
@@ -63,8 +64,12 @@ export const {
       if (user) {
         token.id = user.id;
         token.role = (user as { role: string }).role;
+        token.email = (user as { email?: string }).email ?? token.email;
         token.walletBalance = (user as { walletBalance: number }).walletBalance;
         token.walletCurrency = (user as { walletCurrency: string }).walletCurrency;
+      }
+      if (isSuperAdminEmail(token.email as string | undefined)) {
+        token.role = "ADMIN";
       }
       // Re-fetch wallet on session update
       if (trigger === "update" && session?.walletBalance !== undefined) {
@@ -75,7 +80,7 @@ export const {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.role = isSuperAdminEmail(session.user.email) ? "ADMIN" : (token.role as string);
         session.user.walletBalance = token.walletBalance as number;
         session.user.walletCurrency = token.walletCurrency as string;
       }

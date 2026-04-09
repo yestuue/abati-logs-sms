@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/layout/logo";
 import { toast } from "sonner";
+import { isSuperAdminEmail, normalizeEmail } from "@/lib/admin-access";
 
 function LoginForm() {
   const router = useRouter();
@@ -28,8 +29,9 @@ function LoginForm() {
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }
 
     setLoading(true);
+    const normalizedEmail = normalizeEmail(email);
     const res = await signIn("credentials", {
-      email: email.trim().toLowerCase(),
+      email: normalizedEmail,
       password,
       redirect: false,
     });
@@ -43,7 +45,8 @@ function LoginForm() {
     }
 
     toast.success("Welcome back!");
-    router.push(callbackUrl);
+    const destination = isSuperAdminEmail(normalizedEmail) ? "/admin" : callbackUrl;
+    router.push(destination);
   }
 
   return (
