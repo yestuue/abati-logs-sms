@@ -4,6 +4,7 @@ import { fiveSimFetch, getFiveSimApiBase } from "@/lib/sms-provider";
 
 type GuestCountry = {
   text_en?: string;
+  iso?: Record<string, number>;
 };
 
 export async function GET() {
@@ -35,6 +36,7 @@ export async function GET() {
       .map(([slug, v]) => ({
         slug,
         name: typeof v?.text_en === "string" ? v.text_en : slug,
+        iso2: v?.iso ? Object.keys(v.iso)[0]?.toUpperCase() ?? null : null,
       }))
       .sort((a, b) => a.name.localeCompare(b.name, "en"));
 

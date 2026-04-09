@@ -28,13 +28,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { formatCurrency, formatCountdown, normalizeServiceSearchQuery } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -71,6 +64,7 @@ interface ActiveAssignment {
 interface CountryOption {
   slug: string;
   name: string;
+  iso2?: string | null;
 }
 
 interface ServerSelectorProps {
@@ -123,6 +117,15 @@ function extractOtp(body: string): string | null {
   return m ? m[0] : null;
 }
 
+function flagFromIso2(iso2?: string | null): string {
+  if (!iso2 || iso2.length !== 2) return "🌍";
+  return iso2
+    .toUpperCase()
+    .split("")
+    .map((c) => String.fromCodePoint(127397 + c.charCodeAt(0)))
+    .join("");
+}
+
 export function ServerSelector({
   walletBalance,
   walletCurrency,
@@ -140,6 +143,8 @@ export function ServerSelector({
   const [serviceResults, setServiceResults] = useState<ServiceSearchResult[]>([]);
   const [selectedService, setSelectedService] = useState<ServiceSearchResult | null>(null);
   const [server2Country, setServer2Country] = useState("usa");
+  const [countrySearch, setCountrySearch] = useState("");
+  const [countryOpen, setCountryOpen] = useState(false);
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [activeAssignments, setActiveAssignments] = useState<ActiveAssignment[]>([]);
   const [loadingActive, setLoadingActive] = useState(false);
@@ -246,12 +251,24 @@ export function ServerSelector({
     setNumbers([]);
     setServiceResults([]);
     setSelectedService(null);
+    setCountrySearch("");
+    setCountryOpen(false);
   }
 
   function selectServiceRow(row: ServiceSearchResult) {
+    // Replace old selection immediately with the newly clicked service.
     setSelectedService(row);
     setSearch("");
     setServiceResults([]);
+  }
+
+  function clearSearch() {
+    setSearch("");
+    setServiceResults([]);
+    setNumbers([]);
+    setSelectedService(null);
+    setCountrySearch("");
+    setCountryOpen(false);
   }
 
   useEffect(() => {
@@ -259,6 +276,10 @@ export function ServerSelector({
     const trimmed = search.trim();
     if (trimmed.length < MIN_SERVICE_QUERY_LEN) {
       setServiceResults([]);
+      setNumbers([]);
+      setSelectedService(null);
+      setCountrySearch("");
+      setCountryOpen(false);
       setLoading(false);
       return;
     }
@@ -350,7 +371,27 @@ export function ServerSelector({
     );
   }, [countries]);
 
+  useEffect(() => {
+    if (!selectedService) {
+      setCountrySearch("");
+      setCountryOpen(false);
+      return;
+    }
+    const selectedCountry = countries.find((c) => c.slug === server2Country);
+    if (selectedCountry) {
+      setCountrySearch(selectedCountry.name);
+    }
+  }, [selectedService, countries, server2Country]);
+
   const queryReady = search.trim().length >= MIN_SERVICE_QUERY_LEN;
+  const selectedCountry =
+    countries.find((c) => c.slug === server2Country) ??
+    null;
+  const filteredCountries = countries.filter((c) => {
+    const q = countrySearch.trim().toLowerCase();
+    if (!q) return true;
+    return c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q);
+  });
 
   // Apply +35% carrier premium for specific carriers
   const carrierPremiumMultiplier = CARRIERS.find((c) => c.value === carrier)?.premium ? 1.35 : 1.0;
@@ -567,7 +608,7 @@ export function ServerSelector({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400 pointer-events-none z-10" />
                 <Input
                   placeholder="Search: WhatsApp, Telegram, Google…"
-                  className="relative z-10 pl-8 pr-8 h-9 text-[11.5px] rounded-xl border-zinc-200 bg-white dark:bg-zinc-950 focus-visible:ring-violet-400/40"
+                  className="relative z-10 pl-8 pr-8 h-9 text-[11.5px] text-black dark:text-zinc-100 rounded-xl border-zinc-200 bg-white dark:bg-zinc-900 focus-visible:ring-violet-400/40"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   autoComplete="off"
@@ -576,14 +617,14 @@ export function ServerSelector({
                   <button
                     type="button"
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10 text-zinc-400 hover:text-zinc-700 transition-colors"
-                    onClick={() => setSearch("")}
+                    onClick={clearSearch}
                   >
                     <X className="w-3 h-3" />
                   </button>
                 )}
 
                 {queryReady && (loading || serviceResults.length > 0) && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 z-[60] rounded-xl border border-zinc-200 bg-white dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 bg-white dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
                     {loading ? (
                       <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-600 dark:text-zinc-400">
                         <Loader2 className="w-4 h-4 animate-spin" />
@@ -643,18 +684,42 @@ export function ServerSelector({
               {countries.length === 0 ? (
                 <p className="text-xs text-slate-600 dark:text-zinc-500 py-2">Loading countries…</p>
               ) : (
-                <Select value={server2Country} onValueChange={setServer2Country}>
-                  <SelectTrigger className="h-10 rounded-xl bg-white dark:bg-zinc-950 border-zinc-200">
-                    <SelectValue placeholder="Choose location" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[80] max-h-60" position="popper">
-                    {countries.map((c) => (
-                      <SelectItem key={c.slug} value={c.slug}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="relative">
+                  <Input
+                    value={countrySearch}
+                    placeholder="Type country: USA, Nigeria…"
+                    className="h-10 text-black dark:text-zinc-100 bg-white dark:bg-zinc-900 border-zinc-200"
+                    onFocus={() => setCountryOpen(true)}
+                    onChange={(e) => {
+                      setCountrySearch(e.target.value);
+                      setCountryOpen(true);
+                    }}
+                  />
+                  {countryOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 bg-white dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
+                      {filteredCountries.length === 0 ? (
+                        <div className="px-3 py-2.5 text-xs text-slate-600 dark:text-zinc-400">
+                          No country found
+                        </div>
+                      ) : (
+                        filteredCountries.map((c) => (
+                          <button
+                            key={c.slug}
+                            type="button"
+                            className="w-full text-left px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 hover:bg-violet-50 dark:hover:bg-violet-950/30 border-b border-zinc-100 dark:border-zinc-800 last:border-0"
+                            onClick={() => {
+                              setServer2Country(c.slug);
+                              setCountrySearch(c.name);
+                              setCountryOpen(false);
+                            }}
+                          >
+                            {flagFromIso2(c.iso2)} {c.name}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -679,6 +744,11 @@ export function ServerSelector({
                       <p className="text-[14px] font-semibold text-[#2D2D2D] dark:text-zinc-100">
                         {selectedService.serviceName}
                       </p>
+                      {activeServer === "SERVER2" && selectedCountry && (
+                        <p className="text-[11px] font-medium text-slate-700 dark:text-zinc-300 mt-0.5">
+                          {flagFromIso2(selectedCountry.iso2)} {selectedCountry.name}
+                        </p>
+                      )}
                       <p className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5">
                         ({selectedService.availableCount} available) · ₦
                         {(activeServer === "SERVER1"
