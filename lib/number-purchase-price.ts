@@ -31,13 +31,15 @@ export function purchasePremiumMultiplier(params: {
   server: ServerType;
   carrier: string;
   areaCodesRaw: string;
+  premiumRate?: number;
 }): number {
-  return purchasePremiumActive(params) ? 1.35 : 1;
+  const rate = typeof params.premiumRate === "number" ? params.premiumRate : 0.35;
+  return purchasePremiumActive(params) ? 1 + rate : 1;
 }
 
 export function finalNumberPurchasePriceNGN(
   baseNgN: number,
-  params: { server: ServerType; carrier: string; areaCodesRaw: string }
+  params: { server: ServerType; carrier: string; areaCodesRaw: string; premiumRate?: number }
 ): number {
   return Math.round(baseNgN * purchasePremiumMultiplier(params));
 }

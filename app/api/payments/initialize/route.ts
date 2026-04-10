@@ -42,10 +42,14 @@ export async function POST(req: Request) {
 
       const carrier = normalizePurchaseCarrier(carrierRaw);
       const areaCodes = areaCodesRaw ?? "";
+      const premiumRate =
+        (await prisma.globalSettings.findFirst({ select: { smsGlobalPremiumRate: true } }))
+          ?.smsGlobalPremiumRate ?? 0.35;
       const chargeNGN = finalNumberPurchasePriceNGN(number.priceNGN, {
         server: number.server,
         carrier,
         areaCodesRaw: areaCodes,
+        premiumRate,
       });
 
       if (Math.round(amount) !== chargeNGN) {
@@ -81,7 +85,7 @@ export async function POST(req: Request) {
             type: "NUMBER_PURCHASE",
             server: number.server,
             numberId,
-            metadata: { carrier, areaCodes, basePriceNGN: number.priceNGN },
+            metadata: { carrier, areaCodes, basePriceNGN: number.priceNGN, premiumRate },
           },
         }),
       ]);

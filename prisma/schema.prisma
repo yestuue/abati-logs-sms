@@ -123,7 +123,18 @@ model GlobalSettings {
   rateNGN         Float    @default(1600)
   maintenanceMode Boolean  @default(false)
   minTopUp        Float    @default(500)
+  smsGlobalPremiumRate Float @default(0.35)
   updatedAt       DateTime @default(now())
+}
+
+model SmsService {
+  id          String   @id @default(cuid())
+  serviceKey  String   @unique
+  serviceName String
+  basePrice   Float
+  premiumRate Float    @default(0.35)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Account {

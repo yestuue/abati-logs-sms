@@ -14,6 +14,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const server = searchParams.get("server") as "SERVER1" | "SERVER2" | null;
   const q = normalizeServiceSearchQuery(searchParams.get("q") ?? "");
+  const country = normalizeServiceSearchQuery(searchParams.get("country") ?? "");
 
   if (!server || !["SERVER1", "SERVER2"].includes(server)) {
     return NextResponse.json(
@@ -33,12 +34,24 @@ export async function GET(req: Request) {
   }
 
   const where: Prisma.VirtualNumberWhereInput = { server, status: "AVAILABLE" };
-  if (q.length >= 2) {
+  if (server === "SERVER2" && country.length >= 2) {
     where.OR = [
+      { country: { contains: country, mode: "insensitive" } },
+      { countryCode: { contains: country, mode: "insensitive" } },
+    ];
+  }
+  if (q.length >= 2) {
+    const baseOr: Prisma.VirtualNumberWhereInput[] = [
       { country: { contains: q, mode: "insensitive" } },
       { number: { contains: q } },
       { countryCode: { contains: q, mode: "insensitive" } },
     ];
+    if (where.OR && Array.isArray(where.OR)) {
+      where.AND = [{ OR: where.OR }, { OR: baseOr }];
+      delete where.OR;
+    } else {
+      where.OR = baseOr;
+    }
   }
 
   const numbers = await prisma.virtualNumber.findMany({

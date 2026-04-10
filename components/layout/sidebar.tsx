@@ -35,6 +35,7 @@ const adminNav: NavItem[] = [
   { label: "Overview",   href: "/admin",             icon: LayoutDashboard },
   { label: "Servers",    href: "/admin/servers",     icon: Server },
   { label: "Numbers",    href: "/admin/numbers",     icon: Phone },
+  { label: "Services",   href: "/admin/services",    icon: MessageSquare },
   { label: "Inventory",  href: "/admin/inventory",   icon: PackageSearch },
   { label: "Users",      href: "/admin/users",       icon: Users },
   { label: "Revenue",    href: "/admin/revenue",     icon: BarChart3 },

@@ -54,6 +54,7 @@ interface ServiceSearchResult {
   serviceName: string;
   availableCount: number;
   priceNGN: number;
+  premiumRate?: number;
 }
 
 interface ActiveAssignment {
@@ -117,7 +118,7 @@ const HOW_IT_WORKS_RULES = [
   "Cancel after 1 minute if no code arrives — full refund",
   "If no OTP before expiry — automatic full refund",
   "After OTP received — 10 extra minutes grace period",
-  "Carrier or area code preference adds +35% to the price",
+  "Carrier or area code preference adds the service premium rate to the price",
 ] as const;
 
 function extractOtp(body: string): string | null {
@@ -188,6 +189,7 @@ export function ServerSelector({
           name: string;
           qty: number;
           priceNGN: number;
+          premiumRate?: number;
         }[];
         const mapped: ServiceSearchResult[] = svcRows.map((s) => ({
           id: `service:${s.key}`,
@@ -195,6 +197,7 @@ export function ServerSelector({
           serviceName: s.name,
           availableCount: s.qty,
           priceNGN: s.priceNGN,
+          premiumRate: typeof s.premiumRate === "number" ? s.premiumRate : 0.35,
         }));
         setServiceResults(mapped);
 
@@ -216,8 +219,10 @@ export function ServerSelector({
 
   const loadInventoryServer2 = useCallback(async (serviceKey: string) => {
     try {
+      const selectedCountrySlug =
+        countries.find((c) => c.slug === server2Country)?.name ?? server2Country;
       const invRes = await fetch(
-        `/api/numbers/fetch?server=SERVER2&q=${encodeURIComponent(serviceKey)}`,
+        `/api/numbers/fetch?server=SERVER2&q=${encodeURIComponent(serviceKey)}&country=${encodeURIComponent(selectedCountrySlug)}`,
         { cache: "no-store" }
       );
       const invData = await invRes.json();
@@ -238,7 +243,7 @@ export function ServerSelector({
     } catch {
       setNumbers([]);
     }
-  }, []);
+  }, [countries, server2Country]);
 
   const loadActiveAssignments = useCallback(async () => {
     setLoadingActive(true);
@@ -418,10 +423,13 @@ export function ServerSelector({
   const hasSpecificCarrier = carrier !== "any";
   const server1PremiumActive =
     activeServer === "SERVER1" && (hasAreaCode || hasSpecificCarrier);
-  const premiumMultiplier = server1PremiumActive ? 1.35 : 1;
+  const selectedPremiumRate = selectedService?.premiumRate ?? 0.35;
+  const premiumPercentLabel = Math.round(selectedPremiumRate * 100);
+  const premiumMultiplier = server1PremiumActive ? 1 + selectedPremiumRate : 1;
 
-  function getServer1Price(basePrice: number) {
-    return Math.round(basePrice * premiumMultiplier);
+  function getServer1Price(basePrice: number, premiumRate = selectedPremiumRate) {
+    if (!server1PremiumActive) return Math.round(basePrice);
+    return Math.round(basePrice * (1 + premiumRate));
   }
 
   function getPurchasePriceNGN(item: NumberItem) {
@@ -429,6 +437,7 @@ export function ServerSelector({
       server: item.server,
       carrier,
       areaCodesRaw: preferredAreaCode,
+      premiumRate: selectedPremiumRate,
     });
   }
 
@@ -567,7 +576,7 @@ export function ServerSelector({
           <p className="text-xs font-semibold text-foreground mb-2.5">
             Carrier preference
             <span className="text-muted-foreground font-normal ml-1.5">
-              (optional — specific carrier or area codes below adds one +35% premium, not stacked)
+              (optional — specific carrier or area codes below adds one +{premiumPercentLabel}% premium, not stacked)
             </span>
           </p>
           <div className="flex gap-2 flex-wrap">
@@ -596,7 +605,7 @@ export function ServerSelector({
           </div>
           {server1PremiumActive && (
             <p className="text-xs mt-2 font-medium text-amber-700 dark:text-amber-400">
-              +35% preference premium applied to USA prices below (carrier and/or area codes — not stacked)
+              +{premiumPercentLabel}% preference premium applied to USA prices below (carrier and/or area codes — not stacked)
             </p>
           )}
         </div>
@@ -703,7 +712,7 @@ export function ServerSelector({
                               >
                                 ₦
                                 {(activeServer === "SERVER1"
-                                  ? getServer1Price(row.priceNGN)
+                                  ? getServer1Price(row.priceNGN, row.premiumRate ?? 0.35)
                                   : row.priceNGN
                                 ).toLocaleString()}
                               </span>
@@ -785,7 +794,7 @@ export function ServerSelector({
                 onChange={(e) => setPreferredAreaCode(sanitizeAreaCodeInput(e.target.value))}
               />
               <p className="text-[11px] text-slate-500 dark:text-zinc-500">
-                US area codes only — digits and commas. One +35% premium if you enter any code (combined with carrier preference, not stacked).
+                US area codes only — digits and commas. One +{premiumPercentLabel}% premium if you enter any code (combined with carrier preference, not stacked).
               </p>
               {preferredAreaCode.trim() && parsedAreaCodes.length === 0 && (
                 <p className="text-xs text-slate-600 dark:text-zinc-400">
@@ -794,7 +803,7 @@ export function ServerSelector({
               )}
               {parsedAreaCodes.length > 0 && (
                 <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                  {parsedAreaCodes.length} code{parsedAreaCodes.length === 1 ? "" : "s"} · +35% reflected in prices below
+                  {parsedAreaCodes.length} code{parsedAreaCodes.length === 1 ? "" : "s"} · +{premiumPercentLabel}% reflected in prices below
                 </p>
               )}
             </div>
@@ -1061,7 +1070,7 @@ export function ServerSelector({
                 {getPurchasePriceNGN(selected) > Math.round(selected.priceNGN) && (
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-amber-500">Preference premium</span>
-                    <span className="font-medium text-amber-500">+35%</span>
+                    <span className="font-medium text-amber-500">+{premiumPercentLabel}%</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between text-sm border-t border-border/30 pt-2">
