@@ -87,14 +87,17 @@ model Transaction {
 model Log {
   id          String    @id @default(cuid())
   category    String
+  categoryId  String?
   subCategory String?
   username    String
   password    String
   email       String?
   emailPass   String?
   twoFA       String?
+  price       Float     @default(0)
   status      LogStatus @default(AVAILABLE)
   createdAt   DateTime  @default(now())
+  categoryRef LogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 }
 
 model WithdrawalRequest {
@@ -127,14 +130,35 @@ model GlobalSettings {
   updatedAt       DateTime @default(now())
 }
 
-model SmsService {
+model Service {
   id          String   @id @default(cuid())
+  key         String   @unique
   serviceKey  String   @unique
-  serviceName String
+  name        String
   basePrice   Float
   premiumRate Float    @default(0.35)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model LogCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  price     Float
+  stock     Int      @default(0)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  logs      Log[]
+}
+
+model CountryConfig {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  samplePrice Float?
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
 }
 
 model Account {

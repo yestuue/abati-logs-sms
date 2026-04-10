@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { fiveSimFetch, getFiveSimApiBase } from "@/lib/sms-provider";
 
 type GuestCountry = {
@@ -32,7 +33,16 @@ export async function GET() {
     }
 
     const data = (await res.json()) as Record<string, GuestCountry>;
+    const disabled = new Set(
+      (
+        await prisma.countryConfig.findMany({
+          where: { enabled: false },
+          select: { slug: true },
+        })
+      ).map((c) => c.slug)
+    );
     const countries = Object.entries(data)
+      .filter(([slug]) => !disabled.has(slug))
       .map(([slug, v]) => ({
         slug,
         name: typeof v?.text_en === "string" ? v.text_en : slug,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getGlobalSmsPremiumRate, getServicePriceConfigMap } from "@/lib/price-calculator";
 import {
   computeSmsDisplayPriceNgn,
   fiveSimFetch,
@@ -104,34 +105,22 @@ export async function GET(req: Request) {
       .sort((a, b) => b.qty - a.qty)
       .slice(0, limit);
 
-    const globalPremiumRate =
-      (await prisma.globalSettings.findFirst({ select: { smsGlobalPremiumRate: true } }))
-        ?.smsGlobalPremiumRate ?? 0.35;
+    const globalPremiumRate = await getGlobalSmsPremiumRate();
 
     const keys = services.map((s) => s.key);
-    const configs = keys.length
-      ? await prisma.smsService.findMany({
-          where: { serviceKey: { in: keys } },
-          select: {
-            serviceKey: true,
-            serviceName: true,
-            basePrice: true,
-            premiumRate: true,
-          },
-        })
-      : [];
-    const configMap = new Map(configs.map((c) => [c.serviceKey, c]));
+    const configMap = await getServicePriceConfigMap(keys);
 
     const missing = services
       .filter((s) => !configMap.has(s.key))
       .map((s) => ({
         serviceKey: s.key,
-        serviceName: s.name,
+        key: s.key,
+        name: s.name,
         basePrice: s.basePriceNGN,
         premiumRate: globalPremiumRate,
       }));
     if (missing.length > 0) {
-      await prisma.smsService.createMany({ data: missing, skipDuplicates: true });
+      await prisma.service.createMany({ data: missing, skipDuplicates: true });
       for (const m of missing) configMap.set(m.serviceKey, m);
     }
 
@@ -139,7 +128,7 @@ export async function GET(req: Request) {
       const cfg = configMap.get(s.key);
       return {
         key: s.key,
-        name: cfg?.serviceName ?? s.name,
+        name: cfg?.name ?? s.name,
         category: s.category,
         qty: s.qty,
         priceUsd: s.priceUsd,

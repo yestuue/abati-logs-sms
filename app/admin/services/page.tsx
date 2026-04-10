@@ -10,8 +10,9 @@ import { toast } from "sonner";
 
 type SmsService = {
   id: string;
+  key?: string;
   serviceKey: string;
-  serviceName: string;
+  name: string;
   basePrice: number;
   premiumRate: number;
 };
@@ -100,7 +101,7 @@ export default function AdminServicesPage() {
         body: JSON.stringify({
           basePrice: base,
           premiumRate: premiumPct / 100,
-          serviceName: editing.serviceName,
+          serviceName: editing.name,
         }),
       });
       const data = await res.json();
@@ -181,7 +182,7 @@ export default function AdminServicesPage() {
               ) : (
                 sorted.map((s) => (
                   <tr key={s.id} className="border-b border-border/50">
-                    <td className="py-2.5">{s.serviceName}</td>
+                    <td className="py-2.5">{s.name}</td>
                     <td className="py-2.5 font-mono text-xs text-muted-foreground">{s.serviceKey}</td>
                     <td className="py-2.5">₦{Math.round(s.basePrice).toLocaleString()}</td>
                     <td className="py-2.5">{Math.round(s.premiumRate * 100)}%</td>
@@ -207,7 +208,7 @@ export default function AdminServicesPage() {
             <div className="space-y-1">
               <Label>Service</Label>
               <p className="text-sm text-muted-foreground">
-                {editing?.serviceName} ({editing?.serviceKey})
+                {editing?.name} ({editing?.serviceKey})
               </p>
             </div>
             <div className="space-y-1">

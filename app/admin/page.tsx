@@ -194,6 +194,15 @@ export default async function AdminPage() {
       bg: "bg-emerald-400/10",
       href: "/admin/inventory",
     },
+    {
+      label: "Pricing Management",
+      value: "Manage",
+      sub: "SMS + Marketplace pricing",
+      icon: TrendingUp,
+      color: "text-violet-500",
+      bg: "bg-violet-500/10",
+      href: "/admin/pricing",
+    },
   ];
 
   return (

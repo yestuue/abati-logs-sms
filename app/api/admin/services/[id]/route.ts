@@ -26,12 +26,12 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    const updated = await prisma.smsService.update({
+    const updated = await prisma.service.update({
       where: { id },
       data: {
         basePrice: parsed.data.basePrice,
         premiumRate: parsed.data.premiumRate,
-        ...(parsed.data.serviceName ? { serviceName: parsed.data.serviceName } : {}),
+        ...(parsed.data.serviceName ? { name: parsed.data.serviceName } : {}),
       },
     });
 

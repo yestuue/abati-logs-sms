@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, MessageSquare, Settings,
   LogOut, Shield, BarChart3, Users, Server, Phone,
-  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch, ShieldCheck,
+  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch, ShieldCheck, BadgeDollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
@@ -35,6 +35,7 @@ const adminNav: NavItem[] = [
   { label: "Overview",   href: "/admin",             icon: LayoutDashboard },
   { label: "Servers",    href: "/admin/servers",     icon: Server },
   { label: "Numbers",    href: "/admin/numbers",     icon: Phone },
+  { label: "Pricing Management", href: "/admin/pricing", icon: BadgeDollarSign },
   { label: "Services",   href: "/admin/services",    icon: MessageSquare },
   { label: "Inventory",  href: "/admin/inventory",   icon: PackageSearch },
   { label: "Users",      href: "/admin/users",       icon: Users },

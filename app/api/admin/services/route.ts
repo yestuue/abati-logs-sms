@@ -13,7 +13,7 @@ const globalSchema = z.object({
 });
 
 async function ensureServiceSeed(globalPremiumRate: number) {
-  const existingCount = await prisma.smsService.count();
+  const existingCount = await prisma.service.count();
   if (existingCount > 0) return;
 
   const fallback = [
@@ -35,23 +35,25 @@ async function ensureServiceSeed(globalPremiumRate: number) {
       const usd = typeof v?.Price === "number" ? v.Price : Number(v?.Price) || 0;
       return {
         serviceKey,
-        serviceName: serviceKey,
+        key: serviceKey,
+        name: serviceKey,
         basePrice: computeSmsDisplayPriceNgn(usd),
         premiumRate: globalPremiumRate,
       };
     });
     if (rows.length > 0) {
-      await prisma.smsService.createMany({ data: rows, skipDuplicates: true });
+      await prisma.service.createMany({ data: rows, skipDuplicates: true });
       return;
     }
   } catch {
     // fallback below
   }
 
-  await prisma.smsService.createMany({
+  await prisma.service.createMany({
     data: fallback.map((serviceKey) => ({
+      key: serviceKey,
       serviceKey,
-      serviceName: serviceKey,
+      name: serviceKey,
       basePrice: 2500,
       premiumRate: globalPremiumRate,
     })),
@@ -69,7 +71,7 @@ export async function GET() {
   const globalPremiumRate = settings?.smsGlobalPremiumRate ?? 0.35;
   await ensureServiceSeed(globalPremiumRate);
 
-  const services = await prisma.smsService.findMany({
+  const services = await prisma.service.findMany({
     orderBy: { serviceKey: "asc" },
   });
   return NextResponse.json({ services, globalPremiumRate });
@@ -91,7 +93,7 @@ export async function PUT(req: Request) {
     const { premiumRate } = parsed.data;
     const existing = await prisma.globalSettings.findFirst({ select: { id: true } });
     await prisma.$transaction([
-      prisma.smsService.updateMany({ data: { premiumRate } }),
+      prisma.service.updateMany({ data: { premiumRate } }),
       existing
         ? prisma.globalSettings.update({
             where: { id: existing.id },
