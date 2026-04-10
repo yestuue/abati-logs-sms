@@ -607,6 +607,18 @@ export function ServerSelector({
               </button>
             ))}
           </div>
+          <div className="mt-3 space-y-1.5">
+            <Label className="text-xs font-semibold text-foreground">Area Code(s)</Label>
+            <Input
+              value={preferredAreaCode}
+              placeholder="e.g. 212, 646, 917"
+              className="h-9 text-black dark:text-zinc-100 bg-white dark:bg-zinc-900 border-zinc-200"
+              onChange={(e) => setPreferredAreaCode(sanitizeAreaCodeInput(e.target.value))}
+            />
+            <p className="text-[11px] text-slate-500 dark:text-zinc-500">
+              US area codes only (digits + commas). Premium applies when carrier is specific or any valid code is entered.
+            </p>
+          </div>
           {server1PremiumActive && (
             <p className="text-xs mt-2 font-medium text-amber-700 dark:text-amber-400">
               +{premiumPercentLabel}% preference premium applied to USA prices below (carrier and/or area codes — not stacked)
@@ -628,6 +640,54 @@ export function ServerSelector({
         </Card>
       ) : (
         <>
+          {activeServer === "SERVER2" && (
+            <div className="w-full max-w-[354px] mx-auto lg:max-w-none space-y-2 mb-2">
+              <Label className="text-sm font-medium text-[#2D2D2D] dark:text-zinc-100">
+                Select country
+              </Label>
+              {countries.length === 0 ? (
+                <p className="text-xs text-slate-600 dark:text-zinc-500 py-2">Loading countries…</p>
+              ) : (
+                <div className="relative">
+                  <Input
+                    value={countrySearch}
+                    placeholder="Type country: USA, Nigeria…"
+                    className="h-10 text-black dark:text-zinc-100 bg-white dark:bg-zinc-900 border-zinc-200"
+                    onFocus={() => setCountryOpen(true)}
+                    onChange={(e) => {
+                      setCountrySearch(e.target.value);
+                      setCountryOpen(true);
+                    }}
+                  />
+                  {countryOpen && (
+                    <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 bg-white dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
+                      {filteredCountries.length === 0 ? (
+                        <div className="px-3 py-2.5 text-xs text-slate-600 dark:text-zinc-400">
+                          No country found
+                        </div>
+                      ) : (
+                        filteredCountries.map((c) => (
+                          <button
+                            key={c.slug}
+                            type="button"
+                            className="w-full text-left px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 hover:bg-violet-50 dark:hover:bg-violet-950/30 border-b border-zinc-100 dark:border-zinc-800 last:border-0"
+                            onClick={() => {
+                              setServer2Country(c.slug);
+                              setCountrySearch(c.name);
+                              setCountryOpen(false);
+                            }}
+                          >
+                            {flagFromIso2(c.iso2)} {c.name}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <Card className="relative z-30 w-full max-w-[354px] mx-auto lg:max-w-none overflow-visible rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-card shadow-sm">
             <CardHeader className="pb-3 bg-gradient-to-b from-violet-50/50 to-white dark:from-violet-950/20 dark:to-transparent border-b border-zinc-100 dark:border-zinc-900">
               <div className="flex items-start justify-between gap-3">
@@ -737,81 +797,6 @@ export function ServerSelector({
               )}
             </CardContent>
           </Card>
-
-          {activeServer === "SERVER2" && selectedService && search.trim() !== "" && (
-            <div className="w-full max-w-[354px] mx-auto lg:max-w-none space-y-2 mb-2">
-              <Label className="text-sm font-medium text-[#2D2D2D] dark:text-zinc-100">
-                Select country
-              </Label>
-              {countries.length === 0 ? (
-                <p className="text-xs text-slate-600 dark:text-zinc-500 py-2">Loading countries…</p>
-              ) : (
-                <div className="relative">
-                  <Input
-                    value={countrySearch}
-                    placeholder="Type country: USA, Nigeria…"
-                    className="h-10 text-black dark:text-zinc-100 bg-white dark:bg-zinc-900 border-zinc-200"
-                    onFocus={() => setCountryOpen(true)}
-                    onChange={(e) => {
-                      setCountrySearch(e.target.value);
-                      setCountryOpen(true);
-                    }}
-                  />
-                  {countryOpen && (
-                    <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 bg-white dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
-                      {filteredCountries.length === 0 ? (
-                        <div className="px-3 py-2.5 text-xs text-slate-600 dark:text-zinc-400">
-                          No country found
-                        </div>
-                      ) : (
-                        filteredCountries.map((c) => (
-                          <button
-                            key={c.slug}
-                            type="button"
-                            className="w-full text-left px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 hover:bg-violet-50 dark:hover:bg-violet-950/30 border-b border-zinc-100 dark:border-zinc-800 last:border-0"
-                            onClick={() => {
-                              setServer2Country(c.slug);
-                              setCountrySearch(c.name);
-                              setCountryOpen(false);
-                            }}
-                          >
-                            {flagFromIso2(c.iso2)} {c.name}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeServer === "SERVER1" && selectedService && (
-            <div className="w-full max-w-[354px] mx-auto lg:max-w-none space-y-2 mb-2">
-              <Label className="text-sm font-medium text-[#2D2D2D] dark:text-zinc-100">
-                Preferred Area Code (Optional)
-              </Label>
-              <Input
-                value={preferredAreaCode}
-                placeholder="e.g. 212, 646, 917"
-                className="h-10 text-black dark:text-zinc-100 bg-white dark:bg-zinc-900 border-zinc-200"
-                onChange={(e) => setPreferredAreaCode(sanitizeAreaCodeInput(e.target.value))}
-              />
-              <p className="text-[11px] text-slate-500 dark:text-zinc-500">
-                US area codes only — digits and commas. One +{premiumPercentLabel}% premium if you enter any code (combined with carrier preference, not stacked).
-              </p>
-              {preferredAreaCode.trim() && parsedAreaCodes.length === 0 && (
-                <p className="text-xs text-slate-600 dark:text-zinc-400">
-                  Add full 3-digit codes (e.g. 212) — incomplete segments are ignored for pricing.
-                </p>
-              )}
-              {parsedAreaCodes.length > 0 && (
-                <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-                  {parsedAreaCodes.length} code{parsedAreaCodes.length === 1 ? "" : "s"} · +{premiumPercentLabel}% reflected in prices below
-                </p>
-              )}
-            </div>
-          )}
 
           <Card className="w-full max-w-[354px] mx-auto lg:max-w-none rounded-2xl border border-zinc-200/90 dark:border-zinc-900 mb-8 mt-2 shadow-sm">
             <CardHeader className="pb-2 border-b border-zinc-100 dark:border-zinc-800">

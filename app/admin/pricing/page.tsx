@@ -31,12 +31,18 @@ export default function AdminPricingPage() {
   const [newCategoryPrice, setNewCategoryPrice] = useState("");
   const [bulkPct, setBulkPct] = useState("");
   const [loading, setLoading] = useState(false);
+  const [serviceDrafts, setServiceDrafts] = useState<Record<string, string>>({});
 
   async function loadSms() {
     const res = await fetch("/api/admin/sms/update-price", { cache: "no-store" });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Failed to load SMS pricing");
     setServices(data.services ?? []);
+    setServiceDrafts(
+      Object.fromEntries(
+        (data.services ?? []).map((s: Service) => [s.id, String(Math.round(s.basePrice))])
+      )
+    );
     setServers(data.servers ?? []);
     setCountries(data.countries ?? []);
     setGlobalPremiumPct(String(Math.round((Number(data.globalPremiumRate ?? 0.35) || 0.35) * 100)));
@@ -87,6 +93,7 @@ export default function AdminPricingPage() {
     const data = await res.json();
     if (!res.ok) return toast.error(data.error ?? "Service price update failed");
     setServices((prev) => prev.map((s) => (s.id === id ? { ...s, basePrice } : s)));
+    toast.success("Service price updated");
   }
 
   async function toggleServer(server: "SERVER1" | "SERVER2", isEnabled: boolean) {
@@ -215,11 +222,33 @@ export default function AdminPricingPage() {
                   <tr key={s.id} className="border-b border-border/50">
                     <td className="py-2">{s.name}</td>
                     <td className="py-2 text-xs font-mono text-muted-foreground">{s.serviceKey}</td>
-                    <td className="py-2">₦{Math.round(s.basePrice).toLocaleString()}</td>
+                    <td className="py-2">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={serviceDrafts[s.id] ?? ""}
+                          onChange={(e) =>
+                            setServiceDrafts((prev) => ({
+                              ...prev,
+                              [s.id]: e.target.value.replace(/[^\d.]/g, ""),
+                            }))
+                          }
+                          className="h-8 w-32"
+                        />
+                      </div>
+                    </td>
                     <td className="py-2">{Math.round(s.premiumRate * 100)}%</td>
                     <td className="py-2 text-right">
-                      <Button size="sm" variant="outline" onClick={() => void saveServiceBasePrice(s.id, Number(prompt(`New base price for ${s.name}`, String(Math.round(s.basePrice))) || s.basePrice))}>
-                        Edit Price
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          void saveServiceBasePrice(
+                            s.id,
+                            Number(serviceDrafts[s.id] || s.basePrice)
+                          )
+                        }
+                      >
+                        Save
                       </Button>
                     </td>
                   </tr>

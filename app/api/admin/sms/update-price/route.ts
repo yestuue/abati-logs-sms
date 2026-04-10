@@ -109,32 +109,37 @@ export async function PUT(req: Request) {
     const data = (await res.json()) as Record<string, { text_en?: string }>;
     const countries = Object.entries(data);
 
-    for (const [slug, meta] of countries) {
-      let samplePrice: number | null = null;
+    // Fast sync: persist provider-supported countries immediately.
+    await prisma.$transaction(
+      countries.map(([slug, meta]) =>
+        prisma.countryConfig.upsert({
+          where: { slug },
+          update: { name: meta?.text_en || slug },
+          create: {
+            slug,
+            name: meta?.text_en || slug,
+            enabled: true,
+          },
+        })
+      )
+    );
+
+    // Optional sample prices for first 20 countries only (avoid long admin request times).
+    const top = countries.slice(0, 20);
+    for (const [slug] of top) {
       try {
         const pRes = await fiveSimFetch(`${getFiveSimApiBase()}/guest/products/${encodeURIComponent(slug)}/any`);
-        if (pRes.ok) {
-          const products = (await pRes.json()) as Record<string, { Price?: number }>;
-          const first = Object.values(products)[0];
-          if (first?.Price) samplePrice = computeSmsDisplayPriceNgn(Number(first.Price) || 0);
-        }
+        if (!pRes.ok) continue;
+        const products = (await pRes.json()) as Record<string, { Price?: number }>;
+        const first = Object.values(products)[0];
+        if (!first?.Price) continue;
+        await prisma.countryConfig.update({
+          where: { slug },
+          data: { samplePrice: computeSmsDisplayPriceNgn(Number(first.Price) || 0) },
+        });
       } catch {
-        // ignore per-country provider errors
+        // ignore sample price enrichment failures
       }
-
-      await prisma.countryConfig.upsert({
-        where: { slug },
-        update: {
-          name: meta?.text_en || slug,
-          ...(samplePrice !== null ? { samplePrice } : {}),
-        },
-        create: {
-          slug,
-          name: meta?.text_en || slug,
-          enabled: true,
-          ...(samplePrice !== null ? { samplePrice } : {}),
-        },
-      });
     }
 
     return NextResponse.json({ success: true, synced: countries.length });
