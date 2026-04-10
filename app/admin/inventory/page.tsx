@@ -1,8 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Upload, FileText, Check, X, AlertTriangle, Trash2,
+  Upload, FileText, AlertTriangle, Trash2,
   Package, ChevronDown, Info, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,31 +26,10 @@ interface ParsedLog {
 interface Session {
   id: string;
   name: string;
-  category: Category;
+  category: string;
   uploadedAt: string;
   count: number;
-  logs: ParsedLog[];
 }
-
-// ── Mock sessions already uploaded ────────────────────────────────────────────
-const INITIAL_SESSIONS: Session[] = [
-  {
-    id: "sess-001",
-    name: "FB Aged Batch — March 2026",
-    category: "Facebook",
-    uploadedAt: "Mar 28, 2026",
-    count: 47,
-    logs: [],
-  },
-  {
-    id: "sess-002",
-    name: "IG Premium — April 2026",
-    category: "Instagram",
-    uploadedAt: "Apr 1, 2026",
-    count: 23,
-    logs: [],
-  },
-];
 
 const CATEGORIES: Category[] = ["Facebook", "Instagram", "TikTok", "Twitter/X", "Gmail", "LinkedIn", "Snapchat", "Other"];
 const CATEGORY_ICONS: Record<Category, string> = {
@@ -124,11 +103,48 @@ function PreviewTable({ logs }: { logs: ParsedLog[] }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function AdminInventoryPage() {
-  const [sessions, setSessions] = useState<Session[]>(INITIAL_SESSIONS);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [loadingSessions, setLoadingSessions] = useState(true);
 
   // Form state
   const [sessionName, setSessionName] = useState("");
   const [category, setCategory]       = useState<Category>("Facebook");
+  async function loadSessions() {
+    setLoadingSessions(true);
+    try {
+      const res = await fetch("/api/admin/marketplace/update-price", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to load inventory");
+      const logs = (data.logs ?? []) as Array<{ id: string; category: string; createdAt?: string }>;
+      const grouped = new Map<string, Session>();
+      for (const row of logs) {
+        const key = row.category || "Other";
+        const prev = grouped.get(key);
+        if (!prev) {
+          grouped.set(key, {
+            id: key.toLowerCase().replace(/\s+/g, "-"),
+            name: `${key} Session`,
+            category: key,
+            uploadedAt: new Date(row.createdAt ?? Date.now()).toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" }),
+            count: 1,
+          });
+        } else {
+          prev.count += 1;
+        }
+      }
+      setSessions(Array.from(grouped.values()).sort((a, b) => b.count - a.count));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load sessions");
+      setSessions([]);
+    } finally {
+      setLoadingSessions(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadSessions();
+  }, []);
+
   const [rawText, setRawText]         = useState("");
   const [parsed, setParsed]           = useState<ParsedLog[] | null>(null);
   const [uploading, setUploading]     = useState(false);
@@ -180,22 +196,10 @@ export default function AdminInventoryPage() {
         toast.warning(`${data.skipped} row(s) skipped — missing username or password`);
       }
 
-      // Reflect the new session in the local list
-      setSessions((prev) => [
-        {
-          id: `sess-${Date.now()}`,
-          name: sessionName.trim(),
-          category,
-          uploadedAt: new Date().toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" }),
-          count: data.uploaded ?? valid.length,
-          logs: valid,
-        },
-        ...prev,
-      ]);
-
       setSessionName("");
       setRawText("");
       setParsed(null);
+      await loadSessions();
     } catch {
       toast.error("Network error. Please try again.");
     } finally {
@@ -203,9 +207,27 @@ export default function AdminInventoryPage() {
     }
   }
 
-  function deleteSession(id: string) {
-    setSessions((prev) => prev.filter((s) => s.id !== id));
-    toast.success("Session deleted.");
+  async function deleteSession(categoryName: string) {
+    try {
+      const rows = await fetch("/api/admin/marketplace/update-price", { cache: "no-store" });
+      const data = await rows.json();
+      const logs = (data.logs ?? []) as Array<{ id: string; category: string }>;
+      const target = logs.filter((l) => l.category === categoryName);
+      if (target.length === 0) return toast.info("No logs found for this category.");
+      await Promise.all(
+        target.map((row) =>
+          fetch("/api/admin/marketplace/update-price", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "updateItemPrice", logId: row.id, price: 0 }),
+          })
+        )
+      );
+      toast.success("Category rows zero-priced. Use Marketplace section for full delete.");
+      await loadSessions();
+    } catch {
+      toast.error("Failed to update session.");
+    }
   }
 
   const totalStock = sessions.reduce((s, sess) => s + sess.count, 0);
@@ -361,13 +383,15 @@ export default function AdminInventoryPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {sessions.length === 0 ? (
+          {loadingSessions ? (
+            <p className="text-center text-sm text-muted-foreground py-10">Loading inventory…</p>
+          ) : sessions.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-10">No sessions yet — upload your first batch above.</p>
           ) : (
             <div className="divide-y divide-border/40">
               {sessions.map((sess) => (
                 <div key={sess.id} className="flex items-center gap-4 px-5 py-4 hover:bg-accent/20 transition-colors">
-                  <span className="text-xl flex-shrink-0">{CATEGORY_ICONS[sess.category]}</span>
+                  <span className="text-xl flex-shrink-0">{CATEGORY_ICONS[(sess.category as Category)] ?? "🔗"}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{sess.name}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -382,7 +406,7 @@ export default function AdminInventoryPage() {
                       {sess.count} logs
                     </Badge>
                     <button
-                      onClick={() => deleteSession(sess.id)}
+                      onClick={() => void deleteSession(sess.category)}
                       className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
                       title="Delete session"
                     >

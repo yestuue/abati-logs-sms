@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { fiveSimFetch, getFiveSimApiBase } from "@/lib/sms-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -56,6 +57,7 @@ export default async function AdminPage() {
   let serverConfigs: {
     id: string; server: string; name: string; isEnabled: boolean;
   }[] = [];
+  let providerOnline = false;
 
   let recentTransactions: {
     id: string; amount: number; currency: string; type: string;
@@ -63,14 +65,8 @@ export default async function AdminPage() {
     userName: string; userEmail: string;
   }[] = [];
 
-  try {
-    console.log("[AdminPage] running Promise.all queries");
-
-    const [
-      _totalUsers, _totalNumbers, _assigned, _available,
-      _totalSms, _unreadSms, revenue, _users,
-      _configs, _txns, todayRev, monthRev, _totalLogs,
-    ] = await Promise.all([
+  const [usersCount, numbersCount, assignedCount, availableCount, smsCount, unreadCount, revenueAgg, usersRecent, configs, txns, todayAgg, monthAgg, logsCount] =
+    await Promise.allSettled([
       prisma.user.count(),
       prisma.virtualNumber.count(),
       prisma.virtualNumber.count({ where: { status: "ASSIGNED" } }),
@@ -103,50 +99,59 @@ export default async function AdminPage() {
       prisma.log.count({ where: { status: "AVAILABLE" } }),
     ]);
 
-    console.log("[AdminPage] queries done — users:", _totalUsers, "txns:", _txns.length);
+  totalUsers = usersCount.status === "fulfilled" ? usersCount.value : 0;
+  totalNumbers = numbersCount.status === "fulfilled" ? numbersCount.value : 0;
+  assignedNumbers = assignedCount.status === "fulfilled" ? assignedCount.value : 0;
+  availableNumbers = availableCount.status === "fulfilled" ? availableCount.value : 0;
+  totalSms = smsCount.status === "fulfilled" ? smsCount.value : 0;
+  unreadSms = unreadCount.status === "fulfilled" ? unreadCount.value : 0;
+  totalRevenue = revenueAgg.status === "fulfilled" ? revenueAgg.value._sum.amount ?? 0 : 0;
+  todayRevenueAmt = todayAgg.status === "fulfilled" ? todayAgg.value._sum.amount ?? 0 : 0;
+  monthRevenueAmt = monthAgg.status === "fulfilled" ? monthAgg.value._sum.amount ?? 0 : 0;
+  totalLogs = logsCount.status === "fulfilled" ? logsCount.value : 0;
 
-    totalUsers       = _totalUsers;
-    totalNumbers     = _totalNumbers;
-    assignedNumbers  = _assigned;
-    availableNumbers = _available;
-    totalSms         = _totalSms;
-    unreadSms        = _unreadSms;
-    totalRevenue     = revenue._sum.amount ?? 0;
-    todayRevenueAmt  = todayRev._sum.amount ?? 0;
-    monthRevenueAmt  = monthRev._sum.amount ?? 0;
-    totalLogs        = _totalLogs;
+  recentUsers =
+    usersRecent.status === "fulfilled"
+      ? usersRecent.value.map((u) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: String(u.role),
+          walletBalance: u.walletBalance ?? 0,
+          walletCurrency: String(u.walletCurrency ?? "NGN"),
+          createdAtStr: toStr(u.createdAt),
+        }))
+      : [];
 
-    // Convert dates to strings immediately — never let a Date object reach JSX
-    recentUsers = _users.map((u) => ({
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      role: String(u.role),
-      walletBalance: u.walletBalance ?? 0,
-      walletCurrency: String(u.walletCurrency ?? "NGN"),
-      createdAtStr: toStr(u.createdAt),
-    }));
+  serverConfigs =
+    configs.status === "fulfilled"
+      ? configs.value.map((c) => ({
+          id: c.id,
+          server: c.server,
+          name: c.name,
+          isEnabled: c.isEnabled,
+        }))
+      : [];
 
-    serverConfigs = _configs.map((c) => ({
-      id: c.id,
-      server: c.server,
-      name: c.name,
-      isEnabled: c.isEnabled,
-    }));
+  recentTransactions =
+    txns.status === "fulfilled"
+      ? txns.value.map((tx) => ({
+          id: tx.id,
+          amount: tx.amount ?? 0,
+          currency: String(tx.currency ?? "NGN"),
+          type: String(tx.type),
+          status: String(tx.status),
+          createdAtStr: toStr(tx.createdAt),
+          userName: tx.user?.name ?? tx.user?.username ?? tx.user?.email ?? "Unknown user",
+          userEmail: tx.user?.email ?? "",
+        }))
+      : [];
 
-    recentTransactions = _txns.map((tx) => ({
-      id: tx.id,
-      amount: tx.amount ?? 0,
-      currency: String(tx.currency ?? "NGN"),
-      type: String(tx.type),
-      status: String(tx.status),
-      createdAtStr: toStr(tx.createdAt),
-      userName: tx.user?.name ?? tx.user?.username ?? tx.user?.email ?? "Unknown user",
-      userEmail: tx.user?.email ?? "",
-    }));
-
-  } catch (err) {
-    console.error("[AdminPage] DB error:", err);
+  try {
+    const probe = await fiveSimFetch(`${getFiveSimApiBase()}/guest/countries`);
+    providerOnline = probe.ok;
+  } catch {
+    providerOnline = false;
   }
 
   const stats = [
@@ -305,8 +310,8 @@ export default async function AdminPage() {
                       </p>
                     </div>
                   </div>
-                  <Badge variant={cfg.isEnabled ? "success" : "secondary"}>
-                    {cfg.isEnabled ? "Online" : "Offline"}
+                  <Badge variant={cfg.isEnabled && providerOnline ? "success" : "secondary"}>
+                    {cfg.isEnabled && providerOnline ? "Online" : !cfg.isEnabled ? "Disabled" : "Provider Down"}
                   </Badge>
                 </div>
               ))

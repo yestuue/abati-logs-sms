@@ -39,14 +39,20 @@ export async function POST(req: Request) {
       );
     }
 
+    const categoryName = category.trim();
+    const categoryRow = await prisma.logCategory.findUnique({ where: { name: categoryName } });
+    const unitPrice = categoryRow?.price ?? 0;
+
     await prisma.log.createMany({
       data: validLogs.map((l) => ({
-        category: category.trim(),
+        category: categoryName,
+        categoryId: categoryRow?.id ?? null,
         username: l.username.trim(),
         password: l.password.trim(),
         email: l.email || null,
         emailPass: l.emailPass || null,
         twoFA: l.twoFA || null,
+        price: unitPrice,
       })),
     });
 

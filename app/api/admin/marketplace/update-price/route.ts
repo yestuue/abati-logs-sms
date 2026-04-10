@@ -25,7 +25,7 @@ export async function GET() {
     prisma.log.findMany({
       orderBy: { createdAt: "desc" },
       take: 200,
-      select: { id: true, category: true, subCategory: true, username: true, price: true, status: true, categoryId: true },
+      select: { id: true, category: true, subCategory: true, username: true, price: true, status: true, categoryId: true, createdAt: true },
     }),
   ]);
   return NextResponse.json({ categories, logs });

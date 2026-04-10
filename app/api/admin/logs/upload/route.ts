@@ -45,8 +45,17 @@ export async function POST(req: Request) {
     // Filter out rows that are missing required fields
     const valid = logsData.filter((r) => r.username && r.password);
     const skipped = logsData.length - valid.length;
-
-    await prisma.log.createMany({ data: valid });
+    const categoryName = category.trim();
+    const categoryRow = await prisma.logCategory.findUnique({ where: { name: categoryName } });
+    const unitPrice = categoryRow?.price ?? 0;
+    await prisma.log.createMany({
+      data: valid.map((r) => ({
+        ...r,
+        category: categoryName,
+        categoryId: categoryRow?.id ?? null,
+        price: unitPrice,
+      })),
+    });
 
     return NextResponse.json({
       message: `${valid.length} log${valid.length !== 1 ? "s" : ""} uploaded successfully.`,
