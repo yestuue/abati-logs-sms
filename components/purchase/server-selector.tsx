@@ -155,7 +155,6 @@ export function ServerSelector({
   const [countrySearch, setCountrySearch] = useState("");
   const [countryOpen, setCountryOpen] = useState(false);
   const [preferredAreaCode, setPreferredAreaCode] = useState("");
-  const [preserveSelectionOnNextEmpty, setPreserveSelectionOnNextEmpty] = useState(false);
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [activeAssignments, setActiveAssignments] = useState<ActiveAssignment[]>([]);
   const [loadingActive, setLoadingActive] = useState(false);
@@ -269,15 +268,13 @@ export function ServerSelector({
     setCountrySearch("");
     setCountryOpen(false);
     setPreferredAreaCode("");
-    setPreserveSelectionOnNextEmpty(false);
   }
 
   function selectServiceRow(row: ServiceSearchResult) {
-    // Replace old selection immediately with the newly clicked service.
+    // Replace selected service immediately and hide the dropdown list.
     setSelectedService(row);
-    setPreserveSelectionOnNextEmpty(true);
-    setSearch("");
     setServiceResults([]);
+    setCountryOpen(false);
   }
 
   function clearSearch() {
@@ -288,7 +285,18 @@ export function ServerSelector({
     setCountrySearch("");
     setCountryOpen(false);
     setPreferredAreaCode("");
-    setPreserveSelectionOnNextEmpty(false);
+  }
+
+  function onSearchChange(next: string) {
+    setSearch(next);
+    if (next.trim() === "") {
+      setServiceResults([]);
+      setNumbers([]);
+      setSelectedService(null);
+      setCountrySearch("");
+      setCountryOpen(false);
+      setPreferredAreaCode("");
+    }
   }
 
   useEffect(() => {
@@ -297,14 +305,10 @@ export function ServerSelector({
     if (trimmed.length < MIN_SERVICE_QUERY_LEN) {
       setServiceResults([]);
       setNumbers([]);
-      if (preserveSelectionOnNextEmpty) {
-        setPreserveSelectionOnNextEmpty(false);
-      } else {
-        setSelectedService(null);
-        setCountrySearch("");
-        setCountryOpen(false);
-        setPreferredAreaCode("");
-      }
+      setSelectedService(null);
+      setCountrySearch("");
+      setCountryOpen(false);
+      setPreferredAreaCode("");
       setLoading(false);
       return;
     }
@@ -313,7 +317,7 @@ export function ServerSelector({
       void performSearch(search, countrySlug);
     }, 400);
     return () => window.clearTimeout(t);
-  }, [search, activeServer, server2Country, isDisabled, performSearch, preserveSelectionOnNextEmpty]);
+  }, [search, activeServer, server2Country, isDisabled, performSearch]);
 
   useEffect(() => {
     void loadActiveAssignments();
@@ -662,7 +666,7 @@ export function ServerSelector({
                   placeholder="Search: WhatsApp, Telegram, Google…"
                   className="relative z-10 pl-8 pr-8 h-9 text-[11.5px] text-black dark:text-zinc-100 rounded-xl border-zinc-200 bg-white dark:bg-zinc-900 focus-visible:ring-violet-400/40"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => onSearchChange(e.target.value)}
                   autoComplete="off"
                 />
                 {search && (
@@ -734,7 +738,7 @@ export function ServerSelector({
             </CardContent>
           </Card>
 
-          {activeServer === "SERVER2" && selectedService && (
+          {activeServer === "SERVER2" && selectedService && search.trim() !== "" && (
             <div className="w-full max-w-[354px] mx-auto lg:max-w-none space-y-2 mb-2">
               <Label className="text-sm font-medium text-[#2D2D2D] dark:text-zinc-100">
                 Select country
@@ -819,7 +823,7 @@ export function ServerSelector({
               </p>
             </CardHeader>
             <CardContent className="p-3 space-y-4">
-              {selectedService && (
+              {selectedService && search.trim() !== "" && (
                 <div
                   className={
                     activeServer === "SERVER1" && server1PremiumActive
