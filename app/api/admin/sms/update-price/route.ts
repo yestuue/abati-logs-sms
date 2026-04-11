@@ -28,7 +28,7 @@ export async function GET() {
     prisma.service.findMany({ orderBy: { serviceKey: "asc" } }),
     prisma.globalSettings.findFirst(),
     prisma.serverConfig.findMany({ orderBy: { server: "asc" } }),
-    prisma.countryConfig.findMany({ orderBy: { name: "asc" } }),
+    prisma.country.findMany({ orderBy: { name: "asc" } }),
   ]);
 
   return NextResponse.json({
@@ -106,9 +106,9 @@ export async function PUT(req: Request) {
       if (!body.countrySlug || typeof body.isEnabled !== "boolean") {
         return NextResponse.json({ error: "countrySlug and isEnabled required" }, { status: 400 });
       }
-      const existing = await prisma.countryConfig.findUnique({ where: { slug: body.countrySlug } });
+      const existing = await prisma.country.findUnique({ where: { slug: body.countrySlug } });
       if (!existing) return NextResponse.json({ error: "Country not found" }, { status: 404 });
-      const updated = await prisma.countryConfig.update({
+      const updated = await prisma.country.update({
         where: { slug: body.countrySlug },
         data: { enabled: body.isEnabled },
       });
@@ -124,7 +124,7 @@ export async function PUT(req: Request) {
     // Fast sync: persist provider-supported countries immediately.
     await prisma.$transaction(
       countries.map(([slug, meta]) =>
-        prisma.countryConfig.upsert({
+        prisma.country.upsert({
           where: { slug },
           update: { name: meta?.text_en || slug },
           create: {
@@ -145,7 +145,7 @@ export async function PUT(req: Request) {
         const products = (await pRes.json()) as Record<string, { Price?: number }>;
         const first = Object.values(products)[0];
         if (!first?.Price) continue;
-        await prisma.countryConfig.update({
+        await prisma.country.update({
           where: { slug },
           data: { samplePrice: computeSmsDisplayPriceNgn(Number(first.Price) || 0) },
         });

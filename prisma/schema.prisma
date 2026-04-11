@@ -154,13 +154,16 @@ model LogCategory {
   logs      Log[]
 }
 
-model CountryConfig {
-  id        String   @id @default(cuid())
-  slug      String   @unique
-  name      String
+/// Server 2 / provider countries (synced from 5SIM guest API). Table name kept for existing DBs.
+model Country {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
   samplePrice Float?
-  enabled   Boolean  @default(true)
-  updatedAt DateTime @updatedAt
+  enabled     Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  @@map("CountryConfig")
 }
 
 model Account {

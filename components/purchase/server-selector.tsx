@@ -67,6 +67,7 @@ interface ActiveAssignment {
 }
 
 interface CountryOption {
+  id: string;
   slug: string;
   name: string;
   iso2?: string | null;
@@ -152,6 +153,7 @@ export function ServerSelector({
   const [serviceResults, setServiceResults] = useState<ServiceSearchResult[]>([]);
   const [selectedService, setSelectedService] = useState<ServiceSearchResult | null>(null);
   const [server2Country, setServer2Country] = useState("usa");
+  const [server2CountryId, setServer2CountryId] = useState<string>("usa");
   const [countrySearch, setCountrySearch] = useState("");
   const [countryOpen, setCountryOpen] = useState(false);
   const [preferredAreaCode, setPreferredAreaCode] = useState("");
@@ -172,8 +174,12 @@ export function ServerSelector({
 
       setLoading(true);
       try {
+        const countryIdQs =
+          activeServer === "SERVER2" && server2CountryId
+            ? `&countryId=${encodeURIComponent(server2CountryId)}`
+            : "";
         const searchRes = await fetch(
-          `/api/numbers/search?service=${encodeURIComponent(normalized)}&limit=30&country=${encodeURIComponent(countrySlug)}`,
+          `/api/numbers/search?service=${encodeURIComponent(normalized)}&limit=30&country=${encodeURIComponent(countrySlug)}${countryIdQs}`,
           { cache: "no-store" }
         );
         const searchData = await searchRes.json();
@@ -213,7 +219,7 @@ export function ServerSelector({
         setLoading(false);
       }
     },
-    []
+    [activeServer, server2CountryId]
   );
 
   const loadInventoryServer2 = useCallback(async (serviceKey: string) => {
@@ -268,6 +274,10 @@ export function ServerSelector({
     setCountrySearch("");
     setCountryOpen(false);
     setPreferredAreaCode("");
+    if (srv === "SERVER2") {
+      const row = countries.find((c) => c.slug === server2Country);
+      setServer2CountryId(row?.id ?? server2Country);
+    }
   }
 
   function selectServiceRow(row: ServiceSearchResult) {
@@ -365,8 +375,11 @@ export function ServerSelector({
     const t = window.setTimeout(() => {
       void (async () => {
         try {
+          const idQs = server2CountryId
+            ? `&countryId=${encodeURIComponent(server2CountryId)}`
+            : "";
           const searchRes = await fetch(
-            `/api/numbers/search?service=${encodeURIComponent(key)}&limit=10&country=${encodeURIComponent(server2Country)}`,
+            `/api/numbers/search?service=${encodeURIComponent(key)}&limit=10&country=${encodeURIComponent(server2Country)}${idQs}`,
             { cache: "no-store" }
           );
           const searchData = await searchRes.json();
@@ -398,7 +411,7 @@ export function ServerSelector({
       cancelled = true;
       window.clearTimeout(t);
     };
-  }, [server2Country, activeServer, selectedService?.serviceKey]);
+  }, [server2Country, server2CountryId, activeServer, selectedService?.serviceKey]);
 
   useEffect(() => {
     if (countries.length === 0) return;
@@ -406,6 +419,23 @@ export function ServerSelector({
       countries.some((c) => c.slug === prev) ? prev : countries[0]!.slug
     );
   }, [countries]);
+
+  useEffect(() => {
+    const row = countries.find((c) => c.slug === server2Country);
+    if (row) setServer2CountryId(row.id);
+  }, [countries, server2Country]);
+
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== "visible" || isDisabled) return;
+      const trimmed = search.trim();
+      if (trimmed.length < MIN_SERVICE_QUERY_LEN) return;
+      const countrySlug = activeServer === "SERVER1" ? "usa" : server2Country;
+      void performSearch(search, countrySlug);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, [search, activeServer, server2Country, isDisabled, performSearch]);
 
   useEffect(() => {
     if (!selectedService) {
@@ -463,7 +493,7 @@ export function ServerSelector({
     return finalNumberPurchasePriceNGN(getPurchaseChargeBase(item), {
       server: item.server,
       carrier,
-      areaCodesRaw: preferredAreaCode,
+      areaCodesRaw: preferredAreaCode.trim(),
       premiumRate: selectedPremiumRate,
     });
   }
@@ -497,7 +527,7 @@ export function ServerSelector({
           numberId: selected.id,
           amount: finalNGN,
           carrier,
-          areaCodes: preferredAreaCode,
+          areaCodes: preferredAreaCode.trim(),
           ...(selectedService?.serviceKey ? { serviceKey: selectedService.serviceKey } : {}),
         }),
       });
@@ -596,6 +626,19 @@ export function ServerSelector({
       </div>
 
       {/* Carrier selector — only for USA (SERVER1) */}
+      {activeServer === "SERVER2" && (
+        <div
+          className="p-3 rounded-xl"
+          style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
+        >
+          <p className="text-xs font-semibold text-foreground">US area codes</p>
+          <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
+            Configure <strong>Area Code(s)</strong> on <strong>Server 1</strong> (USA). That value is still sent with
+            every checkout—including Server 2—so the backend receives your preference on each purchase.
+          </p>
+        </div>
+      )}
+
       {activeServer === "SERVER1" && (
         <div
           className="p-3 rounded-xl"
@@ -697,6 +740,7 @@ export function ServerSelector({
                             className="w-full text-left px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 hover:bg-violet-50 dark:hover:bg-violet-950/30 border-b border-zinc-100 dark:border-zinc-800 last:border-0"
                             onClick={() => {
                               setServer2Country(c.slug);
+                              setServer2CountryId(c.id);
                               setCountrySearch(c.name);
                               setCountryOpen(false);
                             }}

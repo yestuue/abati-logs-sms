@@ -33,24 +33,31 @@ export async function GET() {
     }
 
     const data = (await res.json()) as Record<string, GuestCountry>;
-    const disabled = new Set(
-      (
-        await prisma.countryConfig.findMany({
-          where: { enabled: false },
-          select: { slug: true },
-        })
-      ).map((c) => c.slug)
-    );
+    const [disabledRows, dbCountries] = await Promise.all([
+      prisma.country.findMany({ where: { enabled: false }, select: { slug: true } }),
+      prisma.country.findMany({ select: { id: true, slug: true, name: true } }),
+    ]);
+    const disabled = new Set(disabledRows.map((c) => c.slug));
+    const dbBySlug = new Map(dbCountries.map((c) => [c.slug, c]));
+
     const countries = Object.entries(data)
       .filter(([slug]) => !disabled.has(slug))
-      .map(([slug, v]) => ({
-        slug,
-        name: typeof v?.text_en === "string" ? v.text_en : slug,
-        iso2: v?.iso ? Object.keys(v.iso)[0]?.toUpperCase() ?? null : null,
-      }))
+      .map(([slug, v]) => {
+        const row = dbBySlug.get(slug);
+        const isoFromProvider = v?.iso ? Object.keys(v.iso)[0]?.toUpperCase() ?? null : null;
+        return {
+          id: row?.id ?? slug,
+          slug,
+          name: row?.name ?? (typeof v?.text_en === "string" ? v.text_en : slug),
+          iso2: isoFromProvider,
+        };
+      })
       .sort((a, b) => a.name.localeCompare(b.name, "en"));
 
-    return NextResponse.json({ countries });
+    return NextResponse.json(
+      { countries },
+      { headers: { "Cache-Control": "no-store" } }
+    );
   } catch (e) {
     console.error("[numbers/countries]", e);
     return NextResponse.json({ error: "Network error" }, { status: 502 });

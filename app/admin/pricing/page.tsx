@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,13 @@ type Service = {
 };
 
 type ServerCfg = { server: "SERVER1" | "SERVER2"; isEnabled: boolean };
-type CountryCfg = { slug: string; name: string; enabled: boolean; samplePrice?: number | null };
+type CountryCfg = {
+  id: string;
+  slug: string;
+  name: string;
+  enabled: boolean;
+  samplePrice?: number | null;
+};
 type LogCategory = { id: string; name: string; price: number; stock: number; enabled: boolean };
 type LogItem = { id: string; category: string; username: string; price: number; status: string };
 
@@ -34,17 +40,26 @@ export default function AdminPricingPage() {
   const [loading, setLoading] = useState(false);
   const [serviceDrafts, setServiceDrafts] = useState<Record<string, string>>({});
   const [serviceTableSearch, setServiceTableSearch] = useState("");
+  const [servicesLoading, setServicesLoading] = useState(true);
 
-  async function loadServiceCatalog() {
-    const res = await fetch("/api/admin/pricing", { cache: "no-store" });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "Failed to load service catalog");
-    const list = (data.services ?? []) as Service[];
-    setServices(list);
-    setServiceDrafts(
-      Object.fromEntries(list.map((s) => [s.id, String(Math.round(s.customPrice ?? s.basePrice))]))
-    );
-  }
+  /** Loads every row from the Service model (admin pricing table). */
+  const fetchAdminServices = useCallback(async () => {
+    setServicesLoading(true);
+    try {
+      const res = await fetch("/api/admin/pricing", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to load services");
+      const list = (data.services ?? []) as Service[];
+      setServices(list);
+      setServiceDrafts(
+        Object.fromEntries(list.map((s) => [s.id, String(Math.round(s.basePrice))]))
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to load services");
+    } finally {
+      setServicesLoading(false);
+    }
+  }, []);
 
   async function loadSms() {
     const res = await fetch("/api/admin/sms/update-price", { cache: "no-store" });
@@ -66,7 +81,7 @@ export default function AdminPricingPage() {
   async function loadAll() {
     setLoading(true);
     try {
-      await Promise.all([loadSms(), loadMarketplace(), loadServiceCatalog()]);
+      await Promise.all([loadSms(), loadMarketplace(), fetchAdminServices()]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load pricing data");
     } finally {
@@ -75,7 +90,20 @@ export default function AdminPricingPage() {
   }
 
   useEffect(() => {
-    void loadAll();
+    void fetchAdminServices();
+  }, [fetchAdminServices]);
+
+  useEffect(() => {
+    void (async () => {
+      setLoading(true);
+      try {
+        await Promise.all([loadSms(), loadMarketplace()]);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to load pricing data");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   const filteredServices = useMemo(() => {
@@ -97,41 +125,26 @@ export default function AdminPricingPage() {
     const data = await res.json();
     if (!res.ok) return toast.error(data.error ?? "Global premium update failed");
     toast.success("Global premium updated");
-    await Promise.all([loadSms(), loadServiceCatalog()]);
+    await Promise.all([loadSms(), fetchAdminServices()]);
   }
 
-  async function saveServiceCustomPrice(id: string, value: number) {
-    if (!Number.isFinite(value) || value <= 0) {
-      toast.error("Enter a valid positive price");
+  async function updateServiceBasePrice(id: string) {
+    const basePrice = Number(serviceDrafts[id]);
+    if (!Number.isFinite(basePrice) || basePrice <= 0) {
+      toast.error("Enter a valid base price");
       return;
     }
-    const res = await fetch("/api/admin/sms/update-price", {
-      method: "PUT",
+    const res = await fetch("/api/admin/pricing/update", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "servicePrice", serviceId: id, customPrice: value }),
+      body: JSON.stringify({ serviceId: id, basePrice }),
     });
     const data = await res.json();
-    if (!res.ok) return toast.error(data.error ?? "Service price update failed");
+    if (!res.ok) return toast.error(data.error ?? "Update failed");
     const updated = data.service as Service;
     setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s)));
-    toast.success("Service price saved");
-  }
-
-  async function clearServiceCustomPrice(id: string) {
-    const res = await fetch("/api/admin/sms/update-price", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "servicePrice", serviceId: id, customPrice: null }),
-    });
-    const data = await res.json();
-    if (!res.ok) return toast.error(data.error ?? "Could not clear override");
-    const updated = data.service as Service;
-    setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s)));
-    setServiceDrafts((prev) => ({
-      ...prev,
-      [id]: String(Math.round(updated.basePrice)),
-    }));
-    toast.success("Using catalog base price");
+    setServiceDrafts((prev) => ({ ...prev, [id]: String(Math.round(updated.basePrice)) }));
+    toast.success("Service base price updated");
   }
 
   async function syncSmsCatalog() {
@@ -141,7 +154,7 @@ export default function AdminPricingPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Catalog sync failed");
       toast.success(`Catalog synced (${data.syncedKeys ?? 0} keys)`);
-      await loadServiceCatalog();
+      await fetchAdminServices();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Sync failed");
     } finally {
@@ -281,65 +294,54 @@ export default function AdminPricingPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-sm">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-2">Service name</th>
-                  <th className="text-left py-2">Current price (₦)</th>
-                  <th className="text-right py-2">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredServices.map((s) => (
-                  <tr key={s.id} className="border-b border-border/50">
-                    <td className="py-2">
-                      <div className="font-medium">{s.name}</div>
-                      <div className="text-[11px] font-mono text-muted-foreground">{s.serviceKey}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        Catalog base: ₦{Math.round(s.basePrice).toLocaleString()}
-                        {s.customPrice != null && (
-                          <span className="ml-1 text-amber-600 dark:text-amber-400">(override active)</span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="py-2 align-top">
-                      <Input
-                        value={serviceDrafts[s.id] ?? ""}
-                        onChange={(e) =>
-                          setServiceDrafts((prev) => ({
-                            ...prev,
-                            [s.id]: e.target.value.replace(/[^\d.]/g, ""),
-                          }))
-                        }
-                        className="h-8 w-36"
-                        aria-label={`Price for ${s.name}`}
-                      />
-                    </td>
-                    <td className="py-2 text-right align-top space-x-2 whitespace-nowrap">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          void saveServiceCustomPrice(s.id, Number(serviceDrafts[s.id]))
-                        }
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-muted-foreground"
-                        onClick={() => void clearServiceCustomPrice(s.id)}
-                        disabled={s.customPrice == null}
-                      >
-                        Use catalog
-                      </Button>
-                    </td>
+            {servicesLoading ? (
+              <p className="text-sm text-muted-foreground py-6">Loading services from database…</p>
+            ) : (
+              <table className="w-full min-w-[640px] text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2">Service name</th>
+                    <th className="text-left py-2">Key</th>
+                    <th className="text-left py-2">Base price (₦)</th>
+                    <th className="text-right py-2">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            {filteredServices.length === 0 && (
+                </thead>
+                <tbody>
+                  {filteredServices.map((s) => (
+                    <tr key={s.id} className="border-b border-border/50">
+                      <td className="py-2 font-medium align-top">{s.name}</td>
+                      <td className="py-2 align-top">
+                        <span className="font-mono text-xs text-muted-foreground">{s.serviceKey}</span>
+                      </td>
+                      <td className="py-2 align-top">
+                        <Input
+                          value={serviceDrafts[s.id] ?? ""}
+                          onChange={(e) =>
+                            setServiceDrafts((prev) => ({
+                              ...prev,
+                              [s.id]: e.target.value.replace(/[^\d.]/g, ""),
+                            }))
+                          }
+                          className="h-8 w-36"
+                          aria-label={`Base price for ${s.name}`}
+                        />
+                        {s.customPrice != null && (
+                          <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                            Custom override ₦{Math.round(s.customPrice).toLocaleString()} (checkout)
+                          </p>
+                        )}
+                      </td>
+                      <td className="py-2 text-right align-top">
+                        <Button size="sm" variant="outline" onClick={() => void updateServiceBasePrice(s.id)}>
+                          Update
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+            {!servicesLoading && filteredServices.length === 0 && (
               <p className="text-sm text-muted-foreground py-4">
                 {services.length === 0
                   ? "No services in database yet. Run “Sync SMS catalog” or use the user dashboard search to seed services."
@@ -352,7 +354,7 @@ export default function AdminPricingPage() {
             <p className="text-sm font-medium mb-2">Country toggles (Server 2)</p>
             <div className="max-h-56 overflow-auto space-y-2">
               {countries.map((c) => (
-                <div key={c.slug} className="flex items-center justify-between text-sm">
+                <div key={c.id} className="flex items-center justify-between text-sm">
                   <span>{c.name} ({c.slug}) {c.samplePrice ? `- ₦${Math.round(c.samplePrice).toLocaleString()}` : ""}</span>
                   <Button size="sm" variant={c.enabled ? "outline" : "default"} onClick={() => void toggleCountry(c.slug, !c.enabled)}>
                     {c.enabled ? "Disable" : "Enable"}

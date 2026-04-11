@@ -58,7 +58,7 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   let query = normalizeServiceSearchQuery(searchParams.get("service") ?? searchParams.get("q") ?? "");
-  const country = (searchParams.get("country") ?? process.env.FIVE_SIM_GUEST_COUNTRY ?? "usa")
+  let country = (searchParams.get("country") ?? process.env.FIVE_SIM_GUEST_COUNTRY ?? "usa")
     .toLowerCase()
     .trim();
   const operator = (searchParams.get("operator") ?? process.env.FIVE_SIM_GUEST_OPERATOR ?? "any")
@@ -68,6 +68,15 @@ export async function GET(req: Request) {
 
   if (query.length < 2) {
     return NextResponse.json({ services: [], query, total: 0 });
+  }
+
+  const countryIdParam = searchParams.get("countryId")?.trim();
+  if (countryIdParam) {
+    const row = await prisma.country.findFirst({
+      where: { OR: [{ id: countryIdParam }, { slug: countryIdParam }] },
+      select: { slug: true },
+    });
+    if (row?.slug) country = row.slug.toLowerCase();
   }
 
   const base = getFiveSimApiBase();
@@ -149,13 +158,16 @@ export async function GET(req: Request) {
       };
     });
 
-    return NextResponse.json({
-      services: pricedServices,
-      query,
-      country,
-      operator,
-      total: pricedServices.length,
-    });
+    return NextResponse.json(
+      {
+        services: pricedServices,
+        query,
+        country,
+        operator,
+        total: pricedServices.length,
+      },
+      { headers: { "Cache-Control": "no-store, must-revalidate" } }
+    );
   } catch (err) {
     console.error("[numbers/search] Network error:", err);
     return NextResponse.json({ error: "Network error contacting 5SIM" }, { status: 502 });
