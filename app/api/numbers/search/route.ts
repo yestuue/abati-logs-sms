@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getGlobalSmsPremiumRate, getServicePriceConfigMap } from "@/lib/price-calculator";
+import { getGlobalSmsPremiumRateForServer, getServicePriceConfigMap } from "@/lib/price-calculator";
 import {
   computeSmsDisplayPriceNgn,
   fiveSimFetch,
@@ -65,6 +65,8 @@ export async function GET(req: Request) {
     .toLowerCase()
     .trim();
   const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "30", 10) || 30, 1), 50);
+  const serverRaw = (searchParams.get("server") ?? "SERVER1").toUpperCase();
+  const serverForPremium = serverRaw === "SERVER2" ? "SERVER2" : "SERVER1";
 
   if (query.length < 2) {
     return NextResponse.json({ services: [], query, total: 0 });
@@ -114,7 +116,7 @@ export async function GET(req: Request) {
       .sort((a, b) => b.qty - a.qty)
       .slice(0, limit);
 
-    const globalPremiumRate = await getGlobalSmsPremiumRate();
+    const globalPremiumRate = await getGlobalSmsPremiumRateForServer(serverForPremium);
 
     const keys = services.map((s) => s.key);
     const configMap = await getServicePriceConfigMap(keys);
@@ -154,7 +156,7 @@ export async function GET(req: Request) {
         qty: s.qty,
         priceUsd: s.priceUsd,
         priceNGN: Math.round(effective),
-        premiumRate: cfg?.premiumRate ?? globalPremiumRate,
+        premiumRate: globalPremiumRate,
       };
     });
 

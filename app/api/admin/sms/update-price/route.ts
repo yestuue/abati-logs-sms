@@ -11,6 +11,8 @@ const bodySchema = z.object({
   /** When set (including null), updates the per-service price override; null clears override. */
   customPrice: z.union([z.number().positive(), z.null()]).optional(),
   premiumRate: z.number().min(0).max(5).optional(),
+  /** With mode globalPremium: which global setting to update (default SERVER1). */
+  premiumTarget: z.enum(["SERVER1", "SERVER2"]).optional(),
   server: z.enum(["SERVER1", "SERVER2"]).optional(),
   isEnabled: z.boolean().optional(),
   countrySlug: z.string().optional(),
@@ -31,9 +33,13 @@ export async function GET() {
     prisma.country.findMany({ orderBy: { name: "asc" } }),
   ]);
 
+  const s1 = settings?.smsGlobalPremiumRate ?? 0.35;
+  const s2 = settings?.smsGlobalPremiumRateServer2 ?? 0.35;
   return NextResponse.json({
     services,
-    globalPremiumRate: settings?.smsGlobalPremiumRate ?? 0.35,
+    globalPremiumRate: s1,
+    globalPremiumRateServer1: s1,
+    globalPremiumRateServer2: s2,
     servers,
     countries,
   });
@@ -49,16 +55,22 @@ export async function PUT(req: Request) {
 
     if (body.mode === "globalPremium") {
       const premiumRate = body.premiumRate ?? 0.35;
+      const target = body.premiumTarget ?? "SERVER1";
       const existing = await prisma.globalSettings.findFirst({ select: { id: true } });
-      await prisma.$transaction([
-        prisma.service.updateMany({ data: { premiumRate } }),
-        existing
-          ? prisma.globalSettings.update({
-              where: { id: existing.id },
-              data: { smsGlobalPremiumRate: premiumRate },
-            })
-          : prisma.globalSettings.create({ data: { smsGlobalPremiumRate: premiumRate } }),
-      ]);
+      const data =
+        target === "SERVER2"
+          ? { smsGlobalPremiumRateServer2: premiumRate }
+          : { smsGlobalPremiumRate: premiumRate };
+      if (existing) {
+        await prisma.globalSettings.update({ where: { id: existing.id }, data });
+      } else {
+        await prisma.globalSettings.create({
+          data:
+            target === "SERVER2"
+              ? { smsGlobalPremiumRateServer2: premiumRate }
+              : { smsGlobalPremiumRate: premiumRate },
+        });
+      }
       return NextResponse.json({ success: true });
     }
 

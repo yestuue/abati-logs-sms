@@ -181,7 +181,7 @@ export function ServerSelector({
             ? `&countryId=${encodeURIComponent(server2CountryId)}`
             : "";
         const searchRes = await fetch(
-          `/api/numbers/search?service=${encodeURIComponent(normalized)}&limit=30&country=${encodeURIComponent(countrySlug)}${countryIdQs}`,
+          `/api/numbers/search?service=${encodeURIComponent(normalized)}&limit=30&country=${encodeURIComponent(countrySlug)}&server=${encodeURIComponent(activeServer)}${countryIdQs}`,
           { cache: "no-store" }
         );
         const searchData = await searchRes.json();
@@ -381,7 +381,7 @@ export function ServerSelector({
             ? `&countryId=${encodeURIComponent(server2CountryId)}`
             : "";
           const searchRes = await fetch(
-            `/api/numbers/search?service=${encodeURIComponent(key)}&limit=10&country=${encodeURIComponent(server2Country)}${idQs}`,
+            `/api/numbers/search?service=${encodeURIComponent(key)}&limit=10&country=${encodeURIComponent(server2Country)}&server=SERVER2${idQs}`,
             { cache: "no-store" }
           );
           const searchData = await searchRes.json();
@@ -471,6 +471,10 @@ export function ServerSelector({
 
   function getServer1Price(basePrice: number, premiumRate = selectedPremiumRate) {
     if (!server1PremiumActive) return Math.round(basePrice);
+    return Math.round(basePrice * (1 + premiumRate));
+  }
+
+  function getServer2CatalogDisplayPrice(basePrice: number, premiumRate = selectedPremiumRate) {
     return Math.round(basePrice * (1 + premiumRate));
   }
 
@@ -857,7 +861,7 @@ export function ServerSelector({
                                   ₦
                                   {(activeServer === "SERVER1"
                                     ? getServer1Price(row.priceNGN, row.premiumRate ?? 0.35)
-                                    : row.priceNGN
+                                    : getServer2CatalogDisplayPrice(row.priceNGN, row.premiumRate ?? 0.35)
                                   ).toLocaleString()}
                                 </span>
                                 {activeServer === "SERVER1" && server1PremiumActive && (
@@ -936,7 +940,7 @@ export function ServerSelector({
                           ({selectedService.availableCount} available) · ₦
                           {(activeServer === "SERVER1"
                             ? getServer1Price(selectedService.priceNGN)
-                            : selectedService.priceNGN
+                            : getServer2CatalogDisplayPrice(selectedService.priceNGN)
                           ).toLocaleString()}
                         </p>
                         {activeServer === "SERVER1" && server1PremiumActive && (
@@ -1070,7 +1074,13 @@ export function ServerSelector({
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="text-[12px] font-semibold text-violet-600 dark:text-violet-300">
-                            ₦{n.priceNGN.toLocaleString()}
+                            ₦
+                            {finalNumberPurchasePriceNGN(n.priceNGN, {
+                              server: "SERVER2",
+                              carrier: "any",
+                              areaCodesRaw: "",
+                              premiumRate: selectedPremiumRate,
+                            }).toLocaleString()}
                           </p>
                           <p className="text-[10px] text-zinc-500">${n.priceUSD.toFixed(2)}</p>
                         </div>

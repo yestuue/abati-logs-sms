@@ -44,22 +44,22 @@ export async function POST(req: Request) {
 
       const carrier = normalizePurchaseCarrier(carrierRaw);
       const areaCodes = areaCodesRaw ?? "";
-      const globalPremium =
-        (await prisma.globalSettings.findFirst({ select: { smsGlobalPremiumRate: true } }))
-          ?.smsGlobalPremiumRate ?? 0.35;
+      const settings = await prisma.globalSettings.findFirst({
+        select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true },
+      });
+      const premiumRate =
+        number.server === "SERVER2"
+          ? (settings?.smsGlobalPremiumRateServer2 ?? 0.35)
+          : (settings?.smsGlobalPremiumRate ?? 0.35);
 
       let chargeBase = number.priceNGN;
-      let premiumRate = globalPremium;
       if (serviceKey) {
         const svc = await prisma.service.findUnique({
           where: { serviceKey },
-          select: { customPrice: true, basePrice: true, premiumRate: true },
+          select: { customPrice: true, basePrice: true },
         });
-        if (svc) {
-          premiumRate = svc.premiumRate;
-          if (svc.customPrice != null) {
-            chargeBase = Math.round(svc.customPrice);
-          }
+        if (svc?.customPrice != null) {
+          chargeBase = Math.round(svc.customPrice);
         }
       }
 

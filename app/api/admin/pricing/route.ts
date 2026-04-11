@@ -75,6 +75,18 @@ export async function GET(req: Request) {
     }
   }
 
-  const services = await prisma.service.findMany({ orderBy: { name: "asc" } });
-  return NextResponse.json({ services });
+  const [services, settings] = await Promise.all([
+    prisma.service.findMany({ orderBy: { name: "asc" } }),
+    prisma.globalSettings.findFirst({
+      select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true },
+    }),
+  ]);
+  const s1 = settings?.smsGlobalPremiumRate ?? 0.35;
+  const s2 = settings?.smsGlobalPremiumRateServer2 ?? 0.35;
+  return NextResponse.json({
+    services,
+    globalPremiumRate: s1,
+    globalPremiumRateServer1: s1,
+    globalPremiumRateServer2: s2,
+  });
 }

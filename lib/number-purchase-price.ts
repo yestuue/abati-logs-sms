@@ -34,6 +34,7 @@ export function purchasePremiumMultiplier(params: {
   premiumRate?: number;
 }): number {
   const rate = typeof params.premiumRate === "number" ? params.premiumRate : 0.35;
+  if (params.server === "SERVER2") return 1 + rate;
   return purchasePremiumActive(params) ? 1 + rate : 1;
 }
 

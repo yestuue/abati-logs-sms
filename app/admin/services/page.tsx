@@ -19,9 +19,11 @@ type SmsService = {
 
 export default function AdminServicesPage() {
   const [loading, setLoading] = useState(true);
-  const [savingGlobal, setSavingGlobal] = useState(false);
+  const [savingGlobalS1, setSavingGlobalS1] = useState(false);
+  const [savingGlobalS2, setSavingGlobalS2] = useState(false);
   const [services, setServices] = useState<SmsService[]>([]);
-  const [globalPremiumPct, setGlobalPremiumPct] = useState("35");
+  const [globalPremiumS1Pct, setGlobalPremiumS1Pct] = useState("35");
+  const [globalPremiumS2Pct, setGlobalPremiumS2Pct] = useState("35");
   const [editing, setEditing] = useState<SmsService | null>(null);
   const [formBasePrice, setFormBasePrice] = useState("");
   const [formPremiumPct, setFormPremiumPct] = useState("");
@@ -34,7 +36,10 @@ export default function AdminServicesPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to load services");
       setServices(data.services ?? []);
-      setGlobalPremiumPct(String(Math.round((Number(data.globalPremiumRate ?? 0.35) || 0.35) * 100)));
+      const s1 = Number(data.globalPremiumRateServer1 ?? data.globalPremiumRate ?? 0.35) || 0.35;
+      const s2 = Number(data.globalPremiumRateServer2 ?? 0.35) || 0.35;
+      setGlobalPremiumS1Pct(String(Math.round(s1 * 100)));
+      setGlobalPremiumS2Pct(String(Math.round(s2 * 100)));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load services");
     } finally {
@@ -51,27 +56,28 @@ export default function AdminServicesPage() {
     [services]
   );
 
-  async function saveGlobalPremium() {
-    const pct = Number(globalPremiumPct);
+  async function saveGlobalPremiumServer(target: "SERVER1" | "SERVER2") {
+    const raw = target === "SERVER1" ? globalPremiumS1Pct : globalPremiumS2Pct;
+    const pct = Number(raw);
     if (!Number.isFinite(pct) || pct < 0 || pct > 500) {
-      toast.error("Global premium must be between 0 and 500%");
+      toast.error("Premium must be between 0 and 500%");
       return;
     }
-    setSavingGlobal(true);
+    const setSaving = target === "SERVER1" ? setSavingGlobalS1 : setSavingGlobalS2;
+    setSaving(true);
     try {
       const res = await fetch("/api/admin/services", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ premiumRate: pct / 100 }),
+        body: JSON.stringify({ premiumRate: pct / 100, premiumTarget: target }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to update global premium");
-      setServices((prev) => prev.map((s) => ({ ...s, premiumRate: pct / 100 })));
-      toast.success("Global premium updated");
+      if (!res.ok) throw new Error(data.error ?? "Failed to update premium");
+      toast.success(target === "SERVER1" ? "Server 1 premium saved" : "Server 2 premium saved");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update global premium");
+      toast.error(err instanceof Error ? err.message : "Failed to update premium");
     } finally {
-      setSavingGlobal(false);
+      setSaving(false);
     }
   }
 
@@ -133,21 +139,47 @@ export default function AdminServicesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Global Premium</CardTitle>
+          <CardTitle>Global premiums</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row gap-3 sm:items-end">
-          <div className="w-full sm:max-w-[220px] space-y-2">
-            <Label htmlFor="global-premium">Premium Percentage (%)</Label>
-            <Input
-              id="global-premium"
-              value={globalPremiumPct}
-              onChange={(e) => setGlobalPremiumPct(e.target.value.replace(/[^\d.]/g, ""))}
-              placeholder="35"
-            />
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col gap-2 rounded-lg border border-border/80 bg-muted/20 p-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-2 min-w-0 flex-1">
+              <Label htmlFor="global-premium-s1">Server 1 Premium %</Label>
+              <Input
+                id="global-premium-s1"
+                value={globalPremiumS1Pct}
+                onChange={(e) => setGlobalPremiumS1Pct(e.target.value.replace(/[^\d.]/g, ""))}
+                placeholder="35"
+              />
+            </div>
+            <Button
+              type="button"
+              className="shrink-0"
+              onClick={() => void saveGlobalPremiumServer("SERVER1")}
+              disabled={savingGlobalS1}
+            >
+              {savingGlobalS1 ? "Saving…" : "Save S1 Premium"}
+            </Button>
           </div>
-          <Button onClick={() => void saveGlobalPremium()} disabled={savingGlobal}>
-            {savingGlobal ? "Saving..." : "Apply to All Services"}
-          </Button>
+          <div className="flex flex-col gap-2 rounded-lg border border-border/80 bg-muted/20 p-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-2 min-w-0 flex-1">
+              <Label htmlFor="global-premium-s2">Server 2 Premium %</Label>
+              <Input
+                id="global-premium-s2"
+                value={globalPremiumS2Pct}
+                onChange={(e) => setGlobalPremiumS2Pct(e.target.value.replace(/[^\d.]/g, ""))}
+                placeholder="35"
+              />
+            </div>
+            <Button
+              type="button"
+              className="shrink-0"
+              onClick={() => void saveGlobalPremiumServer("SERVER2")}
+              disabled={savingGlobalS2}
+            >
+              {savingGlobalS2 ? "Saving…" : "Save S2 Premium"}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

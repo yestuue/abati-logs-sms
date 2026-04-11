@@ -39,7 +39,8 @@ export default function AdminPricingPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [servers, setServers] = useState<ServerCfg[]>([]);
   const [countries, setCountries] = useState<CountryCfg[]>([]);
-  const [globalPremiumPct, setGlobalPremiumPct] = useState("35");
+  const [globalPremiumS1Pct, setGlobalPremiumS1Pct] = useState("35");
+  const [globalPremiumS2Pct, setGlobalPremiumS2Pct] = useState("35");
   const [categories, setCategories] = useState<LogCategory[]>([]);
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [newCategory, setNewCategory] = useState("");
@@ -87,7 +88,10 @@ export default function AdminPricingPage() {
         ])
       )
     );
-    setGlobalPremiumPct(String(Math.round((Number(data.globalPremiumRate ?? 0.35) || 0.35) * 100)));
+    const s1 = Number(data.globalPremiumRateServer1 ?? data.globalPremiumRate ?? 0.35) || 0.35;
+    const s2 = Number(data.globalPremiumRateServer2 ?? 0.35) || 0.35;
+    setGlobalPremiumS1Pct(String(Math.round(s1 * 100)));
+    setGlobalPremiumS2Pct(String(Math.round(s2 * 100)));
   }
 
   async function loadMarketplace() {
@@ -164,16 +168,25 @@ export default function AdminPricingPage() {
     return false;
   }, [services, countries, serviceDrafts, countryDrafts]);
 
-  async function saveGlobalPremium() {
-    const pct = Number(globalPremiumPct);
+  async function saveGlobalPremiumServer(target: "SERVER1" | "SERVER2") {
+    const raw = target === "SERVER1" ? globalPremiumS1Pct : globalPremiumS2Pct;
+    const pct = Number(raw);
+    if (!Number.isFinite(pct) || pct < 0 || pct > 500) {
+      toast.error("Premium % must be between 0 and 500");
+      return;
+    }
     const res = await fetch("/api/admin/sms/update-price", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "globalPremium", premiumRate: pct / 100 }),
+      body: JSON.stringify({
+        mode: "globalPremium",
+        premiumRate: pct / 100,
+        premiumTarget: target,
+      }),
     });
     const data = await res.json();
-    if (!res.ok) return toast.error(data.error ?? "Global premium update failed");
-    toast.success("Global premium updated");
+    if (!res.ok) return toast.error(data.error ?? "Premium update failed");
+    toast.success(target === "SERVER1" ? "Server 1 premium saved" : "Server 2 premium saved");
     await Promise.all([loadSms(), fetchAdminServices()]);
   }
 
@@ -382,12 +395,42 @@ export default function AdminPricingPage() {
       <Card>
         <CardHeader><CardTitle>SMS Services</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="space-y-1">
-              <Label>Global Premium %</Label>
-              <Input value={globalPremiumPct} onChange={(e) => setGlobalPremiumPct(e.target.value.replace(/[^\d.]/g, ""))} className="w-40" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-wrap items-end gap-2 rounded-lg border border-border/80 bg-muted/20 p-3">
+              <div className="space-y-1 min-w-0 flex-1">
+                <Label htmlFor="premium-s1">Server 1 Premium %</Label>
+                <Input
+                  id="premium-s1"
+                  value={globalPremiumS1Pct}
+                  onChange={(e) => setGlobalPremiumS1Pct(e.target.value.replace(/[^\d.]/g, ""))}
+                  className="max-w-[200px]"
+                  inputMode="decimal"
+                />
+                <p className="text-[11px] text-muted-foreground">USA numbers — carrier / area-code preference</p>
+              </div>
+              <Button type="button" className="shrink-0" onClick={() => void saveGlobalPremiumServer("SERVER1")}>
+                Save S1 Premium
+              </Button>
             </div>
-            <Button onClick={() => void saveGlobalPremium()}>Save Global Premium</Button>
+            <div className="flex flex-wrap items-end gap-2 rounded-lg border border-border/80 bg-muted/20 p-3">
+              <div className="space-y-1 min-w-0 flex-1">
+                <Label htmlFor="premium-s2">Server 2 Premium %</Label>
+                <Input
+                  id="premium-s2"
+                  value={globalPremiumS2Pct}
+                  onChange={(e) => setGlobalPremiumS2Pct(e.target.value.replace(/[^\d.]/g, ""))}
+                  className="max-w-[200px]"
+                  inputMode="decimal"
+                />
+                <p className="text-[11px] text-muted-foreground">Global country numbers</p>
+              </div>
+              <Button type="button" className="shrink-0" onClick={() => void saveGlobalPremiumServer("SERVER2")}>
+                Save S2 Premium
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-3">
             <Button variant="outline" onClick={() => void syncServer2Countries()}>Fetch Server 2 Countries</Button>
             <Button variant="secondary" onClick={() => void syncSmsCatalog()} disabled={loading}>
               Sync SMS catalog (5SIM)

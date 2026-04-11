@@ -1,8 +1,28 @@
 import { prisma } from "@/lib/prisma";
 
+export type SmsGlobalPremiumSettings = { server1: number; server2: number };
+
+export async function getGlobalSmsPremiumSettings(): Promise<SmsGlobalPremiumSettings> {
+  const settings = await prisma.globalSettings.findFirst({
+    select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true },
+  });
+  return {
+    server1: settings?.smsGlobalPremiumRate ?? 0.35,
+    server2: settings?.smsGlobalPremiumRateServer2 ?? 0.35,
+  };
+}
+
+/** Server 1 (USA) global premium — used for catalog sync and legacy call sites. */
 export async function getGlobalSmsPremiumRate(): Promise<number> {
-  const settings = await prisma.globalSettings.findFirst({ select: { smsGlobalPremiumRate: true } });
-  return settings?.smsGlobalPremiumRate ?? 0.35;
+  const s = await getGlobalSmsPremiumSettings();
+  return s.server1;
+}
+
+export async function getGlobalSmsPremiumRateForServer(
+  server: "SERVER1" | "SERVER2"
+): Promise<number> {
+  const s = await getGlobalSmsPremiumSettings();
+  return server === "SERVER2" ? s.server2 : s.server1;
 }
 
 export type ServicePriceConfigRow = {

@@ -126,7 +126,10 @@ model GlobalSettings {
   rateNGN         Float    @default(1600)
   maintenanceMode Boolean  @default(false)
   minTopUp        Float    @default(500)
+  /// Preference / carrier premium for Server 1 (USA) SMS checkout and search.
   smsGlobalPremiumRate Float @default(0.35)
+  /// Same role as smsGlobalPremiumRate for Server 2 (global countries).
+  smsGlobalPremiumRateServer2 Float @default(0.35)
   updatedAt       DateTime @default(now())
 }
 

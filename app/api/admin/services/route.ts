@@ -10,6 +10,7 @@ type FiveSimGuestProduct = {
 
 const globalSchema = z.object({
   premiumRate: z.number().min(0).max(5),
+  premiumTarget: z.enum(["SERVER1", "SERVER2"]).default("SERVER1"),
 });
 
 async function ensureServiceSeed(globalPremiumRate: number) {
@@ -69,12 +70,18 @@ export async function GET() {
 
   const settings = await prisma.globalSettings.findFirst();
   const globalPremiumRate = settings?.smsGlobalPremiumRate ?? 0.35;
+  const globalPremiumRateServer2 = settings?.smsGlobalPremiumRateServer2 ?? 0.35;
   await ensureServiceSeed(globalPremiumRate);
 
   const services = await prisma.service.findMany({
     orderBy: { serviceKey: "asc" },
   });
-  return NextResponse.json({ services, globalPremiumRate });
+  return NextResponse.json({
+    services,
+    globalPremiumRate,
+    globalPremiumRateServer1: globalPremiumRate,
+    globalPremiumRateServer2,
+  });
 }
 
 export async function PUT(req: Request) {
@@ -90,19 +97,22 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Invalid premium rate" }, { status: 400 });
     }
 
-    const { premiumRate } = parsed.data;
+    const { premiumRate, premiumTarget } = parsed.data;
     const existing = await prisma.globalSettings.findFirst({ select: { id: true } });
-    await prisma.$transaction([
-      prisma.service.updateMany({ data: { premiumRate } }),
-      existing
-        ? prisma.globalSettings.update({
-            where: { id: existing.id },
-            data: { smsGlobalPremiumRate: premiumRate },
-          })
-        : prisma.globalSettings.create({
-            data: { smsGlobalPremiumRate: premiumRate },
-          }),
-    ]);
+    const data =
+      premiumTarget === "SERVER2"
+        ? { smsGlobalPremiumRateServer2: premiumRate }
+        : { smsGlobalPremiumRate: premiumRate };
+    if (existing) {
+      await prisma.globalSettings.update({ where: { id: existing.id }, data });
+    } else {
+      await prisma.globalSettings.create({
+        data:
+          premiumTarget === "SERVER2"
+            ? { smsGlobalPremiumRateServer2: premiumRate }
+            : { smsGlobalPremiumRate: premiumRate },
+      });
+    }
 
     return NextResponse.json({ success: true });
   } catch {
