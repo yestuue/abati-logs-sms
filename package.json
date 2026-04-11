@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "db:seed": "prisma db seed",
+    "populate:admin": "ts-node --compiler-options \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/populate-admin.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

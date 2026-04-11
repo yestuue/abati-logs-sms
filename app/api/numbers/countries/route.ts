@@ -35,7 +35,7 @@ export async function GET() {
     const data = (await res.json()) as Record<string, GuestCountry>;
     const [disabledRows, dbCountries] = await Promise.all([
       prisma.country.findMany({ where: { enabled: false }, select: { slug: true } }),
-      prisma.country.findMany({ select: { id: true, slug: true, name: true } }),
+      prisma.country.findMany({ select: { id: true, slug: true, name: true, basePrice: true } }),
     ]);
     const disabled = new Set(disabledRows.map((c) => c.slug));
     const dbBySlug = new Map(dbCountries.map((c) => [c.slug, c]));
@@ -50,6 +50,7 @@ export async function GET() {
           slug,
           name: row?.name ?? (typeof v?.text_en === "string" ? v.text_en : slug),
           iso2: isoFromProvider,
+          basePrice: row?.basePrice ?? null,
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name, "en"));

@@ -147,7 +147,7 @@ export async function PUT(req: Request) {
         if (!first?.Price) continue;
         await prisma.country.update({
           where: { slug },
-          data: { samplePrice: computeSmsDisplayPriceNgn(Number(first.Price) || 0) },
+          data: { basePrice: computeSmsDisplayPriceNgn(Number(first.Price) || 0) },
         });
       } catch {
         // ignore sample price enrichment failures

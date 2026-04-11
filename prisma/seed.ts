@@ -1,5 +1,16 @@
+/**
+ * Full database seed (numbers, admin user, SMS services, Server 2 countries).
+ *
+ * Apply schema first, then seed:
+ *   npx prisma db push
+ *   npm run db:seed
+ *
+ * Services and countries are upserted so you can re-run safely; existing Service.basePrice
+ * values are not overwritten on update (only `name` is refreshed).
+ */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { seedAdminLists } from "./seed-admin-data";
 
 const prisma = new PrismaClient();
 
@@ -21,6 +32,10 @@ const globalNumbers = [
 
 async function main() {
   console.log("🌱 Seeding database...");
+
+  await seedAdminLists(prisma);
+  const [svcN, ctyN] = await Promise.all([prisma.service.count(), prisma.country.count()]);
+  console.log(`✅ Admin lists: ${svcN} services, ${ctyN} countries (upserted)`);
 
   // Server configs
   for (const cfg of [
@@ -73,5 +88,8 @@ async function main() {
 }
 
 main()
-  .catch(console.error)
+  .catch((err) => {
+    console.error(err);
+    process.exit(1);
+  })
   .finally(() => prisma.$disconnect());

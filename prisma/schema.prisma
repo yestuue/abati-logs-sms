@@ -159,7 +159,8 @@ model Country {
   id          String   @id @default(cuid())
   slug        String   @unique
   name        String
-  samplePrice Float?
+  /// Catalog-style NGN hint for this country (stored column: samplePrice).
+  basePrice   Float?   @map("samplePrice")
   enabled     Boolean  @default(true)
   updatedAt   DateTime @updatedAt
 
