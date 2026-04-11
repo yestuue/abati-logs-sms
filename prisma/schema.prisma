@@ -136,6 +136,8 @@ model Service {
   serviceKey  String   @unique
   name        String
   basePrice   Float
+  /// When set, overrides basePrice for display and checkout math for this service.
+  customPrice Float?
   premiumRate Float    @default(0.35)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

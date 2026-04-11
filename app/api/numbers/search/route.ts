@@ -120,19 +120,31 @@ export async function GET(req: Request) {
         premiumRate: globalPremiumRate,
       }));
     if (missing.length > 0) {
-      await prisma.service.createMany({ data: missing, skipDuplicates: true });
-      for (const m of missing) configMap.set(m.serviceKey, m);
+      await prisma.service.createMany({
+        data: missing,
+        skipDuplicates: true,
+      });
+      for (const m of missing) {
+        configMap.set(m.serviceKey, {
+          basePrice: m.basePrice,
+          customPrice: null,
+          effectiveBase: m.basePrice,
+          premiumRate: m.premiumRate,
+          name: m.name,
+        });
+      }
     }
 
     const pricedServices = services.map((s) => {
       const cfg = configMap.get(s.key);
+      const effective = cfg?.effectiveBase ?? s.basePriceNGN;
       return {
         key: s.key,
         name: cfg?.name ?? s.name,
         category: s.category,
         qty: s.qty,
         priceUsd: s.priceUsd,
-        priceNGN: Math.round(cfg?.basePrice ?? s.basePriceNGN),
+        priceNGN: Math.round(effective),
         premiumRate: cfg?.premiumRate ?? globalPremiumRate,
       };
     });

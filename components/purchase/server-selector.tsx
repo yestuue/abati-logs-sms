@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Phone,
@@ -300,6 +300,11 @@ export function ServerSelector({
   }
 
   useEffect(() => {
+    if (activeServer !== "SERVER2") return;
+    setServiceResults([]);
+  }, [server2Country, activeServer]);
+
+  useEffect(() => {
     if (isDisabled) return;
     const trimmed = search.trim();
     if (trimmed.length < MIN_SERVICE_QUERY_LEN) {
@@ -371,6 +376,7 @@ export function ServerSelector({
             name: string;
             qty: number;
             priceNGN: number;
+            premiumRate?: number;
           }[];
           const row = svcRows.find((s) => s.key === key);
           if (row && !cancelled) {
@@ -380,6 +386,7 @@ export function ServerSelector({
               serviceName: row.name,
               availableCount: row.qty,
               priceNGN: row.priceNGN,
+              premiumRate: typeof row.premiumRate === "number" ? row.premiumRate : 0.35,
             });
           }
         } catch {
@@ -429,15 +436,31 @@ export function ServerSelector({
     activeServer === "SERVER1" && (hasAreaCode || hasSpecificCarrier);
   const selectedPremiumRate = selectedService?.premiumRate ?? 0.35;
   const premiumPercentLabel = Math.round(selectedPremiumRate * 100);
-  const premiumMultiplier = server1PremiumActive ? 1 + selectedPremiumRate : 1;
 
   function getServer1Price(basePrice: number, premiumRate = selectedPremiumRate) {
     if (!server1PremiumActive) return Math.round(basePrice);
     return Math.round(basePrice * (1 + premiumRate));
   }
 
+  function preferencePremiumDeltaNgn(basePrice: number, premiumRate: number) {
+    return Math.round(basePrice * premiumRate);
+  }
+
+  const selectedServicePremiumDelta = useMemo(() => {
+    if (!server1PremiumActive || !selectedService) return 0;
+    return preferencePremiumDeltaNgn(selectedService.priceNGN, selectedPremiumRate);
+  }, [server1PremiumActive, selectedService, selectedPremiumRate]);
+
+  /** Charge base must match /api/payments/initialize when serviceKey is sent (catalog / custom service price). */
+  function getPurchaseChargeBase(item: NumberItem): number {
+    if (selectedService?.serviceKey) {
+      return selectedService.priceNGN;
+    }
+    return item.priceNGN;
+  }
+
   function getPurchasePriceNGN(item: NumberItem) {
-    return finalNumberPurchasePriceNGN(item.priceNGN, {
+    return finalNumberPurchasePriceNGN(getPurchaseChargeBase(item), {
       server: item.server,
       carrier,
       areaCodesRaw: preferredAreaCode,
@@ -449,7 +472,7 @@ export function ServerSelector({
   function getPurchaseWalletDebit(item: NumberItem): number {
     const finalNGN = getPurchasePriceNGN(item);
     if (walletCurrency !== "USD") return finalNGN;
-    const base = item.priceNGN;
+    const base = getPurchaseChargeBase(item);
     if (base <= 0) return item.priceUSD;
     return Math.round(((item.priceUSD * finalNGN) / base) * 100) / 100;
   }
@@ -475,6 +498,7 @@ export function ServerSelector({
           amount: finalNGN,
           carrier,
           areaCodes: preferredAreaCode,
+          ...(selectedService?.serviceKey ? { serviceKey: selectedService.serviceKey } : {}),
         }),
       });
       const data = await res.json();
@@ -767,19 +791,30 @@ export function ServerSelector({
                                   ({row.availableCount} available)
                                 </p>
                               </div>
-                              <span
-                                className={`text-[13px] font-semibold shrink-0 ${
-                                  activeServer === "SERVER1" && server1PremiumActive
-                                    ? "text-amber-500"
-                                    : "text-violet-700 dark:text-violet-300"
-                                }`}
-                              >
-                                ₦
-                                {(activeServer === "SERVER1"
-                                  ? getServer1Price(row.priceNGN, row.premiumRate ?? 0.35)
-                                  : row.priceNGN
-                                ).toLocaleString()}
-                              </span>
+                              <div className="text-right shrink-0">
+                                <span
+                                  className={`text-[13px] font-semibold block ${
+                                    activeServer === "SERVER1" && server1PremiumActive
+                                      ? "text-amber-500"
+                                      : "text-violet-700 dark:text-violet-300"
+                                  }`}
+                                >
+                                  ₦
+                                  {(activeServer === "SERVER1"
+                                    ? getServer1Price(row.priceNGN, row.premiumRate ?? 0.35)
+                                    : row.priceNGN
+                                  ).toLocaleString()}
+                                </span>
+                                {activeServer === "SERVER1" && server1PremiumActive && (
+                                  <span className="text-[10px] font-medium text-amber-700/90 dark:text-amber-400/90 block mt-0.5">
+                                    Premium price: +₦
+                                    {preferencePremiumDeltaNgn(
+                                      row.priceNGN,
+                                      row.premiumRate ?? 0.35
+                                    ).toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
                             </button>
                           </li>
                         ))}
@@ -835,19 +870,26 @@ export function ServerSelector({
                           {flagFromIso2(selectedCountry.iso2)} {selectedCountry.name}
                         </p>
                       )}
-                      <p
+                      <div
                         className={`text-[11px] font-medium mt-0.5 ${
                           activeServer === "SERVER1" && server1PremiumActive
                             ? "text-amber-500"
                             : "text-emerald-700 dark:text-emerald-400"
                         }`}
                       >
-                        ({selectedService.availableCount} available) · ₦
-                        {(activeServer === "SERVER1"
-                          ? getServer1Price(selectedService.priceNGN)
-                          : selectedService.priceNGN
-                        ).toLocaleString()}
-                      </p>
+                        <p>
+                          ({selectedService.availableCount} available) · ₦
+                          {(activeServer === "SERVER1"
+                            ? getServer1Price(selectedService.priceNGN)
+                            : selectedService.priceNGN
+                          ).toLocaleString()}
+                        </p>
+                        {activeServer === "SERVER1" && server1PremiumActive && (
+                          <p className="text-[10px] mt-0.5 opacity-95">
+                            Premium price: +₦{selectedServicePremiumDelta.toLocaleString()}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     <Button
                       type="button"
@@ -1053,13 +1095,19 @@ export function ServerSelector({
                 <div className="flex items-center justify-between text-sm border-t border-border/30 pt-2 mt-2">
                   <span className="font-medium">Base</span>
                   <span className="text-muted-foreground">
-                    ₦{Math.round(selected.priceNGN).toLocaleString()}
+                    ₦{Math.round(getPurchaseChargeBase(selected)).toLocaleString()}
                   </span>
                 </div>
-                {getPurchasePriceNGN(selected) > Math.round(selected.priceNGN) && (
+                {getPurchasePriceNGN(selected) > Math.round(getPurchaseChargeBase(selected)) && (
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-amber-500">Preference premium</span>
-                    <span className="font-medium text-amber-500">+{premiumPercentLabel}%</span>
+                    <span className="font-medium text-amber-500">Premium price</span>
+                    <span className="font-medium text-amber-500">
+                      +₦
+                      {(
+                        getPurchasePriceNGN(selected) - Math.round(getPurchaseChargeBase(selected))
+                      ).toLocaleString()}{" "}
+                      ({premiumPercentLabel}%)
+                    </span>
                   </div>
                 )}
                 <div className="flex items-center justify-between text-sm border-t border-border/30 pt-2">

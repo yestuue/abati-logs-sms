@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ type Service = {
   serviceKey: string;
   name: string;
   basePrice: number;
+  customPrice: number | null;
   premiumRate: number;
 };
 
@@ -32,17 +33,23 @@ export default function AdminPricingPage() {
   const [bulkPct, setBulkPct] = useState("");
   const [loading, setLoading] = useState(false);
   const [serviceDrafts, setServiceDrafts] = useState<Record<string, string>>({});
+  const [serviceTableSearch, setServiceTableSearch] = useState("");
+
+  async function loadServiceCatalog() {
+    const res = await fetch("/api/admin/pricing", { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Failed to load service catalog");
+    const list = (data.services ?? []) as Service[];
+    setServices(list);
+    setServiceDrafts(
+      Object.fromEntries(list.map((s) => [s.id, String(Math.round(s.customPrice ?? s.basePrice))]))
+    );
+  }
 
   async function loadSms() {
     const res = await fetch("/api/admin/sms/update-price", { cache: "no-store" });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Failed to load SMS pricing");
-    setServices(data.services ?? []);
-    setServiceDrafts(
-      Object.fromEntries(
-        (data.services ?? []).map((s: Service) => [s.id, String(Math.round(s.basePrice))])
-      )
-    );
     setServers(data.servers ?? []);
     setCountries(data.countries ?? []);
     setGlobalPremiumPct(String(Math.round((Number(data.globalPremiumRate ?? 0.35) || 0.35) * 100)));
@@ -59,7 +66,7 @@ export default function AdminPricingPage() {
   async function loadAll() {
     setLoading(true);
     try {
-      await Promise.all([loadSms(), loadMarketplace()]);
+      await Promise.all([loadSms(), loadMarketplace(), loadServiceCatalog()]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load pricing data");
     } finally {
@@ -71,6 +78,15 @@ export default function AdminPricingPage() {
     void loadAll();
   }, []);
 
+  const filteredServices = useMemo(() => {
+    const q = serviceTableSearch.trim().toLowerCase();
+    if (!q) return services;
+    return services.filter(
+      (s) =>
+        s.name.toLowerCase().includes(q) || s.serviceKey.toLowerCase().includes(q)
+    );
+  }, [services, serviceTableSearch]);
+
   async function saveGlobalPremium() {
     const pct = Number(globalPremiumPct);
     const res = await fetch("/api/admin/sms/update-price", {
@@ -81,19 +97,56 @@ export default function AdminPricingPage() {
     const data = await res.json();
     if (!res.ok) return toast.error(data.error ?? "Global premium update failed");
     toast.success("Global premium updated");
-    await loadSms();
+    await Promise.all([loadSms(), loadServiceCatalog()]);
   }
 
-  async function saveServiceBasePrice(id: string, basePrice: number) {
+  async function saveServiceCustomPrice(id: string, value: number) {
+    if (!Number.isFinite(value) || value <= 0) {
+      toast.error("Enter a valid positive price");
+      return;
+    }
     const res = await fetch("/api/admin/sms/update-price", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode: "servicePrice", serviceId: id, basePrice }),
+      body: JSON.stringify({ mode: "servicePrice", serviceId: id, customPrice: value }),
     });
     const data = await res.json();
     if (!res.ok) return toast.error(data.error ?? "Service price update failed");
-    setServices((prev) => prev.map((s) => (s.id === id ? { ...s, basePrice } : s)));
-    toast.success("Service price updated");
+    const updated = data.service as Service;
+    setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s)));
+    toast.success("Service price saved");
+  }
+
+  async function clearServiceCustomPrice(id: string) {
+    const res = await fetch("/api/admin/sms/update-price", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode: "servicePrice", serviceId: id, customPrice: null }),
+    });
+    const data = await res.json();
+    if (!res.ok) return toast.error(data.error ?? "Could not clear override");
+    const updated = data.service as Service;
+    setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s)));
+    setServiceDrafts((prev) => ({
+      ...prev,
+      [id]: String(Math.round(updated.basePrice)),
+    }));
+    toast.success("Using catalog base price");
+  }
+
+  async function syncSmsCatalog() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/pricing?syncCatalog=1", { cache: "no-store" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Catalog sync failed");
+      toast.success(`Catalog synced (${data.syncedKeys ?? 0} keys)`);
+      await loadServiceCatalog();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Sync failed");
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function toggleServer(server: "SERVER1" | "SERVER2", isEnabled: boolean) {
@@ -201,6 +254,9 @@ export default function AdminPricingPage() {
             </div>
             <Button onClick={() => void saveGlobalPremium()}>Save Global Premium</Button>
             <Button variant="outline" onClick={() => void syncServer2Countries()}>Fetch Server 2 Countries</Button>
+            <Button variant="secondary" onClick={() => void syncSmsCatalog()} disabled={loading}>
+              Sync SMS catalog (5SIM)
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -214,47 +270,82 @@ export default function AdminPricingPage() {
             ))}
           </div>
 
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Search services</Label>
+            <Input
+              placeholder="Filter by name or key (whatsapp, telegram…)"
+              value={serviceTableSearch}
+              onChange={(e) => setServiceTableSearch(e.target.value)}
+              className="max-w-md h-9"
+            />
+          </div>
+
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[680px] text-sm">
-              <thead><tr className="border-b border-border"><th className="text-left py-2">Service</th><th className="text-left py-2">Key</th><th className="text-left py-2">Base Price</th><th className="text-left py-2">Premium</th><th className="text-right py-2">Action</th></tr></thead>
+            <table className="w-full min-w-[520px] text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2">Service name</th>
+                  <th className="text-left py-2">Current price (₦)</th>
+                  <th className="text-right py-2">Action</th>
+                </tr>
+              </thead>
               <tbody>
-                {services.map((s) => (
+                {filteredServices.map((s) => (
                   <tr key={s.id} className="border-b border-border/50">
-                    <td className="py-2">{s.name}</td>
-                    <td className="py-2 text-xs font-mono text-muted-foreground">{s.serviceKey}</td>
                     <td className="py-2">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          value={serviceDrafts[s.id] ?? ""}
-                          onChange={(e) =>
-                            setServiceDrafts((prev) => ({
-                              ...prev,
-                              [s.id]: e.target.value.replace(/[^\d.]/g, ""),
-                            }))
-                          }
-                          className="h-8 w-32"
-                        />
+                      <div className="font-medium">{s.name}</div>
+                      <div className="text-[11px] font-mono text-muted-foreground">{s.serviceKey}</div>
+                      <div className="text-[11px] text-muted-foreground">
+                        Catalog base: ₦{Math.round(s.basePrice).toLocaleString()}
+                        {s.customPrice != null && (
+                          <span className="ml-1 text-amber-600 dark:text-amber-400">(override active)</span>
+                        )}
                       </div>
                     </td>
-                    <td className="py-2">{Math.round(s.premiumRate * 100)}%</td>
-                    <td className="py-2 text-right">
+                    <td className="py-2 align-top">
+                      <Input
+                        value={serviceDrafts[s.id] ?? ""}
+                        onChange={(e) =>
+                          setServiceDrafts((prev) => ({
+                            ...prev,
+                            [s.id]: e.target.value.replace(/[^\d.]/g, ""),
+                          }))
+                        }
+                        className="h-8 w-36"
+                        aria-label={`Price for ${s.name}`}
+                      />
+                    </td>
+                    <td className="py-2 text-right align-top space-x-2 whitespace-nowrap">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() =>
-                          void saveServiceBasePrice(
-                            s.id,
-                            Number(serviceDrafts[s.id] || s.basePrice)
-                          )
+                          void saveServiceCustomPrice(s.id, Number(serviceDrafts[s.id]))
                         }
                       >
                         Save
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-muted-foreground"
+                        onClick={() => void clearServiceCustomPrice(s.id)}
+                        disabled={s.customPrice == null}
+                      >
+                        Use catalog
                       </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            {filteredServices.length === 0 && (
+              <p className="text-sm text-muted-foreground py-4">
+                {services.length === 0
+                  ? "No services in database yet. Run “Sync SMS catalog” or use the user dashboard search to seed services."
+                  : "No services match your search."}
+              </p>
+            )}
           </div>
 
           <div className="border border-border rounded-xl p-3">

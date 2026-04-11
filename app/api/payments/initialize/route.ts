@@ -12,6 +12,8 @@ const schema = z.object({
   numberId: z.string().optional(),
   carrier: z.enum(["any", "att", "tmobile"]).optional(),
   areaCodes: z.string().max(200).optional(),
+  /** When provided, per-service customPrice / premiumRate apply to the charge calculation. */
+  serviceKey: z.string().max(120).optional(),
 });
 
 export async function POST(req: Request) {
@@ -25,7 +27,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    const { type, amount, numberId, carrier: carrierRaw, areaCodes: areaCodesRaw } = parsed.data;
+    const { type, amount, numberId, carrier: carrierRaw, areaCodes: areaCodesRaw, serviceKey } = parsed.data;
     const userId = session.user.id;
     const email = session.user.email;
 
@@ -42,10 +44,26 @@ export async function POST(req: Request) {
 
       const carrier = normalizePurchaseCarrier(carrierRaw);
       const areaCodes = areaCodesRaw ?? "";
-      const premiumRate =
+      const globalPremium =
         (await prisma.globalSettings.findFirst({ select: { smsGlobalPremiumRate: true } }))
           ?.smsGlobalPremiumRate ?? 0.35;
-      const chargeNGN = finalNumberPurchasePriceNGN(number.priceNGN, {
+
+      let chargeBase = number.priceNGN;
+      let premiumRate = globalPremium;
+      if (serviceKey) {
+        const svc = await prisma.service.findUnique({
+          where: { serviceKey },
+          select: { customPrice: true, basePrice: true, premiumRate: true },
+        });
+        if (svc) {
+          premiumRate = svc.premiumRate;
+          if (svc.customPrice != null) {
+            chargeBase = Math.round(svc.customPrice);
+          }
+        }
+      }
+
+      const chargeNGN = finalNumberPurchasePriceNGN(chargeBase, {
         server: number.server,
         carrier,
         areaCodesRaw: areaCodes,
@@ -85,7 +103,14 @@ export async function POST(req: Request) {
             type: "NUMBER_PURCHASE",
             server: number.server,
             numberId,
-            metadata: { carrier, areaCodes, basePriceNGN: number.priceNGN, premiumRate },
+            metadata: {
+              carrier,
+              areaCodes,
+              basePriceNGN: number.priceNGN,
+              chargeBaseNGN: chargeBase,
+              premiumRate,
+              serviceKey: serviceKey ?? null,
+            },
           },
         }),
       ]);

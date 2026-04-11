@@ -8,6 +8,8 @@ const bodySchema = z.object({
   mode: z.enum(["globalPremium", "servicePrice", "toggleServer", "toggleCountry", "syncServer2Countries"]),
   serviceId: z.string().optional(),
   basePrice: z.number().positive().optional(),
+  /** When set (including null), updates the per-service price override; null clears override. */
+  customPrice: z.union([z.number().positive(), z.null()]).optional(),
   premiumRate: z.number().min(0).max(5).optional(),
   server: z.enum(["SERVER1", "SERVER2"]).optional(),
   isEnabled: z.boolean().optional(),
@@ -61,15 +63,25 @@ export async function PUT(req: Request) {
     }
 
     if (body.mode === "servicePrice") {
-      if (!body.serviceId || typeof body.basePrice !== "number") {
-        return NextResponse.json({ error: "serviceId and basePrice required" }, { status: 400 });
+      if (!body.serviceId) {
+        return NextResponse.json({ error: "serviceId required" }, { status: 400 });
       }
+      const hasCustom = body.customPrice !== undefined;
+      const hasBase = typeof body.basePrice === "number";
+      const hasPremium = typeof body.premiumRate === "number";
+      if (!hasCustom && !hasBase && !hasPremium) {
+        return NextResponse.json(
+          { error: "Provide customPrice, basePrice, and/or premiumRate" },
+          { status: 400 }
+        );
+      }
+      const data: { basePrice?: number; customPrice?: number | null; premiumRate?: number } = {};
+      if (hasCustom) data.customPrice = body.customPrice;
+      if (hasBase) data.basePrice = body.basePrice;
+      if (hasPremium) data.premiumRate = body.premiumRate;
       const updated = await prisma.service.update({
         where: { id: body.serviceId },
-        data: {
-          basePrice: body.basePrice,
-          ...(typeof body.premiumRate === "number" ? { premiumRate: body.premiumRate } : {}),
-        },
+        data,
       });
       return NextResponse.json({ service: updated });
     }
