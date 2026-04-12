@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Wallet, Plus, ArrowUpRight, RefreshCw, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +25,7 @@ export function WalletCard({ balance, currency }: WalletCardProps) {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fundLegalAccepted, setFundLegalAccepted] = useState(false);
 
   async function handleTopup() {
     const amt = parseFloat(amount);
@@ -150,7 +152,13 @@ export function WalletCard({ balance, currency }: WalletCardProps) {
       </motion.div>
 
       {/* Fund Wallet Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) setFundLegalAccepted(false);
+        }}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Fund Wallet</DialogTitle>
@@ -200,6 +208,26 @@ export function WalletCard({ balance, currency }: WalletCardProps) {
               />
             </div>
 
+            <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border bg-muted/40 p-3 text-xs leading-snug text-muted-foreground">
+              <input
+                type="checkbox"
+                className="mt-0.5 size-4 shrink-0 rounded border-input accent-primary"
+                checked={fundLegalAccepted}
+                onChange={(e) => setFundLegalAccepted(e.target.checked)}
+              />
+              <span>
+                I agree to the{" "}
+                <Link href="/terms" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+
             <Button
               className="w-full font-semibold"
               style={{
@@ -207,7 +235,7 @@ export function WalletCard({ balance, currency }: WalletCardProps) {
                 color: "#fff",
               }}
               onClick={handleTopup}
-              disabled={loading || !amount}
+              disabled={loading || !amount || !fundLegalAccepted}
             >
               {loading
                 ? "Redirecting to Paystack…"

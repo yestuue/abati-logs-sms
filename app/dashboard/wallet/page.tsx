@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Wallet, Plus, Building2, Copy, AlertTriangle,
@@ -207,7 +208,13 @@ function VirtualAccountModal({ onClose }: { onClose: () => void }) {
 function PaystackModal({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fundLegalAccepted, setFundLegalAccepted] = useState(false);
   const quickAmounts = [500, 1000, 2000, 5000, 10000];
+
+  function handleClose() {
+    setFundLegalAccepted(false);
+    onClose();
+  }
 
   async function handlePay() {
     const amt = parseFloat(amount);
@@ -230,7 +237,12 @@ function PaystackModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) handleClose();
+      }}
+    >
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -270,11 +282,30 @@ function PaystackModal({ onClose }: { onClose: () => void }) {
               onChange={(e) => setAmount(e.target.value)}
             />
           </div>
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border bg-muted/40 p-3 text-xs leading-snug text-muted-foreground">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 shrink-0 rounded border-input accent-primary"
+              checked={fundLegalAccepted}
+              onChange={(e) => setFundLegalAccepted(e.target.checked)}
+            />
+            <span>
+              I agree to the{" "}
+              <Link href="/terms" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                Privacy Policy
+              </Link>
+              .
+            </span>
+          </label>
           <Button
             className="w-full font-semibold"
             style={{ background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))", color: "#fff" }}
             onClick={handlePay}
-            disabled={loading || !amount}
+            disabled={loading || !amount || !fundLegalAccepted}
           >
             {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Redirecting…</> : `Pay ₦${amount ? parseFloat(amount).toLocaleString() : ""}`}
           </Button>

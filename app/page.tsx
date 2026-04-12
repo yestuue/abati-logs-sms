@@ -251,7 +251,7 @@ export default function LandingPage() {
               }}
             >
               <Zap className="w-3 h-3" />
-              Your All-in-One Digital Log &amp; Virtual Number Hub
+              Your All-in-One Digital Communication &amp; Verification Hub
             </span>
           </motion.div>
 
@@ -261,10 +261,10 @@ export default function LandingPage() {
             className="text-[2.4rem] sm:text-5xl lg:text-[4rem] leading-[1.12] mb-5 px-2 text-white"
             style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
           >
-            Virtual Numbers &amp;
+            Virtual Numbers &amp; Aged Profiles
             <br />
             <motion.span variants={fadeUp} style={{ color: MINT }}>
-              Premium Social Logs
+              for Business
             </motion.span>
           </motion.h1>
 
@@ -274,8 +274,8 @@ export default function LandingPage() {
             className="text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8 px-2"
             style={{ color: "rgba(255,255,255,0.62)" }}
           >
-            Instant access to USA &amp; global virtual numbers and premium social account logs.
-            Verified, reliable, and delivered in seconds.
+            Instant access to USA &amp; global virtual numbers for SMS verification. Pre-warmed profiles for marketing
+            and outreach. Fast delivery, reliable support.
           </motion.p>
 
           {/* CTA buttons */}
@@ -786,20 +786,31 @@ export default function LandingPage() {
               </p>
               <div className="space-y-2.5">
                 {[
-                  { label: "About",        href: "#" },
-                  { label: "Contact",      href: "mailto:support@abatilogs.com" },
-                  { label: "Privacy",      href: "/privacy" },
-                  { label: "Terms",        href: "/terms" },
-                ].map((l) => (
-                  <Link
-                    key={l.label}
-                    href={l.href}
-                    className="block text-sm transition-colors hover:text-white"
-                    style={{ color: "rgba(255,255,255,0.45)" }}
-                  >
-                    {l.label}
-                  </Link>
-                ))}
+                  { label: "About", href: "#" },
+                  { label: "Contact", href: "mailto:support@abatilogs.com" },
+                  { label: "Privacy Policy", href: "/privacy" },
+                  { label: "Terms of Service", href: "/terms" },
+                ].map((l) =>
+                  l.href.startsWith("mailto:") ? (
+                    <a
+                      key={l.label}
+                      href={l.href}
+                      className="block text-sm transition-colors hover:text-white"
+                      style={{ color: "rgba(255,255,255,0.45)" }}
+                    >
+                      {l.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={l.label}
+                      href={l.href}
+                      className="block text-sm transition-colors hover:text-white"
+                      style={{ color: "rgba(255,255,255,0.45)" }}
+                    >
+                      {l.label}
+                    </Link>
+                  )
+                )}
               </div>
             </div>
 
@@ -829,6 +840,14 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+
+          <p
+            className="mb-8 max-w-3xl text-center text-[11px] leading-relaxed sm:text-left sm:text-xs mx-auto sm:mx-0"
+            style={{ color: "rgba(255,255,255,0.42)" }}
+          >
+            Abati Digital is an independent provider. We are not affiliated with Meta, Google, TikTok, or any social
+            platform. Users must comply with all third-party Terms of Service.
+          </p>
 
           {/* Bottom bar */}
           <div

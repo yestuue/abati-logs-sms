@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -162,6 +163,11 @@ export function ServerSelector({
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [activeAssignments, setActiveAssignments] = useState<ActiveAssignment[]>([]);
   const [loadingActive, setLoadingActive] = useState(false);
+  const [purchaseLegalAccepted, setPurchaseLegalAccepted] = useState(false);
+
+  useEffect(() => {
+    if (selected) setPurchaseLegalAccepted(false);
+  }, [selected?.id]);
 
   const activeServerConfig = serverConfigs.find((c) => c.server === activeServer);
   const isDisabled = activeServerConfig ? !activeServerConfig.isEnabled : false;
@@ -1127,7 +1133,15 @@ export function ServerSelector({
       )}
 
       {/* Purchase dialog */}
-      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+      <Dialog
+        open={!!selected}
+        onOpenChange={(o) => {
+          if (!o) {
+            setSelected(null);
+            setPurchaseLegalAccepted(false);
+          }
+        }}
+      >
         <DialogContent className="max-w-sm">
           <DialogHeader>
             <DialogTitle>Confirm Purchase</DialogTitle>
@@ -1205,6 +1219,26 @@ export function ServerSelector({
                   Insufficient balance. Please top up your wallet first.
                 </div>
               )}
+
+              <label className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-border/60 bg-muted/30 p-3 text-xs leading-snug text-muted-foreground">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 size-4 shrink-0 rounded border-input accent-primary"
+                  checked={purchaseLegalAccepted}
+                  onChange={(e) => setPurchaseLegalAccepted(e.target.checked)}
+                />
+                <span>
+                  I agree to the{" "}
+                  <Link href="/terms" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">
+                    Privacy Policy
+                  </Link>
+                  .
+                </span>
+              </label>
             </div>
           )}
 
@@ -1217,6 +1251,7 @@ export function ServerSelector({
                 buying ||
                 !selected ||
                 selected.source === "provider" ||
+                !purchaseLegalAccepted ||
                 walletBalance < getPurchaseWalletDebit(selected)
               }
             >
