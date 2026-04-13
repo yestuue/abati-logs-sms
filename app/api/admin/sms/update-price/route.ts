@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { computeSmsDisplayPriceNgn, fiveSimFetch, getFiveSimApiBase } from "@/lib/sms-provider";
+import { fiveSimFetch, getFiveSimApiBase } from "@/lib/sms-provider";
+import {
+  buildCountrySamplePriceSlugOrder,
+  enrichCountrySamplePrices,
+  upsertServer2MasterCountries,
+} from "@/lib/server2-master-countries";
 import { z } from "zod";
 
 const bodySchema = z.object({
@@ -127,13 +132,17 @@ export async function PUT(req: Request) {
       return NextResponse.json({ country: updated });
     }
 
+    if (body.mode !== "syncServer2Countries") {
+      return NextResponse.json({ error: "Unsupported mode" }, { status: 400 });
+    }
+
     const url = `${getFiveSimApiBase()}/guest/countries`;
     const res = await fiveSimFetch(url);
     if (!res.ok) return NextResponse.json({ error: "Provider country sync failed" }, { status: res.status });
     const data = (await res.json()) as Record<string, { text_en?: string }>;
     const countries = Object.entries(data);
 
-    // Fast sync: persist provider-supported countries immediately.
+    // Provider list: add/update rows from 5SIM (new rows enabled for users).
     await prisma.$transaction(
       countries.map(([slug, meta]) =>
         prisma.country.upsert({
@@ -148,23 +157,13 @@ export async function PUT(req: Request) {
       )
     );
 
-    // Optional sample prices for first 20 countries only (avoid long admin request times).
-    const top = countries.slice(0, 20);
-    for (const [slug] of top) {
-      try {
-        const pRes = await fiveSimFetch(`${getFiveSimApiBase()}/guest/products/${encodeURIComponent(slug)}/any`);
-        if (!pRes.ok) continue;
-        const products = (await pRes.json()) as Record<string, { Price?: number }>;
-        const first = Object.values(products)[0];
-        if (!first?.Price) continue;
-        await prisma.country.update({
-          where: { slug },
-          data: { basePrice: computeSmsDisplayPriceNgn(Number(first.Price) || 0) },
-        });
-      } catch {
-        // ignore sample price enrichment failures
-      }
-    }
+    // Master catalog: ensure AU/US/UK/CA + broad EU/Asia/Africa coverage and canonical iso/dial names.
+    await upsertServer2MasterCountries(prisma);
+
+    const providerSlugs = countries.map(([slug]) => slug);
+    const priceOrder = buildCountrySamplePriceSlugOrder(providerSlugs);
+    // Australia first, then masters, then provider extras; cap requests to keep the admin request bounded.
+    await enrichCountrySamplePrices(prisma, priceOrder, 40);
 
     return NextResponse.json({ success: true, synced: countries.length });
   } catch {

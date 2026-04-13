@@ -164,6 +164,10 @@ model Country {
   id          String   @id @default(cuid())
   slug        String   @unique
   name        String
+  /// ISO 3166-1 alpha-2 for flags / display (e.g. AU for Australia).
+  iso2        String?
+  /// E.164 country calling code, e.g. "+61" for Australia.
+  dialCode    String?
   /// Catalog-style NGN hint for this country (stored column: samplePrice).
   basePrice   Float?   @map("samplePrice")
   enabled     Boolean  @default(true)

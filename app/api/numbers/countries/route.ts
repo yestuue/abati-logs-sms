@@ -35,12 +35,23 @@ export async function GET() {
     const data = (await res.json()) as Record<string, GuestCountry>;
     const [disabledRows, dbCountries] = await Promise.all([
       prisma.country.findMany({ where: { enabled: false }, select: { slug: true } }),
-      prisma.country.findMany({ select: { id: true, slug: true, name: true, basePrice: true } }),
+      prisma.country.findMany({
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          basePrice: true,
+          iso2: true,
+          dialCode: true,
+          enabled: true,
+        },
+      }),
     ]);
     const disabled = new Set(disabledRows.map((c) => c.slug));
     const dbBySlug = new Map(dbCountries.map((c) => [c.slug, c]));
+    const providerKeys = new Set(Object.keys(data));
 
-    const countries = Object.entries(data)
+    const fromProvider = Object.entries(data)
       .filter(([slug]) => !disabled.has(slug))
       .map(([slug, v]) => {
         const row = dbBySlug.get(slug);
@@ -49,11 +60,27 @@ export async function GET() {
           id: row?.id ?? slug,
           slug,
           name: row?.name ?? (typeof v?.text_en === "string" ? v.text_en : slug),
-          iso2: isoFromProvider,
+          iso2: row?.iso2 ?? isoFromProvider,
+          dialCode: row?.dialCode ?? null,
           basePrice: row?.basePrice ?? null,
         };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, "en"));
+      });
+
+    // Enabled DB rows from the master catalog (or admin) that the provider response omitted.
+    const fromDbOnly = dbCountries
+      .filter((r) => r.enabled && !disabled.has(r.slug) && !providerKeys.has(r.slug))
+      .map((r) => ({
+        id: r.id,
+        slug: r.slug,
+        name: r.name,
+        iso2: r.iso2 ?? null,
+        dialCode: r.dialCode ?? null,
+        basePrice: r.basePrice ?? null,
+      }));
+
+    const countries = [...fromProvider, ...fromDbOnly].sort((a, b) =>
+      a.name.localeCompare(b.name, "en", { sensitivity: "base" })
+    );
 
     return NextResponse.json(
       { countries },

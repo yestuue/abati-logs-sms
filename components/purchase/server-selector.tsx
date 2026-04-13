@@ -72,6 +72,7 @@ interface CountryOption {
   slug: string;
   name: string;
   iso2?: string | null;
+  dialCode?: string | null;
   /** Admin-configured NGN hint for this country (Server 2). */
   basePrice?: number | null;
 }

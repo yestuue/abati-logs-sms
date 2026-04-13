@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, useInView } from "framer-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Logo } from "@/components/layout/logo";
 import { FloatingSupport } from "@/components/landing/floating-support";
 import {
   ArrowRight, CheckCircle, Zap, Globe, MessageSquare, Shield,
