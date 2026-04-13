@@ -58,6 +58,7 @@ export async function seedAdminLists(prisma: PrismaClient): Promise<void> {
         serviceKey: s.serviceKey,
         name: s.name,
         basePrice: s.basePrice,
+        basePriceServer2: s.basePrice,
         premiumRate: DEFAULT_PREMIUM,
       },
     });

@@ -139,6 +139,8 @@ model Service {
   serviceKey  String   @unique
   name        String
   basePrice   Float
+  /// Optional dedicated base price for Server 2. Falls back to basePrice when null.
+  basePriceServer2 Float?
   /// When set, overrides basePrice for display and checkout math for this service.
   customPrice Float?
   premiumRate Float    @default(0.35)

@@ -15,11 +15,10 @@ export function Logo({ size = "md", className }: LogoProps) {
     <div className={cn("flex items-center", className)}>
       <Image
         src="/logo.png"
-        alt="Abati Logs"
+        alt="Abati Digital"
         height={h}
         width={h * 4}
         style={{ height: h, width: "auto" }}
-        className="dark:invert"
         priority
       />
     </div>

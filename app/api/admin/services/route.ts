@@ -39,6 +39,7 @@ async function ensureServiceSeed(globalPremiumRate: number) {
         key: serviceKey,
         name: serviceKey,
         basePrice: computeSmsDisplayPriceNgn(usd),
+        basePriceServer2: computeSmsDisplayPriceNgn(usd),
         premiumRate: globalPremiumRate,
       };
     });
@@ -56,6 +57,7 @@ async function ensureServiceSeed(globalPremiumRate: number) {
       serviceKey,
       name: serviceKey,
       basePrice: 2500,
+      basePriceServer2: 2500,
       premiumRate: globalPremiumRate,
     })),
     skipDuplicates: true,

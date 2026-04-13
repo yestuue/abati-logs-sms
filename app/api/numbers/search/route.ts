@@ -128,6 +128,7 @@ export async function GET(req: Request) {
         key: s.key,
         name: s.name,
         basePrice: s.basePriceNGN,
+        ...(serverForPremium === "SERVER2" ? { basePriceServer2: s.basePriceNGN } : {}),
         premiumRate: globalPremiumRate,
       }));
     if (missing.length > 0) {
@@ -138,6 +139,7 @@ export async function GET(req: Request) {
       for (const m of missing) {
         configMap.set(m.serviceKey, {
           basePrice: m.basePrice,
+          basePriceServer2: "basePriceServer2" in m ? m.basePriceServer2 ?? null : null,
           customPrice: null,
           effectiveBase: m.basePrice,
           premiumRate: m.premiumRate,
@@ -148,7 +150,10 @@ export async function GET(req: Request) {
 
     const pricedServices = services.map((s) => {
       const cfg = configMap.get(s.key);
-      const effective = cfg?.effectiveBase ?? s.basePriceNGN;
+      const effective =
+        serverForPremium === "SERVER2"
+          ? (cfg?.basePriceServer2 ?? cfg?.effectiveBase ?? s.basePriceNGN)
+          : (cfg?.effectiveBase ?? s.basePriceNGN);
       return {
         key: s.key,
         name: cfg?.name ?? s.name,

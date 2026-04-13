@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { computeSmsDisplayPriceNgn, fiveSimFetch, getFiveSimApiBase } from "@/lib/sms-provider";
 import { getGlobalSmsPremiumRate } from "@/lib/price-calculator";
+import { seedServices } from "@/prisma/seed-admin-data";
 
 async function requireAdmin() {
   const session = await auth();
@@ -14,7 +15,26 @@ async function requireAdmin() {
 
 /** Upsert all guest product keys from 5SIM into Service (does not clear customPrice). */
 async function syncCatalogFromProvider() {
-  if (!process.env.FIVE_SIM_API_KEY) return 0;
+  // When provider key is missing, seed a practical fallback catalog so admin can still manage pricing.
+  if (!process.env.FIVE_SIM_API_KEY) {
+    await prisma.$transaction(
+      seedServices.map((s) =>
+        prisma.service.upsert({
+          where: { serviceKey: s.serviceKey },
+          update: { name: s.name },
+          create: {
+            key: s.key,
+            serviceKey: s.serviceKey,
+            name: s.name,
+            basePrice: s.basePrice,
+            basePriceServer2: s.basePrice,
+            premiumRate: 0.35,
+          },
+        })
+      )
+    );
+    return seedServices.length;
+  }
 
   const url = `${getFiveSimApiBase()}/guest/products/usa/any`;
   const res = await fiveSimFetch(url);
@@ -30,7 +50,7 @@ async function syncCatalogFromProvider() {
     const basePrice = computeSmsDisplayPriceNgn(usd);
     const existing = await prisma.service.findUnique({
       where: { serviceKey: key },
-      select: { id: true, customPrice: true },
+      select: { id: true, customPrice: true, basePriceServer2: true },
     });
     if (!existing) {
       await prisma.service.create({
@@ -39,6 +59,7 @@ async function syncCatalogFromProvider() {
           serviceKey: key,
           name: key,
           basePrice,
+          basePriceServer2: basePrice,
           premiumRate: globalPremium,
         },
       });
@@ -46,7 +67,10 @@ async function syncCatalogFromProvider() {
     } else if (existing.customPrice == null) {
       await prisma.service.update({
         where: { id: existing.id },
-        data: { basePrice },
+        data: {
+          basePrice,
+          ...(existing.basePriceServer2 == null ? { basePriceServer2: basePrice } : {}),
+        },
       });
       n++;
     }

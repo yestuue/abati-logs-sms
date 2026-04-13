@@ -27,6 +27,7 @@ export async function getGlobalSmsPremiumRateForServer(
 
 export type ServicePriceConfigRow = {
   basePrice: number;
+  basePriceServer2: number | null;
   customPrice: number | null;
   effectiveBase: number;
   premiumRate: number;
@@ -41,13 +42,21 @@ export async function getServicePriceConfigMap(serviceKeys: string[]) {
   if (serviceKeys.length === 0) return new Map<string, ServicePriceConfigRow>();
   const rows = await prisma.service.findMany({
     where: { serviceKey: { in: serviceKeys } },
-    select: { serviceKey: true, basePrice: true, customPrice: true, premiumRate: true, name: true },
+    select: {
+      serviceKey: true,
+      basePrice: true,
+      basePriceServer2: true,
+      customPrice: true,
+      premiumRate: true,
+      name: true,
+    },
   });
   return new Map(
     rows.map((r) => [
       r.serviceKey,
       {
         basePrice: r.basePrice,
+        basePriceServer2: r.basePriceServer2,
         customPrice: r.customPrice,
         effectiveBase: effectiveServiceBase(r),
         premiumRate: r.premiumRate,

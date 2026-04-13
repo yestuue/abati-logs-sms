@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
+import { Logo } from "@/components/layout/logo";
 
 export const metadata = { title: "Admin — Overview" };
 
@@ -213,9 +214,12 @@ export default async function AdminPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
+        <div className="flex items-center gap-3">
+          <Logo size="sm" />
+          <div>
           <h1 className="text-2xl font-bold text-foreground">Admin Overview</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Platform health &amp; live activity</p>
+          </div>
         </div>
         <div
           className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium"

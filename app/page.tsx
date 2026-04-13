@@ -1,8 +1,8 @@
 "use client";
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, useInView } from "framer-motion";
-import { Logo } from "@/components/layout/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { FloatingSupport } from "@/components/landing/floating-support";
 import {
@@ -186,7 +186,16 @@ export default function LandingPage() {
         }}
       >
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Logo size="md" />
+          <Link href="/" aria-label="Abati Digital home">
+            <Image
+              src="/logo.png"
+              alt="Abati Digital"
+              width={160}
+              height={40}
+              priority
+              className="h-9 w-auto"
+            />
+          </Link>
           <div className="flex items-center gap-1.5 sm:gap-3">
             <ThemeToggle className="hidden sm:flex" />
             {/* Glass-morphism Sign In */}
@@ -732,7 +741,7 @@ export default function LandingPage() {
             <div className="col-span-2 sm:col-span-1">
               <Logo size="md" />
               <p className="text-sm mt-3 leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
-                Nigeria&apos;s most reliable virtual number &amp; social log platform. Delivered instantly.
+                Nigeria&apos;s reliable virtual number &amp; digital account platform. Delivered instantly.
               </p>
               <div className="flex items-center gap-3 mt-4">
                 {[
@@ -855,7 +864,7 @@ export default function LandingPage() {
             style={{ borderTop: `1px solid ${MINT}10` }}
           >
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>
-              © {new Date().getFullYear()} Abati Logs. All rights reserved.
+              © {new Date().getFullYear()} Abati Digital. All rights reserved.
             </p>
             <div className="flex items-center gap-1.5 text-xs" style={{ color: MINT }}>
               <span

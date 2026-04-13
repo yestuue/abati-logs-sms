@@ -7,10 +7,15 @@ const batchSchema = z
   .object({
     services: z
       .array(
-        z.object({
-          serviceId: z.string().min(1),
-          basePrice: z.number().positive(),
-        })
+        z
+          .object({
+            serviceId: z.string().min(1),
+            basePrice: z.number().positive().optional(),
+            basePriceServer2: z.number().positive().optional(),
+          })
+          .refine((row) => typeof row.basePrice === "number" || typeof row.basePriceServer2 === "number", {
+            message: "Each service row must include basePrice and/or basePriceServer2",
+          })
       )
       .optional()
       .default([]),
@@ -48,7 +53,12 @@ export async function POST(req: Request) {
       ...services.map((s) =>
         prisma.service.update({
           where: { id: s.serviceId },
-          data: { basePrice: s.basePrice },
+          data: {
+            ...(typeof s.basePrice === "number" ? { basePrice: s.basePrice } : {}),
+            ...(typeof s.basePriceServer2 === "number"
+              ? { basePriceServer2: s.basePriceServer2 }
+              : {}),
+          },
         })
       ),
       ...countries.map((c) =>

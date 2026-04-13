@@ -20,6 +20,7 @@ type Service = {
   serviceKey: string;
   name: string;
   basePrice: number;
+  basePriceServer2?: number | null;
   customPrice: number | null;
   premiumRate: number;
 };
@@ -47,7 +48,7 @@ export default function AdminPricingPage() {
   const [newCategoryPrice, setNewCategoryPrice] = useState("");
   const [bulkPct, setBulkPct] = useState("");
   const [loading, setLoading] = useState(false);
-  const [serviceDrafts, setServiceDrafts] = useState<Record<string, string>>({});
+  const [serviceDrafts, setServiceDrafts] = useState<Record<string, { s1: string; s2: string }>>({});
   const [countryDrafts, setCountryDrafts] = useState<Record<string, string>>({});
   const [serviceTableSearch, setServiceTableSearch] = useState("");
   const [servicesLoading, setServicesLoading] = useState(true);
@@ -64,7 +65,21 @@ export default function AdminPricingPage() {
       const list = (data.services ?? []) as Service[];
       setServices(list);
       setServiceDrafts(
-        Object.fromEntries(list.map((s) => [s.id, String(Math.round(s.basePrice))]))
+        Object.fromEntries(
+          list.map((s) => [
+            s.id,
+            {
+              s1: String(Math.round(s.basePrice)),
+              s2: String(
+                Math.round(
+                  typeof s.basePriceServer2 === "number" && Number.isFinite(s.basePriceServer2)
+                    ? s.basePriceServer2
+                    : s.basePrice
+                )
+              ),
+            },
+          ])
+        )
       );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load services");
@@ -157,8 +172,15 @@ export default function AdminPricingPage() {
 
   const hasPendingPriceChanges = useMemo(() => {
     for (const s of services) {
-      const p = parsePositivePriceDraft(serviceDrafts[s.id] ?? "");
-      if (p != null && p !== Math.round(s.basePrice)) return true;
+      const d = serviceDrafts[s.id];
+      const p1 = parsePositivePriceDraft(d?.s1 ?? "");
+      const p2 = parsePositivePriceDraft(d?.s2 ?? "");
+      const cur2 =
+        typeof s.basePriceServer2 === "number" && Number.isFinite(s.basePriceServer2)
+          ? Math.round(s.basePriceServer2)
+          : Math.round(s.basePrice);
+      if (p1 != null && p1 !== Math.round(s.basePrice)) return true;
+      if (p2 != null && p2 !== cur2) return true;
     }
     for (const c of countries) {
       const p = parsePositivePriceDraft(countryDrafts[c.slug] ?? "");
@@ -191,22 +213,36 @@ export default function AdminPricingPage() {
   }
 
   async function updateServiceBasePrice(id: string) {
-    const basePrice = Number(serviceDrafts[id]);
-    if (!Number.isFinite(basePrice) || basePrice <= 0) {
-      toast.error("Enter a valid base price");
+    const row = serviceDrafts[id];
+    const basePrice = parsePositivePriceDraft(row?.s1 ?? "");
+    const basePriceServer2 = parsePositivePriceDraft(row?.s2 ?? "");
+    if (basePrice == null || basePriceServer2 == null) {
+      toast.error("Enter valid S1 and S2 prices");
       return;
     }
     const res = await fetch("/api/admin/pricing/update", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ serviceId: id, basePrice }),
+      body: JSON.stringify({ serviceId: id, basePrice, basePriceServer2 }),
     });
     const data = await res.json();
     if (!res.ok) return toast.error(data.error ?? "Update failed");
     const updated = data.service as Service;
     setServices((prev) => prev.map((s) => (s.id === id ? { ...s, ...updated } : s)));
-    setServiceDrafts((prev) => ({ ...prev, [id]: String(Math.round(updated.basePrice)) }));
-    toast.success("Service base price saved");
+    setServiceDrafts((prev) => ({
+      ...prev,
+      [id]: {
+        s1: String(Math.round(updated.basePrice)),
+        s2: String(
+          Math.round(
+            typeof updated.basePriceServer2 === "number" && Number.isFinite(updated.basePriceServer2)
+              ? updated.basePriceServer2
+              : updated.basePrice
+          )
+        ),
+      },
+    }));
+    toast.success("Service S1/S2 prices saved");
   }
 
   async function updateCountryBasePrice(slug: string) {
@@ -234,11 +270,22 @@ export default function AdminPricingPage() {
   async function saveAllPendingPrices() {
     const servicePayload = services
       .map((s) => {
-        const p = parsePositivePriceDraft(serviceDrafts[s.id] ?? "");
-        if (p == null || p === Math.round(s.basePrice)) return null;
-        return { serviceId: s.id, basePrice: p };
+        const row = serviceDrafts[s.id];
+        const p1 = parsePositivePriceDraft(row?.s1 ?? "");
+        const p2 = parsePositivePriceDraft(row?.s2 ?? "");
+        const cur2 =
+          typeof s.basePriceServer2 === "number" && Number.isFinite(s.basePriceServer2)
+            ? Math.round(s.basePriceServer2)
+            : Math.round(s.basePrice);
+        const next: { serviceId: string; basePrice?: number; basePriceServer2?: number } = {
+          serviceId: s.id,
+        };
+        if (p1 != null && p1 !== Math.round(s.basePrice)) next.basePrice = p1;
+        if (p2 != null && p2 !== cur2) next.basePriceServer2 = p2;
+        if (typeof next.basePrice !== "number" && typeof next.basePriceServer2 !== "number") return null;
+        return next;
       })
-      .filter(Boolean) as { serviceId: string; basePrice: number }[];
+      .filter(Boolean) as { serviceId: string; basePrice?: number; basePriceServer2?: number }[];
 
     const countryPayload = countries
       .map((c) => {
@@ -281,8 +328,29 @@ export default function AdminPricingPage() {
       const res = await fetch("/api/admin/pricing?syncCatalog=1", { cache: "no-store" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Catalog sync failed");
+      const syncedList = (data.services ?? []) as Service[];
+      if (syncedList.length > 0) {
+        setServices(syncedList);
+        setServiceDrafts(
+          Object.fromEntries(
+            syncedList.map((s) => [
+              s.id,
+              {
+                s1: String(Math.round(s.basePrice)),
+                s2: String(
+                  Math.round(
+                    typeof s.basePriceServer2 === "number" && Number.isFinite(s.basePriceServer2)
+                      ? s.basePriceServer2
+                      : s.basePrice
+                  )
+                ),
+              },
+            ])
+          )
+        );
+      }
       toast.success(`Catalog synced (${data.syncedKeys ?? 0} keys)`);
-      await fetchAdminServices();
+      if (syncedList.length === 0) await fetchAdminServices();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Sync failed");
     } finally {
@@ -462,7 +530,7 @@ export default function AdminPricingPage() {
           <div className="space-y-1">
             <h3 className="text-sm font-semibold">Service pricing</h3>
             <p className="text-xs text-muted-foreground">
-              Sorted A–Z. Save each row with the button beside the price, or use Save All Changes below.
+              Sorted A–Z. Each row has Server 1 and Server 2 prices with instant search by name or key.
             </p>
           </div>
 
@@ -485,7 +553,9 @@ export default function AdminPricingPage() {
                   <tr className="border-b border-border">
                     <th className="text-left py-2">Service name</th>
                     <th className="text-left py-2">Key</th>
-                    <th className="text-left py-2">Base price (₦)</th>
+                    <th className="text-left py-2">Server 1 price (₦)</th>
+                    <th className="text-left py-2">Server 2 price (₦)</th>
+                    <th className="text-right py-2">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -496,34 +566,54 @@ export default function AdminPricingPage() {
                         <span className="font-mono text-xs text-muted-foreground">{s.serviceKey}</span>
                       </td>
                       <td className="py-2 align-top">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Input
-                            value={serviceDrafts[s.id] ?? ""}
-                            onChange={(e) =>
-                              setServiceDrafts((prev) => ({
-                                ...prev,
-                                [s.id]: e.target.value.replace(/[^\d.]/g, ""),
-                              }))
-                            }
-                            className="h-8 w-36"
-                            aria-label={`Base price for ${s.name}`}
-                          />
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="outline"
-                            className="h-8 w-8 shrink-0"
-                            onClick={() => void updateServiceBasePrice(s.id)}
-                            aria-label={`Save base price for ${s.name}`}
-                          >
-                            <Save className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <Input
+                          value={serviceDrafts[s.id]?.s1 ?? ""}
+                          onChange={(e) =>
+                            setServiceDrafts((prev) => ({
+                              ...prev,
+                              [s.id]: {
+                                s1: e.target.value.replace(/[^\d.]/g, ""),
+                                s2: prev[s.id]?.s2 ?? "",
+                              },
+                            }))
+                          }
+                          className="h-8 w-36"
+                          aria-label={`Server 1 price for ${s.name}`}
+                        />
                         {s.customPrice != null && (
                           <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
                             Custom override ₦{Math.round(s.customPrice).toLocaleString()} (checkout)
                           </p>
                         )}
+                      </td>
+                      <td className="py-2 align-top">
+                        <Input
+                          value={serviceDrafts[s.id]?.s2 ?? ""}
+                          onChange={(e) =>
+                            setServiceDrafts((prev) => ({
+                              ...prev,
+                              [s.id]: {
+                                s1: prev[s.id]?.s1 ?? "",
+                                s2: e.target.value.replace(/[^\d.]/g, ""),
+                              },
+                            }))
+                          }
+                          className="h-8 w-36"
+                          aria-label={`Server 2 price for ${s.name}`}
+                        />
+                      </td>
+                      <td className="py-2 align-top text-right">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="h-8 shrink-0"
+                          onClick={() => void updateServiceBasePrice(s.id)}
+                          aria-label={`Save server prices for ${s.name}`}
+                        >
+                          <Save className="h-4 w-4 mr-1.5" />
+                          Save Both
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -533,7 +623,7 @@ export default function AdminPricingPage() {
             {!servicesLoading && filteredServices.length === 0 && (
               <p className="text-sm text-muted-foreground py-4">
                 {services.length === 0
-                  ? "No services in database yet. Run “Sync SMS catalog” or use the user dashboard search to seed services."
+                  ? "No services in database yet. Click “Sync SMS catalog (5SIM)” to populate this table."
                   : "No services match your search."}
               </p>
             )}

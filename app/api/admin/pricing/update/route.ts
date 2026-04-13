@@ -7,7 +7,8 @@ const bodySchema = z
   .object({
     serviceId: z.string().min(1).optional(),
     countrySlug: z.string().min(1).optional(),
-    basePrice: z.number().positive(),
+    basePrice: z.number().positive().optional(),
+    basePriceServer2: z.number().positive().optional(),
   })
   .refine(
     (d) =>
@@ -31,16 +32,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    const { serviceId, countrySlug, basePrice } = parsed.data;
+    const { serviceId, countrySlug, basePrice, basePriceServer2 } = parsed.data;
 
     if (serviceId) {
+      if (typeof basePrice !== "number" && typeof basePriceServer2 !== "number") {
+        return NextResponse.json(
+          { error: "Provide basePrice and/or basePriceServer2 for service updates" },
+          { status: 400 }
+        );
+      }
       const updated = await prisma.service.update({
         where: { id: serviceId },
-        data: { basePrice },
+        data: {
+          ...(typeof basePrice === "number" ? { basePrice } : {}),
+          ...(typeof basePriceServer2 === "number" ? { basePriceServer2 } : {}),
+        },
       });
       return NextResponse.json({ service: updated });
     }
 
+    if (typeof basePrice !== "number") {
+      return NextResponse.json({ error: "basePrice is required for country updates" }, { status: 400 });
+    }
     const existing = await prisma.country.findUnique({ where: { slug: countrySlug! } });
     if (!existing) {
       return NextResponse.json({ error: "Country not found" }, { status: 404 });
