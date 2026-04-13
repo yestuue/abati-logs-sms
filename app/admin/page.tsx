@@ -19,6 +19,7 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   NUMBER_RENEWAL:  ArrowUpRight,
   ADMIN_ADJUST:    Activity,
   ADMIN_CREDIT:    TrendingUp,
+  REFERRAL_REWARD: UserPlus,
 };
 
 // Convert Date → ISO string so Next.js RSC serialization never sees a Date object

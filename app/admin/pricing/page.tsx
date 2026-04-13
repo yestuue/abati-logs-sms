@@ -31,7 +31,8 @@ type CountryCfg = {
   slug: string;
   name: string;
   enabled: boolean;
-  basePrice?: number | null;
+  samplePrice?: number;
+  server?: string;
 };
 type LogCategory = { id: string; name: string; price: number; stock: number; enabled: boolean };
 type LogItem = { id: string; category: string; username: string; price: number; status: string };
@@ -50,7 +51,8 @@ export default function AdminPricingPage() {
   const [loading, setLoading] = useState(false);
   const [serviceDrafts, setServiceDrafts] = useState<Record<string, { s1: string; s2: string }>>({});
   const [countryDrafts, setCountryDrafts] = useState<Record<string, string>>({});
-  const [serviceTableSearch, setServiceTableSearch] = useState("");
+  const [serviceNameSearch, setServiceNameSearch] = useState("");
+  const [serviceKeySearch, setServiceKeySearch] = useState("");
   const [servicesLoading, setServicesLoading] = useState(true);
   const [savingAll, setSavingAll] = useState(false);
   const [pendingCountryToggle, setPendingCountryToggle] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export default function AdminPricingPage() {
       Object.fromEntries(
         list.map((c) => [
           c.slug,
-          c.basePrice != null && Number.isFinite(c.basePrice) ? String(Math.round(c.basePrice)) : "",
+          c.samplePrice != null && Number.isFinite(c.samplePrice) ? String(Math.round(c.samplePrice)) : "",
         ])
       )
     );
@@ -146,16 +148,15 @@ export default function AdminPricingPage() {
   }, []);
 
   const filteredServices = useMemo(() => {
-    const q = serviceTableSearch.trim().toLowerCase();
-    const base =
-      !q
-        ? services
-        : services.filter(
-            (s) =>
-              s.name.toLowerCase().includes(q) || s.serviceKey.toLowerCase().includes(q)
-          );
+    const nq = serviceNameSearch.trim().toLowerCase();
+    const kq = serviceKeySearch.trim().toLowerCase();
+    const base = services.filter((s) => {
+      if (nq && !s.name.toLowerCase().includes(nq)) return false;
+      if (kq && !s.serviceKey.toLowerCase().includes(kq)) return false;
+      return true;
+    });
     return [...base].sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }));
-  }, [services, serviceTableSearch]);
+  }, [services, serviceNameSearch, serviceKeySearch]);
 
   const sortedCountries = useMemo(
     () =>
@@ -184,7 +185,8 @@ export default function AdminPricingPage() {
     }
     for (const c of countries) {
       const p = parsePositivePriceDraft(countryDrafts[c.slug] ?? "");
-      const cur = c.basePrice != null && Number.isFinite(c.basePrice) ? Math.round(c.basePrice) : null;
+      const cur =
+        c.samplePrice != null && Number.isFinite(c.samplePrice) ? Math.round(c.samplePrice) : null;
       if (p != null && p !== cur) return true;
     }
     return false;
@@ -248,7 +250,7 @@ export default function AdminPricingPage() {
   async function updateCountryBasePrice(slug: string) {
     const basePrice = parsePositivePriceDraft(countryDrafts[slug] ?? "");
     if (basePrice == null) {
-      toast.error("Enter a valid base price");
+      toast.error("Enter a valid sample price");
       return;
     }
     const res = await fetch("/api/admin/pricing/update", {
@@ -262,9 +264,9 @@ export default function AdminPricingPage() {
     setCountries((prev) => prev.map((c) => (c.slug === slug ? { ...c, ...updated } : c)));
     setCountryDrafts((prev) => ({
       ...prev,
-      [slug]: String(Math.round(Number(updated.basePrice) || basePrice)),
+      [slug]: String(Math.round(Number(updated.samplePrice) || basePrice)),
     }));
-    toast.success("Country base price saved");
+    toast.success("Country sample price saved");
   }
 
   async function saveAllPendingPrices() {
@@ -291,7 +293,7 @@ export default function AdminPricingPage() {
       .map((c) => {
         const p = parsePositivePriceDraft(countryDrafts[c.slug] ?? "");
         const cur =
-          c.basePrice != null && Number.isFinite(c.basePrice) ? Math.round(c.basePrice) : null;
+          c.samplePrice != null && Number.isFinite(c.samplePrice) ? Math.round(c.samplePrice) : null;
         if (p == null || p === cur) return null;
         return { countrySlug: c.slug, basePrice: p };
       })
@@ -530,18 +532,36 @@ export default function AdminPricingPage() {
           <div className="space-y-1">
             <h3 className="text-sm font-semibold">Service pricing</h3>
             <p className="text-xs text-muted-foreground">
-              Sorted A–Z. Each row has Server 1 and Server 2 prices with instant search by name or key.
+              Sorted A–Z. Each row has Server 1 and Server 2 prices. Filter by name and/or key using the
+              fields below (side by side).
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Search services</Label>
-            <Input
-              placeholder="Filter by name or key (whatsapp, telegram…)"
-              value={serviceTableSearch}
-              onChange={(e) => setServiceTableSearch(e.target.value)}
-              className="max-w-md h-9"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
+            <div className="space-y-2">
+              <Label htmlFor="svc-search-name" className="text-xs text-muted-foreground">
+                Search by service name
+              </Label>
+              <Input
+                id="svc-search-name"
+                placeholder="e.g. WhatsApp, Telegram…"
+                value={serviceNameSearch}
+                onChange={(e) => setServiceNameSearch(e.target.value)}
+                className="h-9"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="svc-search-key" className="text-xs text-muted-foreground">
+                Search by service key
+              </Label>
+              <Input
+                id="svc-search-key"
+                placeholder="e.g. whatsapp, telegram…"
+                value={serviceKeySearch}
+                onChange={(e) => setServiceKeySearch(e.target.value)}
+                className="h-9"
+              />
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -624,7 +644,7 @@ export default function AdminPricingPage() {
               <p className="text-sm text-muted-foreground py-4">
                 {services.length === 0
                   ? "No services in database yet. Click “Sync SMS catalog (5SIM)” to populate this table."
-                  : "No services match your search."}
+                  : "No services match your name/key filters."}
               </p>
             )}
           </div>
@@ -632,7 +652,8 @@ export default function AdminPricingPage() {
           <div className="space-y-1 pt-2 border-t border-border">
             <h3 className="text-sm font-semibold">Server 2 countries</h3>
             <p className="text-xs text-muted-foreground">
-              Sorted A–Z. Toggle enables or disables a country immediately. Base price is saved per row or via Save All Changes.
+              Sorted A–Z by country name. Toggle enables or disables a country immediately. Sample price
+              (₦) is saved per row or via Save All Changes.
             </p>
           </div>
 
@@ -648,7 +669,7 @@ export default function AdminPricingPage() {
                     <tr>
                       <th className="text-left py-2 px-3">Country name</th>
                       <th className="text-left py-2 px-3">Key</th>
-                      <th className="text-left py-2 px-3">Base price (₦)</th>
+                      <th className="text-left py-2 px-3">Sample price (₦)</th>
                       <th className="text-right py-2 px-3">Enabled</th>
                     </tr>
                   </thead>
@@ -670,7 +691,7 @@ export default function AdminPricingPage() {
                                 }))
                               }
                               className="h-8 w-36"
-                              aria-label={`Base price for ${c.name}`}
+                              aria-label={`Sample price for ${c.name}`}
                             />
                             <Button
                               type="button"
@@ -678,7 +699,7 @@ export default function AdminPricingPage() {
                               variant="outline"
                               className="h-8 w-8 shrink-0"
                               onClick={() => void updateCountryBasePrice(c.slug)}
-                              aria-label={`Save base price for ${c.name}`}
+                              aria-label={`Save sample price for ${c.name}`}
                             >
                               <Save className="h-4 w-4" />
                             </Button>

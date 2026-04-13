@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { sendSMS } from "@/lib/sms";
+import { assignUniqueReferralCode } from "@/lib/referral-code";
 
 /** Registration is Prisma + bcrypt only. NextAuth uses Credentials + JWT; Supabase Auth is not used here. */
 
@@ -12,6 +13,8 @@ const schema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   phone: z.string().optional(),
+  /** Referral code or referrer user id from ?ref= */
+  ref: z.string().max(128).optional(),
 });
 
 export async function POST(req: Request) {
@@ -26,7 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { username, email, password, phone } = parsed.data;
+    const { username, email, password, phone, ref } = parsed.data;
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedUsername = username.trim().toLowerCase();
 
@@ -73,6 +76,21 @@ export async function POST(req: Request) {
 
     const hashed = await bcrypt.hash(password, 12);
 
+    let referredById: string | undefined;
+    const refTrim = ref?.trim();
+    if (refTrim) {
+      const referrer = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { referralCode: { equals: refTrim, mode: "insensitive" } },
+            { id: refTrim },
+          ],
+        },
+        select: { id: true },
+      });
+      if (referrer) referredById = referrer.id;
+    }
+
     let user: {
       id: string;
       username: string;
@@ -91,7 +109,7 @@ export async function POST(req: Request) {
           where: { identifier: normalizedEmail },
         });
 
-        return tx.user.create({
+        const created = await tx.user.create({
           data: {
             username: normalizedUsername,
             name: normalizedUsername,
@@ -101,6 +119,7 @@ export async function POST(req: Request) {
             isVerified: true,
             walletBalance: 0,
             walletCurrency: "NGN",
+            ...(referredById ? { referredById } : {}),
           },
           select: {
             id: true,
@@ -111,6 +130,8 @@ export async function POST(req: Request) {
             walletCurrency: true,
           },
         });
+        await assignUniqueReferralCode(tx, created.id);
+        return created;
       });
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {

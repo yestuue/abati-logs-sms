@@ -147,17 +147,19 @@ export async function PUT(req: Request) {
       countries.map(([slug, meta]) =>
         prisma.country.upsert({
           where: { slug },
-          update: { name: meta?.text_en || slug },
+          update: { name: meta?.text_en || slug, server: "SERVER2" },
           create: {
             slug,
             name: meta?.text_en || slug,
             enabled: true,
+            server: "SERVER2",
+            samplePrice: 0,
           },
         })
       )
     );
 
-    // Master catalog: ensure AU/US/UK/CA + broad EU/Asia/Africa coverage and canonical iso/dial names.
+    // Master catalog: ensure AU/US/UK/CA + broad EU/Asia/Africa coverage and canonical names.
     await upsertServer2MasterCountries(prisma);
 
     const providerSlugs = countries.map(([slug]) => slug);

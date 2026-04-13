@@ -46,6 +46,13 @@ export function AppHeader({
       className="sticky top-0 z-20 h-14 flex items-center border-b px-4 lg:pl-[calc(240px+1.5rem)]"
       style={{ background: "var(--card)", borderColor: "var(--border)" }}
     >
+      {variant === "admin" && (
+        <div className="hidden lg:flex items-center shrink-0 mr-4">
+          <Link href="/admin" className="flex items-center" aria-label="Abati Digital — Admin home">
+            <Logo size="sm" />
+          </Link>
+        </div>
+      )}
       {/* Mobile: hamburger + logo */}
       <div className="lg:hidden flex items-center gap-2">
         <button

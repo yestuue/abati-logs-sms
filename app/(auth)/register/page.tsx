@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -31,6 +31,28 @@ export default function RegisterPage() {
   const [show, setShow] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [referralRef, setReferralRef] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const q = new URLSearchParams(window.location.search).get("ref");
+    if (q?.trim()) {
+      const v = q.trim();
+      setReferralRef(v);
+      try {
+        sessionStorage.setItem("register_ref", v);
+      } catch {
+        /* ignore */
+      }
+    } else {
+      try {
+        const stored = sessionStorage.getItem("register_ref");
+        if (stored?.trim()) setReferralRef(stored.trim());
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
 
   function update(field: keyof typeof form, val: string) {
     setForm((prev) => ({ ...prev, [field]: val }));
@@ -54,6 +76,16 @@ export default function RegisterPage() {
 
     setLoading(true);
 
+    let refPayload: string | undefined = referralRef ?? undefined;
+    if (!refPayload) {
+      try {
+        const s = sessionStorage.getItem("register_ref")?.trim();
+        if (s) refPayload = s;
+      } catch {
+        /* ignore */
+      }
+    }
+
     const res = await fetch("/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -62,6 +94,7 @@ export default function RegisterPage() {
         email: form.email,
         password: form.password,
         ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
+        ...(refPayload ? { ref: refPayload } : {}),
       }),
     });
     const data = await res.json();

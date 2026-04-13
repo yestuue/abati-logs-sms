@@ -19,34 +19,34 @@ export const seedServices: { key: string; serviceKey: string; name: string; base
 ];
 
 /** Server 2 countries (slugs align with common 5SIM guest country codes). */
-export const seedCountries: { slug: string; name: string; basePrice?: number }[] = [
-  { slug: "usa", name: "United States", basePrice: 2_200 },
-  { slug: "canada", name: "Canada", basePrice: 2_000 },
-  { slug: "nigeria", name: "Nigeria", basePrice: 1_800 },
-  { slug: "ghana", name: "Ghana", basePrice: 1_700 },
-  { slug: "kenya", name: "Kenya", basePrice: 1_750 },
-  { slug: "india", name: "India", basePrice: 1_400 },
-  { slug: "philippines", name: "Philippines", basePrice: 1_350 },
-  { slug: "indonesia", name: "Indonesia", basePrice: 1_300 },
-  { slug: "england", name: "United Kingdom", basePrice: 2_100 },
-  { slug: "germany", name: "Germany", basePrice: 2_050 },
-  { slug: "france", name: "France", basePrice: 2_000 },
-  { slug: "spain", name: "Spain", basePrice: 1_950 },
-  { slug: "italy", name: "Italy", basePrice: 1_950 },
-  { slug: "brazil", name: "Brazil", basePrice: 1_600 },
-  { slug: "mexico", name: "Mexico", basePrice: 1_550 },
-  { slug: "netherlands", name: "Netherlands", basePrice: 2_000 },
-  { slug: "poland", name: "Poland", basePrice: 1_700 },
-  { slug: "turkey", name: "Turkey", basePrice: 1_500 },
-  { slug: "ukraine", name: "Ukraine", basePrice: 1_450 },
-  { slug: "australia", name: "Australia", basePrice: 2_300 },
+export const seedCountries: { slug: string; name: string; samplePrice?: number }[] = [
+  { slug: "usa", name: "United States", samplePrice: 2_200 },
+  { slug: "canada", name: "Canada", samplePrice: 2_000 },
+  { slug: "nigeria", name: "Nigeria", samplePrice: 1_800 },
+  { slug: "ghana", name: "Ghana", samplePrice: 1_700 },
+  { slug: "kenya", name: "Kenya", samplePrice: 1_750 },
+  { slug: "india", name: "India", samplePrice: 1_400 },
+  { slug: "philippines", name: "Philippines", samplePrice: 1_350 },
+  { slug: "indonesia", name: "Indonesia", samplePrice: 1_300 },
+  { slug: "england", name: "United Kingdom", samplePrice: 2_100 },
+  { slug: "germany", name: "Germany", samplePrice: 2_050 },
+  { slug: "france", name: "France", samplePrice: 2_000 },
+  { slug: "spain", name: "Spain", samplePrice: 1_950 },
+  { slug: "italy", name: "Italy", samplePrice: 1_950 },
+  { slug: "brazil", name: "Brazil", samplePrice: 1_600 },
+  { slug: "mexico", name: "Mexico", samplePrice: 1_550 },
+  { slug: "netherlands", name: "Netherlands", samplePrice: 2_000 },
+  { slug: "poland", name: "Poland", samplePrice: 1_700 },
+  { slug: "turkey", name: "Turkey", samplePrice: 1_500 },
+  { slug: "ukraine", name: "Ukraine", samplePrice: 1_450 },
+  { slug: "australia", name: "Australia", samplePrice: 2_300 },
 ];
 
 const DEFAULT_PREMIUM = 0.35;
 
 /**
  * Upsert Service and Country rows for the Admin panel (idempotent).
- * Re-runs update service `name` only (not basePrice). Country updates `name` only.
+ * Re-runs update service `name` only (not basePrice). Country updates `name`/`server` only (not samplePrice).
  */
 export async function seedAdminLists(prisma: PrismaClient): Promise<void> {
   for (const s of seedServices) {
@@ -67,12 +67,13 @@ export async function seedAdminLists(prisma: PrismaClient): Promise<void> {
   for (const c of seedCountries) {
     await prisma.country.upsert({
       where: { slug: c.slug },
-      update: { name: c.name },
+      update: { name: c.name, server: "SERVER2" },
       create: {
         slug: c.slug,
         name: c.name,
         enabled: true,
-        basePrice: c.basePrice ?? null,
+        server: "SERVER2",
+        samplePrice: c.samplePrice ?? 0,
       },
     });
   }

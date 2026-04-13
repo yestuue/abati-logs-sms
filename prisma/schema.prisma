@@ -23,6 +23,14 @@ model User {
   walletCurrency Currency        @default(NGN)
   image          String?
   emailVerified  DateTime?
+  /// Shareable code for ?ref= on registration (e.g. 8-char hex).
+  referralCode   String?         @unique
+  /// Set when the user registered via another user's referral link.
+  referredById   String?
+  /// Running total of NGN earned from referral rewards (wallet may differ if spent).
+  referralEarnings Float         @default(0)
+  /// After first successful wallet top-up, referrer is rewarded and this is set true.
+  referralBonusGranted Boolean     @default(false)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @default(now()) @updatedAt
   accounts       Account[]
@@ -30,6 +38,8 @@ model User {
   sessions       Session[]
   transactions   Transaction[]
   numbers        VirtualNumber[]
+  referredBy     User?           @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  referrals      User[]          @relation("UserReferrals")
 }
 
 model VirtualNumber {
@@ -161,17 +171,14 @@ model LogCategory {
 
 /// Server 2 / provider countries (synced from 5SIM guest API). Table name kept for existing DBs.
 model Country {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  name        String
-  /// ISO 3166-1 alpha-2 for flags / display (e.g. AU for Australia).
-  iso2        String?
-  /// E.164 country calling code, e.g. "+61" for Australia.
-  dialCode    String?
-  /// Catalog-style NGN hint for this country (stored column: samplePrice).
-  basePrice   Float?   @map("samplePrice")
-  enabled     Boolean  @default(true)
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  enabled      Boolean  @default(true)
+  samplePrice  Int      @default(0)
+  server       String   @default("SERVER2")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@map("CountryConfig")
 }
@@ -259,4 +266,5 @@ enum TransactionType {
   NUMBER_RENEWAL
   ADMIN_ADJUST
   ADMIN_CREDIT
+  REFERRAL_REWARD
 }

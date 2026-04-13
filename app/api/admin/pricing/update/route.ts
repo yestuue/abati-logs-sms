@@ -17,7 +17,7 @@ const bodySchema = z
   );
 
 /**
- * POST /api/admin/pricing/update — update one Service.basePrice or one Country.basePrice (admin only).
+ * POST /api/admin/pricing/update — update one Service base prices or one Country.samplePrice (admin only).
  */
 export async function POST(req: Request) {
   const session = await auth();
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
     }
 
     if (typeof basePrice !== "number") {
-      return NextResponse.json({ error: "basePrice is required for country updates" }, { status: 400 });
+      return NextResponse.json({ error: "basePrice is required for country updates (stored as samplePrice)" }, { status: 400 });
     }
     const existing = await prisma.country.findUnique({ where: { slug: countrySlug! } });
     if (!existing) {
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
     }
     const updated = await prisma.country.update({
       where: { slug: countrySlug! },
-      data: { basePrice },
+      data: { samplePrice: Math.round(basePrice) },
     });
     return NextResponse.json({ country: updated });
   } catch (e) {

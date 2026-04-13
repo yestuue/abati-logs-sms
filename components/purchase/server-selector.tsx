@@ -72,9 +72,8 @@ interface CountryOption {
   slug: string;
   name: string;
   iso2?: string | null;
-  dialCode?: string | null;
   /** Admin-configured NGN hint for this country (Server 2). */
-  basePrice?: number | null;
+  samplePrice?: number | null;
 }
 
 interface ServerSelectorProps {
@@ -762,9 +761,9 @@ export function ServerSelector({
                               <span>
                                 {flagFromIso2(c.iso2)} {c.name}
                               </span>
-                              {c.basePrice != null && c.basePrice > 0 && (
+                              {c.samplePrice != null && c.samplePrice > 0 && (
                                 <span className="text-[11px] text-muted-foreground font-normal tabular-nums">
-                                  from ₦{Math.round(c.basePrice).toLocaleString()}
+                                  from ₦{Math.round(c.samplePrice).toLocaleString()}
                                 </span>
                               )}
                             </span>

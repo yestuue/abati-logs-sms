@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyTransaction } from "@/lib/paystack";
-import { redirect } from "next/navigation";
+import { grantReferralRewardInTx } from "@/lib/referral-reward";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -35,17 +35,19 @@ export async function GET(req: Request) {
 
     const amountPaid = paystackData.data.amount / 100; // convert from kobo
 
-    // Credit wallet + mark transaction success
-    await prisma.$transaction([
-      prisma.user.update({
+    await prisma.$transaction(async (dbtx) => {
+      await dbtx.user.update({
         where: { id: tx.userId },
         data: { walletBalance: { increment: amountPaid } },
-      }),
-      prisma.transaction.update({
+      });
+      await dbtx.transaction.update({
         where: { reference },
         data: { status: "SUCCESS", amount: amountPaid },
-      }),
-    ]);
+      });
+      if (tx.type === "WALLET_TOPUP") {
+        await grantReferralRewardInTx(dbtx, tx.userId, amountPaid);
+      }
+    });
 
     return NextResponse.redirect(
       new URL("/dashboard?success=wallet_topped_up", req.url)

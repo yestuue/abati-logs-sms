@@ -1,7 +1,6 @@
 "use client";
 import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { motion, useInView } from "framer-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo } from "@/components/layout/logo";
@@ -187,15 +186,8 @@ export default function LandingPage() {
         }}
       >
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/" aria-label="Abati Digital home">
-            <Image
-              src="/logo.png"
-              alt="Abati Digital"
-              width={160}
-              height={40}
-              priority
-              className="h-9 w-auto"
-            />
+          <Link href="/" aria-label="Abati Digital home" className="flex items-center">
+            <Logo size="sm" />
           </Link>
           <div className="flex items-center gap-1.5 sm:gap-3">
             <ThemeToggle className="hidden sm:flex" />

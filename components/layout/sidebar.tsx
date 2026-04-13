@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, MessageSquare, Settings,
   LogOut, Shield, BarChart3, Users, Server, Phone,
-  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch, ShieldCheck, BadgeDollarSign,
+  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch, ShieldCheck, BadgeDollarSign, Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
@@ -27,6 +27,7 @@ const userNav: NavItem[] = [
   { label: "My Vault",     href: "/dashboard/orders",       icon: Archive },
   { label: "SMS Inbox",    href: "/dashboard/sms",          icon: MessageSquare },
   { label: "Wallet",       href: "/dashboard/wallet",       icon: Wallet },
+  { label: "Referrals",    href: "/dashboard/referrals",    icon: Gift },
   { label: "Transactions", href: "/dashboard/transactions", icon: CreditCard },
   { label: "Settings",     href: "/dashboard/settings",     icon: Settings },
 ];

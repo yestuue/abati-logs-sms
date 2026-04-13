@@ -64,7 +64,7 @@ export async function POST(req: Request) {
       ...countries.map((c) =>
         prisma.country.update({
           where: { slug: c.countrySlug },
-          data: { basePrice: c.basePrice },
+          data: { samplePrice: Math.round(c.basePrice) },
         })
       ),
     ]);

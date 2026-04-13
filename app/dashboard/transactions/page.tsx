@@ -13,6 +13,7 @@ const TYPE_LABELS: Record<string, string> = {
   NUMBER_RENEWAL: "Number Renewal",
   ADMIN_ADJUST:   "Admin Adjustment",
   ADMIN_CREDIT:   "Admin Credit",
+  REFERRAL_REWARD: "Referral reward",
 };
 
 export default async function TransactionsPage() {
