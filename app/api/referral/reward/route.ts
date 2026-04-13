@@ -1,45 +1,36 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { grantReferralRewardInTx } from "@/lib/referral-reward";
+import { grantReferralPurchaseCommissionInTx } from "@/lib/referral-reward";
 import { z } from "zod";
 
 const bodySchema = z.object({
-  userId: z.string().optional(),
-  topupAmountNGN: z.number().nonnegative().optional(),
+  /** Buyer user id (referred user who placed the number order). */
+  userId: z.string().min(1),
+  /** Charged NGN for that order (same as NUMBER_PURCHASE transaction amount). */
+  orderAmountNGN: z.number().positive(),
 });
 
 /**
- * Re-evaluates referral reward for a user after at least one successful wallet top-up.
- * Idempotent via referralBonusGranted. Used for recovery/testing; normal flow runs in payment verify/webhook.
+ * Admin-only: apply one referral purchase commission slot (first 3 orders per referred user).
+ * Normal flow runs inside `payments/initialize` when a number is purchased.
  */
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user?.id || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   let parsed: z.infer<typeof bodySchema>;
   try {
-    const json = await req.json().catch(() => ({}));
-    parsed = bodySchema.parse(json);
+    parsed = bodySchema.parse(await req.json());
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  let targetUserId = session.user.id;
-  if (parsed.userId && parsed.userId !== session.user.id) {
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-    targetUserId = parsed.userId;
-  }
-
-  const amountHint = parsed.topupAmountNGN ?? 0;
-
   try {
     const result = await prisma.$transaction(async (tx) =>
-      grantReferralRewardInTx(tx, targetUserId, amountHint)
+      grantReferralPurchaseCommissionInTx(tx, parsed.userId, parsed.orderAmountNGN)
     );
     return NextResponse.json(result);
   } catch (e) {

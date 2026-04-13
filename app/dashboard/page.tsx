@@ -19,7 +19,7 @@ const quickLinks = [
   { label: "Social Logs",   desc: "Account marketplace",        href: "/dashboard/social", icon: ShoppingBag,  color: "oklch(0.72 0.18 300)" },
   { label: "Wallet",        desc: "Fund & manage balance",      href: "/dashboard/wallet", icon: Wallet,       color: "oklch(0.80 0.15 80)"  },
   { label: "History",       desc: "View all transactions",      href: "/dashboard/transactions", icon: History, color: "oklch(0.72 0.16 162)" },
-  { label: "Referrals",     desc: "Invite friends & earn",      href: "/dashboard/referrals",    icon: Gift,    color: "oklch(0.72 0.20 300)" },
+  { label: "Referrals",     desc: "Invite friends & earn",      href: "/referrals",                icon: Gift,    color: "oklch(0.72 0.20 300)" },
 ];
 
 export default async function DashboardPage() {

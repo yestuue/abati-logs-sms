@@ -1,87 +1,79 @@
 import type { Prisma } from "@prisma/client";
+
+type TxClient = Prisma.TransactionClient;
 import { generateReference } from "@/lib/utils";
 
-function computeRewardAmount(topupAmountNGN: number): number {
-  const pctRaw = process.env.REFERRAL_REWARD_PERCENT;
-  const flat = Number(process.env.REFERRAL_REWARD_NGN ?? "500");
-  if (pctRaw != null && pctRaw !== "" && !Number.isNaN(Number(pctRaw)) && topupAmountNGN > 0) {
-    const fromPct = Math.round(topupAmountNGN * (Number(pctRaw) / 100));
-    return Math.max(1, fromPct);
-  }
-  if (!Number.isFinite(flat) || flat < 1) return 500;
-  return Math.round(flat);
+function maxReferrerOrderRewards(): number {
+  const n = Number(process.env.REFERRAL_REFERRER_MAX_ORDERS ?? "3");
+  if (!Number.isFinite(n) || n < 1) return 3;
+  return Math.min(10, Math.floor(n));
+}
+
+function orderCommissionPercent(): number {
+  const p = Number(process.env.REFERRAL_ORDER_PERCENT ?? "5");
+  if (!Number.isFinite(p) || p <= 0) return 5;
+  return Math.min(100, p);
 }
 
 /**
- * After a wallet top-up is marked SUCCESS inside the same DB transaction,
- * credits the referrer once (guarded by referralBonusGranted).
+ * After a successful virtual-number wallet purchase (NUMBER_PURCHASE) in the same DB transaction,
+ * credits the referrer a percentage of the charged amount for up to the first N purchases by the buyer.
  */
-export async function grantReferralRewardInTx(
-  tx: Prisma.TransactionClient,
-  toppedUpUserId: string,
-  topupAmountNGN: number
+export async function grantReferralPurchaseCommissionInTx(
+  tx: TxClient,
+  buyerUserId: string,
+  orderAmountNGN: number
 ): Promise<{ granted: boolean; amount?: number }> {
-  const prior = await tx.user.findUnique({
-    where: { id: toppedUpUserId },
-    select: { referredById: true, referralBonusGranted: true },
-  });
-  if (!prior?.referredById || prior.referralBonusGranted) {
-    return { granted: false };
-  }
-
-  const successTopups = await tx.transaction.count({
-    where: { userId: toppedUpUserId, type: "WALLET_TOPUP", status: "SUCCESS" },
-  });
-  if (successTopups < 1) {
-    return { granted: false };
-  }
+  const cap = maxReferrerOrderRewards();
+  const pct = orderCommissionPercent();
 
   const lock = await tx.user.updateMany({
     where: {
-      id: toppedUpUserId,
-      referralBonusGranted: false,
+      id: buyerUserId,
       referredById: { not: null },
+      referralPurchaseRewardsCount: { lt: cap },
     },
-    data: { referralBonusGranted: true },
+    data: { referralPurchaseRewardsCount: { increment: 1 } },
   });
   if (lock.count === 0) {
     return { granted: false };
   }
 
-  let rewardBase = topupAmountNGN;
-  if (!rewardBase || rewardBase <= 0) {
-    const first = await tx.transaction.findFirst({
-      where: { userId: toppedUpUserId, type: "WALLET_TOPUP", status: "SUCCESS" },
-      orderBy: { createdAt: "asc" },
-    });
-    rewardBase = first?.amount ?? 0;
+  const buyer = await tx.user.findUnique({
+    where: { id: buyerUserId },
+    select: { referredById: true, referralPurchaseRewardsCount: true },
+  });
+  if (!buyer?.referredById) {
+    return { granted: false };
   }
 
-  const reward = computeRewardAmount(rewardBase);
-  const referrerId = prior.referredById;
+  const commission = Math.max(1, Math.round(orderAmountNGN * (pct / 100)));
+  const referrerId = buyer.referredById;
 
   await tx.user.update({
     where: { id: referrerId },
     data: {
-      walletBalance: { increment: reward },
-      referralEarnings: { increment: reward },
+      walletBalance: { increment: commission },
+      referralEarnings: { increment: commission },
     },
   });
 
   await tx.transaction.create({
     data: {
       userId: referrerId,
-      amount: reward,
+      amount: commission,
       currency: "NGN",
       reference: generateReference(),
       type: "REFERRAL_REWARD",
       status: "SUCCESS",
       metadata: {
-        referredUserId: toppedUpUserId,
-        topupAmountNGN: rewardBase,
+        referredUserId: buyerUserId,
+        orderAmountNGN,
+        commissionPercent: pct,
+        purchaseRewardIndex: buyer.referralPurchaseRewardsCount,
       } as object,
     },
   });
 
-  return { granted: true, amount: reward };
+  return { granted: true, amount: commission };
 }

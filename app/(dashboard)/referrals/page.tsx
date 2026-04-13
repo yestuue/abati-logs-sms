@@ -37,12 +37,9 @@ export default async function ReferralsPage() {
 
   const earned = user?.referralEarnings ?? 0;
   const list = user?.referrals ?? [];
-  const pct = process.env.REFERRAL_REWARD_PERCENT?.trim();
-  const flat = process.env.REFERRAL_REWARD_NGN ?? "500";
-  const rewardHint =
-    pct && !Number.isNaN(Number(pct))
-      ? `${pct}% of your friend’s first wallet top-up (min. ₦1)`
-      : `₦${flat} per qualifying referral`;
+  const orderPct = process.env.REFERRAL_ORDER_PERCENT ?? "5";
+  const maxOrders = process.env.REFERRAL_REFERRER_MAX_ORDERS ?? "3";
+  const welcome = process.env.REFERRAL_WELCOME_NGN ?? "100";
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -56,7 +53,9 @@ export default async function ReferralsPage() {
             Referrals
           </h1>
           <p className="text-sm text-muted-foreground">
-            Share your link. When someone you refer completes their first wallet top-up, you earn {rewardHint}.
+            Friends who sign up with your link get a <strong>₦{welcome}</strong> welcome balance. You earn{" "}
+            <strong>{orderPct}%</strong> of what they spend on their first <strong>{maxOrders}</strong> number
+            purchases (credited to your wallet).
           </p>
         </div>
       </div>
@@ -66,6 +65,10 @@ export default async function ReferralsPage() {
           <CardTitle className="text-base">Your referral link</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Share: <span className="font-medium text-foreground">abatidigital.com/register?ref=</span>
+            <span className="font-mono">{code}</span>
+          </p>
           <p className="text-xs text-muted-foreground break-all font-mono bg-muted/50 rounded-lg px-3 py-2 border border-border">
             {referralLink}
           </p>
@@ -82,7 +85,7 @@ export default async function ReferralsPage() {
             ₦{Math.round(earned).toLocaleString()}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Credited to your wallet when referrals fund their wallet the first time.
+            From referral commissions on friends&apos; qualifying number purchases.
           </p>
         </CardContent>
       </Card>

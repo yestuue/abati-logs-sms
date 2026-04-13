@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { initializeTransaction } from "@/lib/paystack";
 import { finalNumberPurchasePriceNGN, normalizePurchaseCarrier } from "@/lib/number-purchase-price";
 import { generateReference } from "@/lib/utils";
+import { grantReferralPurchaseCommissionInTx } from "@/lib/referral-reward";
 import { z } from "zod";
 
 const schema = z.object({
@@ -84,16 +85,16 @@ export async function POST(req: Request) {
       const reference = generateReference();
       const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
-      await prisma.$transaction([
-        prisma.user.update({
+      await prisma.$transaction(async (dbtx) => {
+        await dbtx.user.update({
           where: { id: userId },
           data: { walletBalance: { decrement: chargeNGN } },
-        }),
-        prisma.virtualNumber.update({
+        });
+        await dbtx.virtualNumber.update({
           where: { id: numberId },
           data: { status: "ASSIGNED", userId, assignedAt: new Date(), expiresAt },
-        }),
-        prisma.transaction.create({
+        });
+        await dbtx.transaction.create({
           data: {
             userId,
             amount: chargeNGN,
@@ -112,8 +113,9 @@ export async function POST(req: Request) {
               serviceKey: serviceKey ?? null,
             },
           },
-        }),
-      ]);
+        });
+        await grantReferralPurchaseCommissionInTx(dbtx, userId, chargeNGN);
+      });
 
       return NextResponse.json({ success: true, number: number.number, expiresAt });
     }
@@ -140,7 +142,7 @@ export async function POST(req: Request) {
     const paystackRes = await initializeTransaction({
       email,
       amount: amountKobo,
-      currency: "NGN",       // Rule 2: explicit currency
+      currency: "NGN", // Rule 2: explicit currency
       reference,
       callback_url: callbackUrl,
       metadata: { userId, type, amount },

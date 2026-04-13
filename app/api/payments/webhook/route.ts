@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyPaystackSignature } from "@/lib/paystack";
-import { grantReferralRewardInTx } from "@/lib/referral-reward";
 
 export async function POST(req: Request) {
   const rawBody = await req.text();
@@ -32,9 +31,6 @@ export async function POST(req: Request) {
           where: { reference },
           data: { status: "SUCCESS", amount: amountNGN },
         });
-        if (tx.type === "WALLET_TOPUP") {
-          await grantReferralRewardInTx(dbtx, tx.userId, amountNGN);
-        }
       });
     }
 

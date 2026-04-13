@@ -14,6 +14,7 @@ const TYPE_LABELS: Record<string, string> = {
   ADMIN_ADJUST:   "Admin Adjustment",
   ADMIN_CREDIT:   "Admin Credit",
   REFERRAL_REWARD: "Referral reward",
+  REFERRAL_WELCOME_BONUS: "Referral welcome bonus",
 };
 
 export default async function TransactionsPage() {
@@ -106,7 +107,12 @@ export default async function TransactionsPage() {
           ) : (
             <div className="divide-y divide-border/30">
               {transactions.map((tx) => {
-                const isTopup = tx.type === "WALLET_TOPUP" || tx.type === "ADMIN_CREDIT" || tx.type === "ADMIN_ADJUST";
+                const isTopup =
+                  tx.type === "WALLET_TOPUP" ||
+                  tx.type === "ADMIN_CREDIT" ||
+                  tx.type === "ADMIN_ADJUST" ||
+                  tx.type === "REFERRAL_WELCOME_BONUS" ||
+                  tx.type === "REFERRAL_REWARD";
                 return (
                   <div key={tx.id} className="flex items-center gap-3 px-4 py-3 hover:bg-accent/20 transition-colors">
                     {/* Icon */}

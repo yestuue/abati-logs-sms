@@ -1,4 +1,4 @@
-/** Canonical marketing / share URL (no trailing slash). */
+/** Canonical marketing / share URL (no trailing slash). Defaults to abatidigital.com. */
 export function getPublicSiteUrl(): string {
   const a = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (a) return a.replace(/\/$/, "");

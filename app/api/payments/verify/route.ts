@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyTransaction } from "@/lib/paystack";
-import { grantReferralRewardInTx } from "@/lib/referral-reward";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -44,9 +43,6 @@ export async function GET(req: Request) {
         where: { reference },
         data: { status: "SUCCESS", amount: amountPaid },
       });
-      if (tx.type === "WALLET_TOPUP") {
-        await grantReferralRewardInTx(dbtx, tx.userId, amountPaid);
-      }
     });
 
     return NextResponse.redirect(

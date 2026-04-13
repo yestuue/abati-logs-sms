@@ -29,8 +29,10 @@ model User {
   referredById   String?
   /// Running total of NGN earned from referral rewards (wallet may differ if spent).
   referralEarnings Float         @default(0)
-  /// After first successful wallet top-up, referrer is rewarded and this is set true.
-  referralBonusGranted Boolean     @default(false)
+  /// True after the user received the referral-link welcome wallet credit.
+  referralWelcomeCredited Boolean @default(false)
+  /// How many number-purchase referral commissions have been paid to this user's referrer (max 3).
+  referralPurchaseRewardsCount Int @default(0)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @default(now()) @updatedAt
   accounts       Account[]
@@ -267,4 +269,5 @@ enum TransactionType {
   ADMIN_ADJUST
   ADMIN_CREDIT
   REFERRAL_REWARD
+  REFERRAL_WELCOME_BONUS
 }
