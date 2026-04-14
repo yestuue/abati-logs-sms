@@ -11,6 +11,7 @@ import { Logo } from "@/components/layout/logo";
 import { toast } from "sonner";
 import { signIn } from "next-auth/react";
 import { isSuperAdminEmail, normalizeEmail } from "@/lib/admin-access";
+import { getPublicSiteUrl } from "@/lib/site-url";
 
 const PERKS = [
   "50+ countries supported",
@@ -21,6 +22,7 @@ const PERKS = [
 
 export default function RegisterPage() {
   const router = useRouter();
+  const siteBase = getPublicSiteUrl();
   const [form, setForm] = useState({
     username: "",
     email: "",
@@ -118,9 +120,10 @@ export default function RegisterPage() {
       email: normalizedEmail,
       password: form.password,
       redirect: false,
+      callbackUrl: `${siteBase}/dashboard`,
     });
 
-    router.push(isSuperAdminEmail(normalizedEmail) ? "/admin" : "/dashboard");
+    router.push(isSuperAdminEmail(normalizedEmail) ? `${siteBase}/admin` : `${siteBase}/dashboard`);
   }
 
   const passwordStrength = form.password.length === 0 ? 0

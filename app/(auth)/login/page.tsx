@@ -11,11 +11,16 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/layout/logo";
 import { toast } from "sonner";
 import { isSuperAdminEmail, normalizeEmail } from "@/lib/admin-access";
+import { getPublicSiteUrl } from "@/lib/site-url";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  const siteBase = getPublicSiteUrl();
+  const callbackPath = searchParams.get("callbackUrl") ?? "/dashboard";
+  const callbackUrl = callbackPath.startsWith("http")
+    ? callbackPath
+    : `${siteBase}${callbackPath.startsWith("/") ? callbackPath : `/${callbackPath}`}`;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,6 +39,7 @@ function LoginForm() {
       email: normalizedEmail,
       password,
       redirect: false,
+      callbackUrl,
     });
 
     if (res?.error) {
@@ -45,7 +51,7 @@ function LoginForm() {
     }
 
     toast.success("Welcome back!");
-    const destination = isSuperAdminEmail(normalizedEmail) ? "/admin" : callbackUrl;
+    const destination = isSuperAdminEmail(normalizedEmail) ? `${siteBase}/admin` : callbackUrl;
     router.push(destination);
   }
 

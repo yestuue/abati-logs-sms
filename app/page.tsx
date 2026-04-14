@@ -201,7 +201,7 @@ export default function LandingPage() {
                 backdropFilter: "blur(8px)",
               }}
             >
-              Sign In
+              Login
             </Link>
             <Link
               href="/register"
@@ -211,7 +211,7 @@ export default function LandingPage() {
                 color: "#09090d",
               }}
             >
-              Get Started
+              Sign Up
             </Link>
           </div>
         </div>
