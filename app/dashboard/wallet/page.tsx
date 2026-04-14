@@ -53,7 +53,7 @@ function VirtualAccountModal({ onClose }: { onClose: () => void }) {
   const bankDetails = {
     bank:    "Wema Bank",
     account: "0123456789",
-    name:    "Abati Logs / Your Name",
+    name:    "Abati Digital / Your Name",
     ref:     "ABT-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
   };
 

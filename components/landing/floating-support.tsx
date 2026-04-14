@@ -76,7 +76,7 @@ export function FloatingSupport() {
               >
                 <Mail className="w-4 h-4 flex-shrink-0" style={{ color: "oklch(0.68 0.22 278)" }} />
                 <div>
-                  <p className="text-sm font-semibold">Email Support</p>
+                  <p className="text-sm font-semibold">Mail Us</p>
                   <p className="text-[11px] text-muted-foreground">Abatiemmanuel24@gmail.com</p>
                 </div>
               </a>

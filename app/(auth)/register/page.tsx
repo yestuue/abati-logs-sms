@@ -166,7 +166,7 @@ export default function RegisterPage() {
             <span style={{ color: "var(--primary)" }}>unlocked.</span>
           </h2>
           <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
-            Join thousands of digital professionals who use Abati Logs for virtual numbers,
+            Join thousands of digital professionals who use Abati Digital for virtual numbers,
             social accounts, and instant OTP delivery.
           </p>
           <div className="mt-6 space-y-3">

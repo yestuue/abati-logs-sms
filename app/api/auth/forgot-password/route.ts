@@ -44,9 +44,9 @@ export async function POST(req: Request) {
           auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
         }) as { sendMail: Function };
         await transporter.sendMail({
-          from: process.env.EMAIL_FROM ?? `Abati Logs <noreply@abatilogs.com>`,
+          from: process.env.EMAIL_FROM ?? `Abati Digital <noreply@abatidigital.com>`,
           to: normalised,
-          subject: "Reset your Abati Logs password",
+          subject: "Reset your Abati Digital password",
           html: `
             <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
               <h2 style="margin:0 0 8px;font-size:22px">Password Reset</h2>
@@ -68,9 +68,6 @@ export async function POST(req: Request) {
         // Log but don't fail — token is still saved in DB
         console.error("[forgot-password] Email send failed:", emailErr);
       }
-    } else {
-      // No SMTP configured — log reset URL to console for dev/admin use
-      console.log(`[forgot-password] Reset URL for ${normalised}: ${resetUrl}`);
     }
 
     return NextResponse.json({ ok: true });

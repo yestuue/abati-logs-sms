@@ -81,7 +81,7 @@ export default async function DashboardPage() {
           Welcome back, {firstName} 👋
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Here&apos;s a snapshot of your Abati Logs account
+          Here&apos;s a snapshot of your Abati Digital account
         </p>
       </div>
 

@@ -12,8 +12,6 @@ function createPrismaClient() {
     throw new Error("[Prisma] DATABASE_URL is not set in environment variables.");
   }
 
-  console.log("[Prisma] Connecting with host:", url.split("@")[1]?.split("/")[0] ?? "unknown");
-
   return new PrismaClient({
     log: ["error"],
     datasources: {

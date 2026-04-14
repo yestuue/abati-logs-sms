@@ -37,8 +37,6 @@ function toStr(d: Date | string | null | undefined): string {
 }
 
 export default async function AdminPage() {
-  console.log("[AdminPage] rendering — fetching stats from DB");
-
   let totalUsers       = 0;
   let totalNumbers     = 0;
   let assignedNumbers  = 0;

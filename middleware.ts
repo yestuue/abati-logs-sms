@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const PUBLIC_PREFIXES = [
+  "/",
   "/login",
   "/register",
   "/terms",
@@ -37,6 +38,7 @@ export function middleware(request: NextRequest) {
 
   // Canonical host/protocol from NEXTAUTH_URL (prevents old Vercel-host loops).
   const canonical = process.env.NEXTAUTH_URL?.trim();
+  let canonicalOrigin: string | null = null;
   if (process.env.NODE_ENV === "production" && canonical) {
     const canonicalUrl = new URL(canonical);
     // SSL guard: if NEXTAUTH_URL was configured as http in production, force https.
@@ -46,6 +48,7 @@ export function middleware(request: NextRequest) {
     const forwardedProto = headers.get("x-forwarded-proto")?.toLowerCase();
     const incomingProto = (forwardedProto ?? nextUrl.protocol.replace(":", "")).toLowerCase();
     const canonicalProtoNoColon = canonicalProto.replace(":", "").toLowerCase();
+    canonicalOrigin = `${canonicalProto}//${canonicalUrl.host}`;
 
     // Standardize host to non-www canonical host from NEXTAUTH_URL.
     if (incomingHost !== canonicalHost || incomingProto !== canonicalProtoNoColon) {
@@ -71,7 +74,10 @@ export function middleware(request: NextRequest) {
     request.cookies.get("__Secure-authjs.session-token")?.value;
 
   if (!session) {
-    return NextResponse.redirect(new URL("/login", nextUrl));
+    const target = canonicalOrigin
+      ? `${canonicalOrigin}/login`
+      : new URL("/login", nextUrl).toString();
+    return NextResponse.redirect(target, 307);
   }
 
   return NextResponse.next();

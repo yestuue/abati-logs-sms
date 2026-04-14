@@ -82,7 +82,7 @@ async function main() {
       walletBalance: 0,
     },
   });
-  console.log("✅ Admin user ready: admin@abatilogs.com / admin123456");
+  console.log("✅ Admin user ready: admin@abatidigital.com / admin123456");
 
   console.log("✅ Seed complete!");
 }

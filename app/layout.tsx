@@ -22,29 +22,29 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: {
-    default: "Abati Logs — Virtual Numbers & OTP Platform",
-    template: "%s | Abati Logs",
+    default: "Abati Digital — Virtual Numbers & OTP Platform",
+    template: "%s | Abati Digital",
   },
   description:
     "Get instant virtual phone numbers from USA and 50+ countries. Receive OTPs in real time.",
-  keywords: ["virtual number", "OTP", "SMS", "Abati Logs", "Nigeria"],
+  keywords: ["virtual number", "OTP", "SMS", "Abati Digital", "Nigeria"],
   manifest: "/manifest.json",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
   },
   openGraph: {
-    title: "Abati Logs — Virtual Numbers & OTP Platform",
+    title: "Abati Digital — Virtual Numbers & OTP Platform",
     description:
       "Get instant virtual phone numbers from USA and 50+ countries. Receive OTPs in real time.",
-    url: "https://abatilogs.com",
-    siteName: "Abati Logs",
-    images: [{ url: "/logo.png", width: 1200, height: 630, alt: "Abati Logs" }],
+    url: "https://abatidigital.com",
+    siteName: "Abati Digital",
+    images: [{ url: "/logo.png", width: 1200, height: 630, alt: "Abati Digital" }],
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Abati Logs — Virtual Numbers & OTP Platform",
+    title: "Abati Digital — Virtual Numbers & OTP Platform",
     description:
       "Get instant virtual phone numbers from USA and 50+ countries. Receive OTPs in real time.",
     images: ["/logo.png"],
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Abati Logs",
+    title: "Abati Digital",
   },
 };
 

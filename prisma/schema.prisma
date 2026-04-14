@@ -118,7 +118,7 @@ model WithdrawalRequest {
   status      String   @default("PENDING")
   bankDetails String
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model PriceConfig {
@@ -127,12 +127,12 @@ model PriceConfig {
   category      String?
   fixedMarkup   Float    @default(0)
   percentMarkup Float    @default(0)
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime @default(now()) @updatedAt
 }
 
 model GlobalSettings {
   id              String   @id @default(cuid())
-  siteName        String   @default("Abati Logs & SMS")
+  siteName        String   @default("Abati Digital")
   maintenance     Boolean  @default(false)
   minDepositNGN   Float    @default(1000)
   rateNGN         Float    @default(1600)
@@ -142,7 +142,7 @@ model GlobalSettings {
   smsGlobalPremiumRate Float @default(0.35)
   /// Same role as smsGlobalPremiumRate for Server 2 (global countries).
   smsGlobalPremiumRateServer2 Float @default(0.35)
-  updatedAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
 }
 
 model Service {
@@ -157,7 +157,7 @@ model Service {
   customPrice Float?
   premiumRate Float    @default(0.35)
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model LogCategory {
@@ -167,7 +167,7 @@ model LogCategory {
   stock     Int      @default(0)
   enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now()) @updatedAt
   logs      Log[]
 }
 
@@ -180,7 +180,7 @@ model Country {
   samplePrice  Int      @default(0)
   server       String   @default("SERVER2")
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  updatedAt    DateTime @default(now()) @updatedAt
 
   @@map("CountryConfig")
 }
@@ -217,7 +217,7 @@ model ServerConfig {
   name      String
   isEnabled Boolean    @default(true)
   createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  updatedAt DateTime   @default(now()) @updatedAt
 }
 
 model VerificationToken {

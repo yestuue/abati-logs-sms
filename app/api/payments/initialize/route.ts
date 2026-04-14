@@ -131,14 +131,6 @@ export async function POST(req: Request) {
       process.env.PAYSTACK_CALLBACK_URL ??
       `${process.env.NEXTAUTH_URL}/api/payments/verify?reference=${reference}`;
 
-    console.log("[payments/initialize] Sending to Paystack:", {
-      email,
-      amount: amountKobo,
-      currency: "NGN",
-      reference,
-      callback_url: callbackUrl,
-    });
-
     const paystackRes = await initializeTransaction({
       email,
       amount: amountKobo,
@@ -147,8 +139,6 @@ export async function POST(req: Request) {
       callback_url: callbackUrl,
       metadata: { userId, type, amount },
     });
-
-    console.log("[payments/initialize] Paystack response:", paystackRes);
 
     if (!paystackRes.status) {
       console.error("[payments/initialize] Paystack rejected:", paystackRes.message);

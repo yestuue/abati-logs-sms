@@ -21,6 +21,7 @@ export const {
 } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
+  useSecureCookies: process.env.NODE_ENV === "production",
   pages: {
     signIn: "/login",
     error: "/login",

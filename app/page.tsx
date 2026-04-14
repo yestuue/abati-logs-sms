@@ -116,7 +116,7 @@ const trustStats = [
 const testimonials = [
   {
     name: "Adebayo Okonkwo", handle: "@adebayo_ok", avatar: "AO", stars: 5,
-    text: "Abati Logs is hands down the best virtual number service I've used. Got my OTP in under 3 seconds. No stress, no lag. 100% recommend!",
+    text: "Abati Digital is hands down the best virtual number service I've used. Got my OTP in under 3 seconds. No stress, no lag. 100% recommend!",
     tag: "Verified User",
   },
   {
@@ -141,7 +141,7 @@ const testimonials = [
   },
   {
     name: "Emeka Obi", handle: "@emeka_obi", avatar: "EO", stars: 5,
-    text: "Cheapest and most reliable virtual number service in Nigeria. I've tried others but Abati Logs is superior in every way.",
+    text: "Cheapest and most reliable virtual number service in Nigeria. I've tried others but Abati Digital is superior in every way.",
     tag: "Long-term User",
   },
 ];
@@ -607,7 +607,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Why Abati Logs ───────────────────────────────────────────────────── */}
+      {/* ── Why Abati Digital ────────────────────────────────────────────────── */}
       <section className="relative z-10 py-16 sm:py-20 px-4">
         <div className="max-w-5xl mx-auto">
           <InView>
@@ -626,7 +626,7 @@ export default function LandingPage() {
                     className="text-3xl sm:text-4xl mb-4 text-white"
                     style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
                   >
-                    Why Abati Logs?
+                    Why Abati Digital?
                   </motion.h2>
                   <motion.p
                     variants={fadeUp}
@@ -740,7 +740,7 @@ export default function LandingPage() {
                 {[
                   { href: "https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL", icon: MessageSquare, label: "WhatsApp" },
                   { href: "https://t.me/abatilogs", icon: Send, label: "Telegram" },
-                  { href: "mailto:support@abatilogs.com", icon: Mail, label: "Email" },
+                  { href: "mailto:Abatiemmanuel24@gmail.com", icon: Mail, label: "Email" },
                 ].map(({ href, icon: Icon, label }) => (
                   <a
                     key={label}
@@ -789,7 +789,7 @@ export default function LandingPage() {
               <div className="space-y-2.5">
                 {[
                   { label: "About", href: "#" },
-                  { label: "Contact", href: "mailto:support@abatilogs.com" },
+                  { label: "Contact", href: "mailto:Abatiemmanuel24@gmail.com" },
                   { label: "Privacy Policy", href: "/privacy" },
                   { label: "Terms of Service", href: "/terms" },
                 ].map((l) =>
@@ -826,7 +826,7 @@ export default function LandingPage() {
                   { label: "WhatsApp Chat",  href: "https://api.whatsapp.com/send?phone=2349049386397" },
                   { label: "WhatsApp Group", href: "https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL" },
                   { label: "Telegram",       href: "https://t.me/abatilogs" },
-                  { label: "Email Us",       href: "mailto:support@abatilogs.com" },
+                  { label: "Email Us",       href: "mailto:Abatiemmanuel24@gmail.com" },
                 ].map((l) => (
                   <a
                     key={l.label}

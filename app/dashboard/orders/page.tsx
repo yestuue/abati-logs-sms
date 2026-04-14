@@ -334,7 +334,7 @@ export default function OrdersPage() {
         <CardContent className="px-4 pb-4">
           <p className="text-xs text-muted-foreground leading-relaxed">
             Never share your credentials publicly. Store passwords in a secure password manager.
-            Abati Logs is not responsible for account loss due to misuse or sharing of credentials.
+            Abati Digital is not responsible for account loss due to misuse or sharing of credentials.
           </p>
         </CardContent>
       </Card>
