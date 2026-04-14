@@ -1,16 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_PREFIXES = [
-  "/",
-  "/login",
-  "/register",
-  "/terms",
-  "/privacy",
-  "/_next",
-  "/images",
-  "/api/auth",
-];
+const PUBLIC_PREFIXES = ["/", "/login", "/register", "/api/auth", "/_next", "/images"];
 
 const PUBLIC_FILES = new Set(["/favicon.ico", "/logo.png"]);
 const STATIC_FILE_RE = /\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|map)$/i;
@@ -36,10 +27,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isProtected =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/referrals");
+  const isProtected = pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
   if (!isProtected) {
     return NextResponse.next();
   }
@@ -50,8 +38,11 @@ export function middleware(request: NextRequest) {
     request.cookies.get("__Secure-authjs.session-token")?.value;
 
   if (!session) {
-    // Pathname-only redirect to avoid host/protocol bounce loops.
-    return NextResponse.redirect(new URL("/login", request.url), 307);
+    const authBase = process.env.NEXTAUTH_URL?.trim();
+    const target = authBase
+      ? new URL("/login", authBase)
+      : new URL("/login", request.url);
+    return NextResponse.redirect(target, 307);
   }
 
   return NextResponse.next();
