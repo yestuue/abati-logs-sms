@@ -1,64 +1,45 @@
+import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const { nextUrl } = request;
-  const pathname = nextUrl.pathname;
-
-  // Public routes/assets should never be auth-gated.
-  const isPublicRoute =
-    pathname === "/login" ||
-    pathname === "/register" ||
-    pathname === "/terms" ||
-    pathname === "/privacy" ||
-    pathname.startsWith("/_next/") ||
-    pathname.startsWith("/images/") ||
-    pathname === "/logo.png" ||
-    pathname === "/favicon.ico" ||
-    /\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|map)$/i.test(pathname);
-
-  // Read canonical origin from NEXTAUTH_URL to prevent stale Vercel-host redirects.
-  const canonicalRaw = process.env.NEXTAUTH_URL?.trim();
-  if (canonicalRaw) {
-    const canonical = new URL(canonicalRaw);
-    const incomingHost = nextUrl.hostname.toLowerCase();
-    const canonicalHost = canonical.hostname.toLowerCase();
-    const incomingProto = nextUrl.protocol.toLowerCase();
-    const canonicalProto = canonical.protocol.toLowerCase();
-
-    // Redirect once to canonical host/protocol only when there is an actual mismatch.
-    if (incomingHost !== canonicalHost || incomingProto !== canonicalProto) {
-      const url = nextUrl.clone();
-      url.hostname = canonical.hostname;
-      url.protocol = canonical.protocol;
-      // Respect explicit canonical port if present.
-      if (canonical.port) url.port = canonical.port;
-      return NextResponse.redirect(url, 308);
-    }
-  }
-
-  if (isPublicRoute) {
+export default withAuth(
+  function middleware(req) {
     return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token, req }) => {
+        const { pathname } = req.nextUrl;
+        
+        // ALLOW these paths without a login
+        if (
+          pathname.startsWith("/login") ||
+          pathname.startsWith("/register") ||
+          pathname.startsWith("/api/auth") ||
+          pathname.startsWith("/logo.png") ||
+          pathname.endsWith(".html") // For your static about/contact pages
+        ) {
+          return true;
+        }
+
+        // REQUIRE login for everything else (Dashboard, Admin, etc.)
+        return !!token;
+      },
+    },
+    pages: {
+      signIn: "/login",
+    },
   }
+);
 
-  // Directly check the session cookie - This is 100% Edge-Safe
-  const session = request.cookies.get("authjs.session-token") ||
-                  request.cookies.get("__Secure-authjs.session-token");
-
-  // Define protected areas
-  const isDashboard = nextUrl.pathname.startsWith("/dashboard");
-  const isAdmin = nextUrl.pathname.startsWith("/admin");
-  const isReferrals = nextUrl.pathname.startsWith("/referrals");
-
-  // Redirect if no session found
-  if ((isDashboard || isAdmin || isReferrals) && !session) {
-    return NextResponse.redirect(new URL("/login", nextUrl));
-  }
-
-  return NextResponse.next();
-}
-
-// Match only the routes that need protection
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image).*)"],
+  matcher: [
+    /*
+     * Match all paths except for:
+     * 1. /api/auth (authentication routes)
+     * 2. /_next (Next.js internals)
+     * 3. /static (static files)
+     * 4. favicon.ico, logo.png
+     */
+    "/((?!api/auth|_next|static|favicon.ico|logo.png).*)",
+  ],
 };
