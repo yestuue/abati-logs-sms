@@ -23,7 +23,7 @@ function isPublicPath(pathname: string): boolean {
 }
 
 export function middleware(request: NextRequest) {
-  const { nextUrl, headers } = request;
+  const { nextUrl } = request;
   const { pathname } = nextUrl;
 
   // Stop loop: never redirect when already on /login.
@@ -34,30 +34,6 @@ export function middleware(request: NextRequest) {
   // Public routes first: bypass auth checks for public pages/assets.
   if (isPublicPath(pathname)) {
     return NextResponse.next();
-  }
-
-  // Canonical host/protocol from NEXTAUTH_URL (prevents old Vercel-host loops).
-  const canonical = process.env.NEXTAUTH_URL?.trim();
-  let canonicalOrigin: string | null = null;
-  if (process.env.NODE_ENV === "production" && canonical) {
-    const canonicalUrl = new URL(canonical);
-    // SSL guard: if NEXTAUTH_URL was configured as http in production, force https.
-    const canonicalProto = canonicalUrl.protocol === "http:" ? "https:" : canonicalUrl.protocol;
-    const incomingHost = nextUrl.hostname.toLowerCase();
-    const canonicalHost = canonicalUrl.hostname.toLowerCase();
-    const forwardedProto = headers.get("x-forwarded-proto")?.toLowerCase();
-    const incomingProto = (forwardedProto ?? nextUrl.protocol.replace(":", "")).toLowerCase();
-    const canonicalProtoNoColon = canonicalProto.replace(":", "").toLowerCase();
-    canonicalOrigin = `${canonicalProto}//${canonicalUrl.host}`;
-
-    // Standardize host to non-www canonical host from NEXTAUTH_URL.
-    if (incomingHost !== canonicalHost || incomingProto !== canonicalProtoNoColon) {
-      const target = nextUrl.clone();
-      target.hostname = canonicalUrl.hostname;
-      target.protocol = canonicalProto;
-      if (canonicalUrl.port) target.port = canonicalUrl.port;
-      return NextResponse.redirect(target, 308);
-    }
   }
 
   const isProtected =
@@ -74,10 +50,8 @@ export function middleware(request: NextRequest) {
     request.cookies.get("__Secure-authjs.session-token")?.value;
 
   if (!session) {
-    const target = canonicalOrigin
-      ? `${canonicalOrigin}/login`
-      : new URL("/login", nextUrl).toString();
-    return NextResponse.redirect(target, 307);
+    // Pathname-only redirect to avoid host/protocol bounce loops.
+    return NextResponse.redirect(new URL("/login", request.url), 307);
   }
 
   return NextResponse.next();
