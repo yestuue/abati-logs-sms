@@ -25,7 +25,12 @@ export function middleware(request: NextRequest) {
   const { nextUrl, headers } = request;
   const { pathname } = nextUrl;
 
-  // Explicitly bypass auth checks for login/register/public assets.
+  // Stop loop: never redirect when already on /login.
+  if (pathname === "/login") {
+    return NextResponse.next();
+  }
+
+  // Public routes first: bypass auth checks for public pages/assets.
   if (isPublicPath(pathname)) {
     return NextResponse.next();
   }
@@ -34,16 +39,19 @@ export function middleware(request: NextRequest) {
   const canonical = process.env.NEXTAUTH_URL?.trim();
   if (process.env.NODE_ENV === "production" && canonical) {
     const canonicalUrl = new URL(canonical);
+    // SSL guard: if NEXTAUTH_URL was configured as http in production, force https.
+    const canonicalProto = canonicalUrl.protocol === "http:" ? "https:" : canonicalUrl.protocol;
     const incomingHost = nextUrl.hostname.toLowerCase();
     const canonicalHost = canonicalUrl.hostname.toLowerCase();
     const forwardedProto = headers.get("x-forwarded-proto")?.toLowerCase();
     const incomingProto = (forwardedProto ?? nextUrl.protocol.replace(":", "")).toLowerCase();
-    const canonicalProto = canonicalUrl.protocol.replace(":", "").toLowerCase();
+    const canonicalProtoNoColon = canonicalProto.replace(":", "").toLowerCase();
 
-    if (incomingHost !== canonicalHost || incomingProto !== canonicalProto) {
+    // Standardize host to non-www canonical host from NEXTAUTH_URL.
+    if (incomingHost !== canonicalHost || incomingProto !== canonicalProtoNoColon) {
       const target = nextUrl.clone();
       target.hostname = canonicalUrl.hostname;
-      target.protocol = canonicalUrl.protocol;
+      target.protocol = canonicalProto;
       if (canonicalUrl.port) target.port = canonicalUrl.port;
       return NextResponse.redirect(target, 308);
     }
@@ -70,5 +78,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!_next/static|_next/image).*)"],
 };
