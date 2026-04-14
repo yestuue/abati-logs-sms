@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, X, Users, Headphones } from "lucide-react";
+import { MessageCircle, X, Users, Headphones, Mail } from "lucide-react";
 
 export function FloatingSupport() {
   const [open, setOpen] = useState(false);
@@ -66,6 +66,18 @@ export function FloatingSupport() {
                 <div>
                   <p className="text-sm font-semibold">Join Community</p>
                   <p className="text-[11px] text-muted-foreground">WhatsApp group — tips & updates</p>
+                </div>
+              </a>
+
+              <a
+                href="mailto:Abatiemmanuel24@gmail.com"
+                className="flex items-center gap-3 p-3 rounded-xl transition-all hover:scale-[1.02] active:scale-95"
+                style={{ background: "oklch(0.68 0.22 278 / 0.05)", border: "1px solid var(--border)" }}
+              >
+                <Mail className="w-4 h-4 flex-shrink-0" style={{ color: "oklch(0.68 0.22 278)" }} />
+                <div>
+                  <p className="text-sm font-semibold">Email Support</p>
+                  <p className="text-[11px] text-muted-foreground">Abatiemmanuel24@gmail.com</p>
                 </div>
               </a>
             </div>

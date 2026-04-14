@@ -27,6 +27,7 @@ export default function RegisterPage() {
     phone: "",
     password: "",
     confirm: "",
+    acceptedLegal: false,
   });
   const [show, setShow] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -73,6 +74,10 @@ export default function RegisterPage() {
       toast.error("Passwords do not match");
       return;
     }
+    if (!form.acceptedLegal) {
+      toast.error("You must agree to the Terms & Conditions and Privacy Policy");
+      return;
+    }
 
     setLoading(true);
 
@@ -95,6 +100,7 @@ export default function RegisterPage() {
         password: form.password,
         ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
         ...(refPayload ? { ref: refPayload } : {}),
+        acceptedLegal: form.acceptedLegal,
       }),
     });
     const data = await res.json();
@@ -304,6 +310,41 @@ export default function RegisterPage() {
                     Passwords do not match
                   </p>
                 )}
+              </div>
+
+              <div className="rounded-lg border border-border p-3">
+                <label className="flex items-start gap-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={form.acceptedLegal}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, acceptedLegal: e.target.checked }))
+                    }
+                    className="mt-0.5 h-4 w-4 rounded border-border"
+                    required
+                  />
+                  <span className="text-muted-foreground">
+                    I agree to the{" "}
+                    <Link
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      Terms &amp; Conditions
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      Privacy Policy
+                    </Link>
+                    .
+                  </span>
+                </label>
               </div>
 
               <Button

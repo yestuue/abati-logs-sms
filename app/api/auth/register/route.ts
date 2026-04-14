@@ -16,6 +16,7 @@ const schema = z.object({
   phone: z.string().optional(),
   /** Referral code or referrer user id from ?ref= */
   ref: z.string().max(128).optional(),
+  acceptedLegal: z.literal(true),
 });
 
 export async function POST(req: Request) {

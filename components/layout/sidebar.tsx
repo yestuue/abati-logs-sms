@@ -27,7 +27,7 @@ const userNav: NavItem[] = [
   { label: "My Vault",     href: "/dashboard/orders",       icon: Archive },
   { label: "SMS Inbox",    href: "/dashboard/sms",          icon: MessageSquare },
   { label: "Wallet",       href: "/dashboard/wallet",       icon: Wallet },
-  { label: "Referrals",    href: "/referrals",              icon: Gift },
+  { label: "Referral Program", href: "/referrals",          icon: Gift },
   { label: "Transactions", href: "/dashboard/transactions", icon: CreditCard },
   { label: "Settings",     href: "/dashboard/settings",     icon: Settings },
 ];
