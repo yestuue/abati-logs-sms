@@ -8,6 +8,7 @@ import {
   upsertServer2MasterCountries,
 } from "@/lib/server2-master-countries";
 import { z } from "zod";
+import { revalidatePath } from "next/cache";
 
 const bodySchema = z.object({
   mode: z.enum(["globalPremium", "servicePrice", "toggleServer", "toggleCountry", "syncServer2Countries"]),
@@ -33,7 +34,7 @@ export async function GET() {
 
   const [services, settings, servers, countries] = await Promise.all([
     prisma.service.findMany({ orderBy: { serviceKey: "asc" } }),
-    prisma.globalSettings.findFirst(),
+    prisma.globalSettings.findFirst({ orderBy: { updatedAt: "desc" } }),
     prisma.serverConfig.findMany({ orderBy: { server: "asc" } }),
     prisma.country.findMany({ orderBy: { name: "asc" } }),
   ]);
@@ -61,7 +62,10 @@ export async function PUT(req: Request) {
     if (body.mode === "globalPremium") {
       const premiumRate = body.premiumRate ?? 0.35;
       const target = body.premiumTarget ?? "SERVER1";
-      const existing = await prisma.globalSettings.findFirst({ select: { id: true } });
+      const existing = await prisma.globalSettings.findFirst({
+        orderBy: { updatedAt: "desc" },
+        select: { id: true },
+      });
       const data =
         target === "SERVER2"
           ? { smsGlobalPremiumRateServer2: premiumRate }
@@ -76,6 +80,8 @@ export async function PUT(req: Request) {
               : { smsGlobalPremiumRate: premiumRate },
         });
       }
+      revalidatePath("/admin/pricing");
+      revalidatePath("/dashboard/buy");
       return NextResponse.json({ success: true });
     }
 

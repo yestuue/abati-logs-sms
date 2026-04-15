@@ -32,7 +32,6 @@ import {
 import { formatCurrency, formatCountdown, normalizeServiceSearchQuery } from "@/lib/utils";
 import {
   finalNumberPurchasePriceNGN,
-  parseUsAreaCodes,
 } from "@/lib/number-purchase-price";
 import { toast } from "sonner";
 
@@ -211,7 +210,8 @@ export function ServerSelector({
           availableCount: s.qty,
           priceNGN: s.priceNGN,
           premiumRate: typeof s.premiumRate === "number" ? s.premiumRate : 0.35,
-        }));
+        }))
+          .sort((a, b) => a.serviceName.localeCompare(b.serviceName, "en", { sensitivity: "base" }));
         setServiceResults(mapped);
 
         setSelectedService((prev) => {
@@ -467,25 +467,20 @@ export function ServerSelector({
     return c.name.toLowerCase().includes(q) || c.slug.toLowerCase().includes(q);
   });
 
-  const parsedAreaCodes = parseUsAreaCodes(preferredAreaCode);
-  const hasAreaCode = activeServer === "SERVER1" && parsedAreaCodes.length > 0;
-  const hasSpecificCarrier = carrier !== "any";
-  const server1PremiumActive =
-    activeServer === "SERVER1" && (hasAreaCode || hasSpecificCarrier);
+  const server1PremiumActive = activeServer === "SERVER1";
   const selectedPremiumRate = selectedService?.premiumRate ?? 0.35;
   const premiumPercentLabel = Math.round(selectedPremiumRate * 100);
 
   function getServer1Price(basePrice: number, premiumRate = selectedPremiumRate) {
-    if (!server1PremiumActive) return Math.round(basePrice);
-    return Math.round(basePrice * (1 + premiumRate));
+    return Math.ceil(basePrice * (1 + premiumRate));
   }
 
   function getServer2CatalogDisplayPrice(basePrice: number, premiumRate = selectedPremiumRate) {
-    return Math.round(basePrice * (1 + premiumRate));
+    return Math.ceil(basePrice * (1 + premiumRate));
   }
 
   function preferencePremiumDeltaNgn(basePrice: number, premiumRate: number) {
-    return Math.round(basePrice * premiumRate);
+    return Math.ceil(basePrice * premiumRate);
   }
 
   const selectedServicePremiumDelta = useMemo(() => {
@@ -962,15 +957,13 @@ export function ServerSelector({
                       variant="brand"
                       className="shrink-0 text-xs"
                       onClick={() => {
+                        if (activeServer !== "SERVER2") return;
+                        if (numbers.length === 0) {
+                          toast.info("Inventory will appear here when numbers are in stock for this service.");
+                          return;
+                        }
                         const el = document.getElementById("abati-buy-inventory");
                         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                        else {
-                          toast.info(
-                            activeServer === "SERVER2"
-                              ? "Inventory will appear here when numbers are in stock for this service."
-                              : "You're already on Server 1. Pick your service and optional US area code to continue."
-                          );
-                        }
                       }}
                     >
                       Get Number

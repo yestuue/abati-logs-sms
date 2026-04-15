@@ -113,7 +113,7 @@ export async function GET(req: Request) {
           basePriceNGN: computeSmsDisplayPriceNgn(priceUsd),
         };
       })
-      .sort((a, b) => b.qty - a.qty)
+      .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }))
       .slice(0, limit);
 
     const globalPremiumRate = await getGlobalSmsPremiumRateForServer(serverForPremium);

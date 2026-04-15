@@ -70,7 +70,9 @@ export async function GET() {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const settings = await prisma.globalSettings.findFirst();
+  const settings = await prisma.globalSettings.findFirst({
+    orderBy: { updatedAt: "desc" },
+  });
   const globalPremiumRate = settings?.smsGlobalPremiumRate ?? 0.35;
   const globalPremiumRateServer2 = settings?.smsGlobalPremiumRateServer2 ?? 0.35;
   await ensureServiceSeed(globalPremiumRate);
@@ -100,7 +102,10 @@ export async function PUT(req: Request) {
     }
 
     const { premiumRate, premiumTarget } = parsed.data;
-    const existing = await prisma.globalSettings.findFirst({ select: { id: true } });
+    const existing = await prisma.globalSettings.findFirst({
+      orderBy: { updatedAt: "desc" },
+      select: { id: true },
+    });
     const data =
       premiumTarget === "SERVER2"
         ? { smsGlobalPremiumRateServer2: premiumRate }

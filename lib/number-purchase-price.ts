@@ -21,10 +21,7 @@ export function purchasePremiumActive(params: {
   carrier: string;
   areaCodesRaw: string;
 }): boolean {
-  if (params.server !== "SERVER1") return false;
-  const hasArea = parseUsAreaCodes(params.areaCodesRaw).length > 0;
-  const hasCarrier = params.carrier === "att" || params.carrier === "tmobile";
-  return hasArea || hasCarrier;
+  return params.server === "SERVER1" || params.server === "SERVER2";
 }
 
 export function purchasePremiumMultiplier(params: {
@@ -34,7 +31,6 @@ export function purchasePremiumMultiplier(params: {
   premiumRate?: number;
 }): number {
   const rate = typeof params.premiumRate === "number" ? params.premiumRate : 0.35;
-  if (params.server === "SERVER2") return 1 + rate;
   return purchasePremiumActive(params) ? 1 + rate : 1;
 }
 
@@ -42,5 +38,5 @@ export function finalNumberPurchasePriceNGN(
   baseNgN: number,
   params: { server: ServerType; carrier: string; areaCodesRaw: string; premiumRate?: number }
 ): number {
-  return Math.round(baseNgN * purchasePremiumMultiplier(params));
+  return Math.ceil(baseNgN * purchasePremiumMultiplier(params));
 }

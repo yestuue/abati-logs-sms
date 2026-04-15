@@ -105,6 +105,12 @@ export default function AdminPricingPage() {
         ])
       )
     );
+  }
+
+  async function loadPremiumSettings() {
+    const res = await fetch("/api/admin/settings", { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error ?? "Failed to load settings");
     const s1 = Number(data.globalPremiumRateServer1 ?? data.globalPremiumRate ?? 0.35) || 0.35;
     const s2 = Number(data.globalPremiumRateServer2 ?? 0.35) || 0.35;
     setGlobalPremiumS1Pct(String(Math.round(s1 * 100)));
@@ -122,7 +128,7 @@ export default function AdminPricingPage() {
   async function loadAll() {
     setLoading(true);
     try {
-      await Promise.all([loadSms(), loadMarketplace(), fetchAdminServices()]);
+      await Promise.all([loadSms(), loadMarketplace(), fetchAdminServices(), loadPremiumSettings()]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load pricing data");
     } finally {
@@ -138,7 +144,7 @@ export default function AdminPricingPage() {
     void (async () => {
       setLoading(true);
       try {
-        await Promise.all([loadSms(), loadMarketplace()]);
+        await Promise.all([loadSms(), loadMarketplace(), loadPremiumSettings()]);
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to load pricing data");
       } finally {
@@ -199,11 +205,10 @@ export default function AdminPricingPage() {
       toast.error("Premium % must be between 0 and 500");
       return;
     }
-    const res = await fetch("/api/admin/sms/update-price", {
-      method: "PUT",
+    const res = await fetch("/api/admin/settings", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        mode: "globalPremium",
         premiumRate: pct / 100,
         premiumTarget: target,
       }),
@@ -211,7 +216,7 @@ export default function AdminPricingPage() {
     const data = await res.json();
     if (!res.ok) return toast.error(data.error ?? "Premium update failed");
     toast.success(target === "SERVER1" ? "Server 1 premium saved" : "Server 2 premium saved");
-    await Promise.all([loadSms(), fetchAdminServices()]);
+    await Promise.all([loadPremiumSettings(), fetchAdminServices()]);
   }
 
   async function updateServiceBasePrice(id: string) {

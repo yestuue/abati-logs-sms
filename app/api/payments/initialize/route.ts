@@ -46,6 +46,7 @@ export async function POST(req: Request) {
       const carrier = normalizePurchaseCarrier(carrierRaw);
       const areaCodes = areaCodesRaw ?? "";
       const settings = await prisma.globalSettings.findFirst({
+        orderBy: { updatedAt: "desc" },
         select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true },
       });
       const premiumRate =

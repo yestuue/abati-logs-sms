@@ -4,6 +4,7 @@ export type SmsGlobalPremiumSettings = { server1: number; server2: number };
 
 export async function getGlobalSmsPremiumSettings(): Promise<SmsGlobalPremiumSettings> {
   const settings = await prisma.globalSettings.findFirst({
+    orderBy: { updatedAt: "desc" },
     select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true },
   });
   return {
