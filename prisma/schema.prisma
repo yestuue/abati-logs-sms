@@ -138,6 +138,10 @@ model GlobalSettings {
   rateNGN         Float    @default(1600)
   maintenanceMode Boolean  @default(false)
   minTopUp        Float    @default(500)
+  /// Global margin percentage for Server 1 (stored as percent, e.g. 35).
+  s1Margin        Float    @default(35) @map("S1_MARGIN")
+  /// Global margin percentage for Server 2 (stored as percent, e.g. 35).
+  s2Margin        Float    @default(35) @map("S2_MARGIN")
   /// Preference / carrier premium for Server 1 (USA) SMS checkout and search.
   smsGlobalPremiumRate Float @default(0.35)
   /// Same role as smsGlobalPremiumRate for Server 2 (global countries).

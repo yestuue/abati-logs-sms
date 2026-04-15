@@ -39,13 +39,12 @@ export async function GET() {
     prisma.country.findMany({ orderBy: { name: "asc" } }),
   ]);
 
-  const s1 = settings?.smsGlobalPremiumRate ?? 0.35;
-  const s2 = settings?.smsGlobalPremiumRateServer2 ?? 0.35;
+  const s1 = settings?.s1Margin ?? (settings?.smsGlobalPremiumRate ?? 0.35) * 100;
+  const s2 = settings?.s2Margin ?? (settings?.smsGlobalPremiumRateServer2 ?? 0.35) * 100;
   return NextResponse.json({
     services,
-    globalPremiumRate: s1,
-    globalPremiumRateServer1: s1,
-    globalPremiumRateServer2: s2,
+    S1_MARGIN: s1,
+    S2_MARGIN: s2,
     servers,
     countries,
   });
@@ -61,6 +60,7 @@ export async function PUT(req: Request) {
 
     if (body.mode === "globalPremium") {
       const premiumRate = body.premiumRate ?? 0.35;
+      const marginPct = premiumRate * 100;
       const target = body.premiumTarget ?? "SERVER1";
       const existing = await prisma.globalSettings.findFirst({
         orderBy: { updatedAt: "desc" },
@@ -68,8 +68,8 @@ export async function PUT(req: Request) {
       });
       const data =
         target === "SERVER2"
-          ? { smsGlobalPremiumRateServer2: premiumRate }
-          : { smsGlobalPremiumRate: premiumRate };
+          ? { s2Margin: marginPct, smsGlobalPremiumRateServer2: premiumRate }
+          : { s1Margin: marginPct, smsGlobalPremiumRate: premiumRate };
       if (existing) {
         await prisma.globalSettings.update({ where: { id: existing.id }, data });
       } else {

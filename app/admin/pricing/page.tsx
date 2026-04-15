@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Save } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ type LogCategory = { id: string; name: string; price: number; stock: number; ena
 type LogItem = { id: string; category: string; username: string; price: number; status: string };
 
 export default function AdminPricingPage() {
+  const router = useRouter();
   const [services, setServices] = useState<Service[]>([]);
   const [servers, setServers] = useState<ServerCfg[]>([]);
   const [countries, setCountries] = useState<CountryCfg[]>([]);
@@ -111,10 +113,10 @@ export default function AdminPricingPage() {
     const res = await fetch("/api/admin/settings", { cache: "no-store" });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Failed to load settings");
-    const s1 = Number(data.globalPremiumRateServer1 ?? data.globalPremiumRate ?? 0.35) || 0.35;
-    const s2 = Number(data.globalPremiumRateServer2 ?? 0.35) || 0.35;
-    setGlobalPremiumS1Pct(String(Math.round(s1 * 100)));
-    setGlobalPremiumS2Pct(String(Math.round(s2 * 100)));
+    const s1 = Number(data.S1_MARGIN ?? 35) || 35;
+    const s2 = Number(data.S2_MARGIN ?? 35) || 35;
+    setGlobalPremiumS1Pct(String(Math.round(s1)));
+    setGlobalPremiumS2Pct(String(Math.round(s2)));
   }
 
   async function loadMarketplace() {
@@ -209,7 +211,7 @@ export default function AdminPricingPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        premiumRate: pct / 100,
+        marginPct: pct,
         premiumTarget: target,
       }),
     });
@@ -217,6 +219,7 @@ export default function AdminPricingPage() {
     if (!res.ok) return toast.error(data.error ?? "Premium update failed");
     toast.success(target === "SERVER1" ? "Server 1 premium saved" : "Server 2 premium saved");
     await Promise.all([loadPremiumSettings(), fetchAdminServices()]);
+    router.refresh();
   }
 
   async function updateServiceBasePrice(id: string) {

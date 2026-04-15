@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { sendSMS } from "@/lib/sms";
 import { assignUniqueReferralCode } from "@/lib/referral-code";
-import { generateReference } from "@/lib/utils";
+import { isSuperAdminEmail } from "@/lib/admin-access";
 
 /** Registration is Prisma + bcrypt only. NextAuth uses Credentials + JWT; Supabase Auth is not used here. */
 
@@ -102,20 +102,14 @@ export async function POST(req: Request) {
       walletCurrency: string;
     };
 
-    const welcomeNgnRaw = Number(process.env.REFERRAL_WELCOME_NGN ?? "100");
-    const welcomeNgn =
-      Number.isFinite(welcomeNgnRaw) && welcomeNgnRaw >= 0 ? Math.round(welcomeNgnRaw) : 100;
-
     try {
       user = await prisma.$transaction(async (tx) => {
         const existingUsersCount = await tx.user.count();
-        const role = existingUsersCount === 0 ? "ADMIN" : "USER";
+        const role = existingUsersCount === 0 || isSuperAdminEmail(normalizedEmail) ? "ADMIN" : "USER";
 
         await tx.verificationToken.deleteMany({
           where: { identifier: normalizedEmail },
         });
-
-        const welcomeBalance = referredById && welcomeNgn > 0 ? welcomeNgn : 0;
 
         const created = await tx.user.create({
           data: {
@@ -125,12 +119,9 @@ export async function POST(req: Request) {
             password: hashed,
             role,
             isVerified: true,
-            walletBalance: welcomeBalance,
+            walletBalance: 0,
             walletCurrency: "NGN",
             ...(referredById ? { referredById } : {}),
-            ...(referredById && welcomeNgn > 0
-              ? { referralWelcomeCredited: true }
-              : {}),
           },
           select: {
             id: true,
@@ -142,19 +133,6 @@ export async function POST(req: Request) {
           },
         });
         await assignUniqueReferralCode(tx, created.id);
-        if (referredById && welcomeNgn > 0) {
-          await tx.transaction.create({
-            data: {
-              userId: created.id,
-              amount: welcomeNgn,
-              currency: "NGN",
-              reference: generateReference(),
-              type: "REFERRAL_WELCOME_BONUS",
-              status: "SUCCESS",
-              metadata: { reason: "referral_signup" } as object,
-            },
-          });
-        }
         return created;
       });
     } catch (e) {

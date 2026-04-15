@@ -1,15 +1,44 @@
 import { prisma } from "@/lib/prisma";
 
 export type SmsGlobalPremiumSettings = { server1: number; server2: number };
+export type SmsGlobalMarginSettings = { server1MarginPct: number; server2MarginPct: number };
 
-export async function getGlobalSmsPremiumSettings(): Promise<SmsGlobalPremiumSettings> {
+function sanitizeMarginPct(value: unknown, fallback = 35): number {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return fallback;
+  return n;
+}
+
+export async function getGlobalSmsMarginSettings(): Promise<SmsGlobalMarginSettings> {
   const settings = await prisma.globalSettings.findFirst({
     orderBy: { updatedAt: "desc" },
-    select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true },
+    select: {
+      s1Margin: true,
+      s2Margin: true,
+      smsGlobalPremiumRate: true,
+      smsGlobalPremiumRateServer2: true,
+    },
   });
+  // Backward-compatible fallback: derive margin % from legacy premium-rate decimals.
+  const s1Pct = sanitizeMarginPct(
+    settings?.s1Margin ?? (settings?.smsGlobalPremiumRate != null ? settings.smsGlobalPremiumRate * 100 : 35),
+    35
+  );
+  const s2Pct = sanitizeMarginPct(
+    settings?.s2Margin ??
+      (settings?.smsGlobalPremiumRateServer2 != null
+        ? settings.smsGlobalPremiumRateServer2 * 100
+        : 35),
+    35
+  );
+  return { server1MarginPct: s1Pct, server2MarginPct: s2Pct };
+}
+
+export async function getGlobalSmsPremiumSettings(): Promise<SmsGlobalPremiumSettings> {
+  const margins = await getGlobalSmsMarginSettings();
   return {
-    server1: settings?.smsGlobalPremiumRate ?? 0.35,
-    server2: settings?.smsGlobalPremiumRateServer2 ?? 0.35,
+    server1: margins.server1MarginPct / 100,
+    server2: margins.server2MarginPct / 100,
   };
 }
 

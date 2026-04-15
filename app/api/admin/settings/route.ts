@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const patchSchema = z.object({
   premiumTarget: z.enum(["SERVER1", "SERVER2"]),
-  premiumRate: z.number().min(0).max(5),
+  marginPct: z.number().min(0).max(500),
 });
 
 async function requireAdmin() {
@@ -27,16 +27,20 @@ export async function GET() {
 
   const settings = await prisma.globalSettings.findFirst({
     orderBy: { updatedAt: "desc" },
-    select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true },
+    select: {
+      s1Margin: true,
+      s2Margin: true,
+      smsGlobalPremiumRate: true,
+      smsGlobalPremiumRateServer2: true,
+    },
   });
 
-  const s1 = settings?.smsGlobalPremiumRate ?? 0.35;
-  const s2 = settings?.smsGlobalPremiumRateServer2 ?? 0.35;
+  const s1 = settings?.s1Margin ?? (settings?.smsGlobalPremiumRate ?? 0.35) * 100;
+  const s2 = settings?.s2Margin ?? (settings?.smsGlobalPremiumRateServer2 ?? 0.35) * 100;
 
   return NextResponse.json({
-    globalPremiumRate: s1,
-    globalPremiumRateServer1: s1,
-    globalPremiumRateServer2: s2,
+    S1_MARGIN: s1,
+    S2_MARGIN: s2,
   });
 }
 
@@ -48,12 +52,12 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const { premiumTarget, premiumRate } = parsed.data;
+  const { premiumTarget, marginPct } = parsed.data;
   const settingsId = await getLatestSettingsId();
   const data =
     premiumTarget === "SERVER2"
-      ? { smsGlobalPremiumRateServer2: premiumRate }
-      : { smsGlobalPremiumRate: premiumRate };
+      ? { s2Margin: marginPct, smsGlobalPremiumRateServer2: marginPct / 100 }
+      : { s1Margin: marginPct, smsGlobalPremiumRate: marginPct / 100 };
 
   if (settingsId) {
     await prisma.globalSettings.update({ where: { id: settingsId }, data });
