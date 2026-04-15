@@ -9,16 +9,6 @@ const nextConfig = {
         destination: "https://abatidigital.com/:path*",
         permanent: true,
       },
-      // Force HTTPS on canonical host (uses proxy header in production).
-      {
-        source: "/:path*",
-        has: [
-          { type: "host", value: "abatidigital.com" },
-          { type: "header", key: "x-forwarded-proto", value: "http" },
-        ],
-        destination: "https://abatidigital.com/:path*",
-        permanent: true,
-      },
     ];
   },
 };

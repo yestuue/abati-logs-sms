@@ -8,6 +8,8 @@ import { isSuperAdminEmail, normalizeEmail } from "@/lib/admin-access";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
+const isProd = process.env.NODE_ENV === "production";
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
@@ -21,7 +23,35 @@ export const {
 } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
-  useSecureCookies: process.env.NODE_ENV === "production",
+  useSecureCookies: isProd,
+  cookies: {
+    sessionToken: {
+      name: isProd ? "__Secure-authjs.session-token" : "authjs.session-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isProd,
+      },
+    },
+    callbackUrl: {
+      name: isProd ? "__Secure-authjs.callback-url" : "authjs.callback-url",
+      options: {
+        sameSite: "lax",
+        path: "/",
+        secure: isProd,
+      },
+    },
+    csrfToken: {
+      name: isProd ? "__Host-authjs.csrf-token" : "authjs.csrf-token",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        secure: isProd,
+      },
+    },
+  },
   pages: {
     signIn: "/login",
     error: "/login",
@@ -62,19 +92,30 @@ export const {
   ],
   callbacks: {
     async redirect({ url, baseUrl }) {
-      const configuredBase = process.env.NEXTAUTH_URL?.trim() || baseUrl;
-      const origin = new URL(configuredBase).origin;
+      const requestOrigin = new URL(baseUrl).origin;
+      const configuredBase = process.env.NEXTAUTH_URL?.trim();
+      let origin = requestOrigin;
+      if (configuredBase) {
+        try {
+          const configuredOrigin = new URL(configuredBase).origin;
+          if (configuredOrigin === requestOrigin) {
+            origin = configuredOrigin;
+          }
+        } catch {
+          origin = requestOrigin;
+        }
+      }
 
-      let pathname = "/dashboard";
+      let pathname = "/login";
       if (url.startsWith("/")) {
         pathname = url;
       } else {
         try {
           const parsed = new URL(url);
-          if (parsed.origin !== origin) return `${origin}/dashboard`;
+          if (parsed.origin !== origin) return `${origin}/login`;
           pathname = `${parsed.pathname}${parsed.search}`;
         } catch {
-          return `${origin}/dashboard`;
+          return `${origin}/login`;
         }
       }
 
@@ -83,7 +124,7 @@ export const {
       if (pathname === "/" || pathname.startsWith("/login") || pathname.startsWith("/register")) {
         return `${origin}${pathname}`;
       }
-      return `${origin}/dashboard`;
+      return `${origin}/login`;
     },
     async jwt({ token, user, trigger, session }) {
       if (user) {

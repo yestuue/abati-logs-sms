@@ -18,6 +18,14 @@ export function middleware(request: NextRequest) {
   const { nextUrl } = request;
   const { pathname } = nextUrl;
 
+  // Canonical host guard: strip www before any auth checks.
+  if (nextUrl.host === "www.abatidigital.com") {
+    const redirectUrl = new URL(request.url);
+    redirectUrl.protocol = "https:";
+    redirectUrl.host = "abatidigital.com";
+    return NextResponse.redirect(redirectUrl, 308);
+  }
+
   // Stop loop: never redirect when already on /login.
   if (pathname === "/login") {
     return NextResponse.next();
@@ -47,5 +55,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image).*)"],
+  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
 };
