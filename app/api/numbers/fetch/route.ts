@@ -15,6 +15,7 @@ export async function GET(req: Request) {
   const server = searchParams.get("server") as "SERVER1" | "SERVER2" | null;
   const q = normalizeServiceSearchQuery(searchParams.get("q") ?? "");
   const country = normalizeServiceSearchQuery(searchParams.get("country") ?? "");
+  const countryIdParam = searchParams.get("countryId")?.trim();
 
   if (!server || !["SERVER1", "SERVER2"].includes(server)) {
     return NextResponse.json(
@@ -34,11 +35,31 @@ export async function GET(req: Request) {
   }
 
   const where: Prisma.VirtualNumberWhereInput = { server, status: "AVAILABLE" };
-  if (server === "SERVER2" && country.length >= 2) {
-    where.OR = [
-      { country: { contains: country, mode: "insensitive" } },
-      { countryCode: { contains: country, mode: "insensitive" } },
-    ];
+  if (server === "SERVER2") {
+    const countryTerms = new Set<string>();
+    if (country.length >= 2) countryTerms.add(country);
+
+    if (countryIdParam) {
+      const row = await prisma.country.findFirst({
+        where: { OR: [{ id: countryIdParam }, { slug: countryIdParam }] },
+        select: { slug: true, name: true },
+      });
+      if (row) {
+        countryTerms.add(normalizeServiceSearchQuery(row.slug));
+        countryTerms.add(normalizeServiceSearchQuery(row.name));
+      }
+    }
+
+    if (countryTerms.size > 0) {
+      where.OR = [
+        ...Array.from(countryTerms).map((term) => ({
+          country: { contains: term, mode: "insensitive" as const },
+        })),
+        ...Array.from(countryTerms).map((term) => ({
+          countryCode: { contains: term, mode: "insensitive" as const },
+        })),
+      ];
+    }
   }
   if (q.length >= 2) {
     const baseOr: Prisma.VirtualNumberWhereInput[] = [

@@ -230,12 +230,12 @@ export function ServerSelector({
     [activeServer, server2CountryId]
   );
 
-  const loadInventoryServer2 = useCallback(async (serviceKey: string) => {
+  const loadInventoryServer2 = useCallback(async () => {
     try {
-      const selectedCountrySlug =
-        countries.find((c) => c.slug === server2Country)?.name ?? server2Country;
+      const selectedCountrySlug = countries.find((c) => c.slug === server2Country)?.slug ?? server2Country;
+      const countryIdQs = server2CountryId ? `&countryId=${encodeURIComponent(server2CountryId)}` : "";
       const invRes = await fetch(
-        `/api/numbers/fetch?server=SERVER2&q=${encodeURIComponent(serviceKey)}&country=${encodeURIComponent(selectedCountrySlug)}`,
+        `/api/numbers/fetch?server=SERVER2&country=${encodeURIComponent(selectedCountrySlug)}${countryIdQs}`,
         { cache: "no-store" }
       );
       const invData = await invRes.json();
@@ -256,7 +256,7 @@ export function ServerSelector({
     } catch {
       setNumbers([]);
     }
-  }, [countries, server2Country]);
+  }, [countries, server2Country, server2CountryId]);
 
   const loadActiveAssignments = useCallback(async () => {
     setLoadingActive(true);
@@ -372,7 +372,7 @@ export function ServerSelector({
       setNumbers([]);
       return;
     }
-    void loadInventoryServer2(selectedService.serviceKey);
+    void loadInventoryServer2();
   }, [activeServer, selectedService, loadInventoryServer2]);
 
   useEffect(() => {
@@ -968,7 +968,7 @@ export function ServerSelector({
                           toast.info(
                             activeServer === "SERVER2"
                               ? "Inventory will appear here when numbers are in stock for this service."
-                              : "Use Server 2 to pick a number from inventory."
+                              : "You're already on Server 1. Pick your service and optional US area code to continue."
                           );
                         }
                       }}
