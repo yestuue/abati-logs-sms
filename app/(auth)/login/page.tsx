@@ -17,10 +17,12 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const siteBase = getPublicSiteUrl();
-  const callbackPath = searchParams.get("callbackUrl") ?? "/dashboard";
-  const callbackUrl = callbackPath.startsWith("http")
-    ? callbackPath
-    : `${siteBase}${callbackPath.startsWith("/") ? callbackPath : `/${callbackPath}`}`;
+  const callbackPathRaw = (searchParams.get("callbackUrl") ?? "").trim();
+  const callbackPath =
+    callbackPathRaw.startsWith("/admin") || callbackPathRaw.startsWith("/dashboard")
+      ? callbackPathRaw
+      : "/dashboard";
+  const callbackUrl = `${siteBase}${callbackPath}`;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,7 +53,7 @@ function LoginForm() {
     }
 
     toast.success("Welcome back!");
-    const destination = isSuperAdminEmail(normalizedEmail) ? `${siteBase}/admin` : callbackUrl;
+    const destination = isSuperAdminEmail(normalizedEmail) ? `${siteBase}/admin` : `${siteBase}/dashboard`;
     router.push(destination);
   }
 

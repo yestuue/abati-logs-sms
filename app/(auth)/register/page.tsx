@@ -50,7 +50,14 @@ export default function RegisterPage() {
     } else {
       try {
         const stored = sessionStorage.getItem("register_ref");
-        if (stored?.trim()) setReferralRef(stored.trim());
+        if (stored?.trim()) {
+          const s = stored.trim();
+          setReferralRef(s);
+          // Keep referral visible in URL after navigation redirects.
+          const u = new URL(window.location.href);
+          u.searchParams.set("ref", s);
+          window.history.replaceState({}, "", u.toString());
+        }
       } catch {
         /* ignore */
       }

@@ -61,6 +61,30 @@ export const {
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      const configuredBase = process.env.NEXTAUTH_URL?.trim() || baseUrl;
+      const origin = new URL(configuredBase).origin;
+
+      let pathname = "/dashboard";
+      if (url.startsWith("/")) {
+        pathname = url;
+      } else {
+        try {
+          const parsed = new URL(url);
+          if (parsed.origin !== origin) return `${origin}/dashboard`;
+          pathname = `${parsed.pathname}${parsed.search}`;
+        } catch {
+          return `${origin}/dashboard`;
+        }
+      }
+
+      if (pathname.startsWith("/admin")) return `${origin}/admin`;
+      if (pathname.startsWith("/dashboard")) return `${origin}/dashboard`;
+      if (pathname === "/" || pathname.startsWith("/login") || pathname.startsWith("/register")) {
+        return `${origin}${pathname}`;
+      }
+      return `${origin}/dashboard`;
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;

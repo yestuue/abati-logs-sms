@@ -1,6 +1,6 @@
 {
-  "name": "Abati Logs & SMS",
-  "short_name": "Abati SMS",
+  "name": "Abati Digital",
+  "short_name": "Abati Digital",
   "description": "Get a private virtual number from 50+ countries. Receive SMS instantly.",
   "start_url": "/dashboard",
   "display": "standalone",

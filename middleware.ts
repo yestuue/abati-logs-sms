@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_PREFIXES = ["/", "/login", "/register", "/api/auth", "/_next", "/images"];
+const PUBLIC_PREFIXES = ["/", "/login", "/register", "/api/auth", "/terms", "/privacy", "/_next", "/images"];
 
-const PUBLIC_FILES = new Set(["/favicon.ico", "/logo.png"]);
-const STATIC_FILE_RE = /\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|map)$/i;
+const PUBLIC_FILES = new Set(["/favicon.ico", "/logo.png", "/robots.txt", "/sitemap.xml"]);
+const STATIC_FILE_RE =
+  /\.(png|jpg|jpeg|gif|webp|svg|ico|css|js|map|txt|xml|woff|woff2|ttf|eot|webmanifest|json)$/i;
 
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_FILES.has(pathname)) return true;
@@ -27,7 +28,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isProtected = pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
+  const isProtected =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/admin") || pathname.startsWith("/referrals");
   if (!isProtected) {
     return NextResponse.next();
   }
@@ -38,11 +40,7 @@ export function middleware(request: NextRequest) {
     request.cookies.get("__Secure-authjs.session-token")?.value;
 
   if (!session) {
-    const authBase = process.env.NEXTAUTH_URL?.trim();
-    const target = authBase
-      ? new URL("/login", authBase)
-      : new URL("/login", request.url);
-    return NextResponse.redirect(target, 307);
+    return NextResponse.redirect(new URL("/login", request.url), 307);
   }
 
   return NextResponse.next();
