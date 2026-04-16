@@ -19,6 +19,7 @@ const TYPE_ICONS: Record<string, React.ElementType> = {
   NUMBER_RENEWAL:  ArrowUpRight,
   ADMIN_ADJUST:    Activity,
   ADMIN_CREDIT:    TrendingUp,
+  REFUND:          Wallet,
   REFERRAL_REWARD: UserPlus,
   REFERRAL_WELCOME_BONUS: Wallet,
 };

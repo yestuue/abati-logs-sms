@@ -13,6 +13,7 @@ const TYPE_LABELS: Record<string, string> = {
   NUMBER_RENEWAL: "Number Renewal",
   ADMIN_ADJUST:   "Admin Adjustment",
   ADMIN_CREDIT:   "Admin Credit",
+  REFUND: "Refund",
   REFERRAL_REWARD: "Referral reward",
   REFERRAL_WELCOME_BONUS: "Referral welcome bonus",
 };
@@ -111,6 +112,7 @@ export default async function TransactionsPage() {
                   tx.type === "WALLET_TOPUP" ||
                   tx.type === "ADMIN_CREDIT" ||
                   tx.type === "ADMIN_ADJUST" ||
+                  tx.type === "REFUND" ||
                   tx.type === "REFERRAL_WELCOME_BONUS" ||
                   tx.type === "REFERRAL_REWARD";
                 return (

@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Copy, Check, Clock, Globe, Flag } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,13 +14,37 @@ interface ActiveNumbersProps {
 }
 
 export function ActiveNumbers({ numbers }: ActiveNumbersProps) {
+  const router = useRouter();
   const [copied, setCopied] = useState<string | null>(null);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   async function copyNumber(num: string) {
     await navigator.clipboard.writeText(num);
     setCopied(num);
     toast.success("Number copied!");
     setTimeout(() => setCopied(null), 2000);
+  }
+
+  async function cancelNumber(numberId: string) {
+    setCancellingId(numberId);
+    try {
+      const res = await fetch("/api/sms/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ numberId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Cancel failed");
+        return;
+      }
+      toast.success(data.refunded ? "Order cancelled and refund completed" : "Order cancelled");
+      router.refresh();
+    } catch {
+      toast.error("Network error while cancelling number");
+    } finally {
+      setCancellingId(null);
+    }
   }
 
   return (
@@ -89,17 +114,27 @@ export function ActiveNumbers({ numbers }: ActiveNumbersProps) {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => copyNumber(n.number)}
-                    className="p-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground flex-shrink-0"
-                    title="Copy number"
-                  >
-                    {copied === n.number ? (
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    ) : (
-                      <Copy className="w-3.5 h-3.5" />
-                    )}
-                  </button>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button
+                      onClick={() => copyNumber(n.number)}
+                      className="p-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                      title="Copy number"
+                    >
+                      {copied === n.number ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => void cancelNumber(n.id)}
+                      disabled={cancellingId === n.id}
+                      className="px-2.5 py-1.5 text-[11px] rounded-lg border border-amber-300/40 bg-amber-500/10 text-amber-700 hover:bg-amber-500/15 transition-colors disabled:opacity-60"
+                      title="Cancel and refund this order"
+                    >
+                      {cancellingId === n.id ? "Cancelling..." : "Cancel"}
+                    </button>
+                  </div>
                 </motion.div>
               );
             })}
