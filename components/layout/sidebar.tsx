@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, MessageSquare, Settings,
   LogOut, Shield, BarChart3, Users, Server, Phone,
-  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch, ShieldCheck, BadgeDollarSign, Gift,
+  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch, BadgeDollarSign, Gift, User,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
@@ -52,7 +52,6 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === "ADMIN";
   const nav = variant === "admin" ? adminNav : userNav;
 
   const isActive = (href: string) => {
@@ -62,6 +61,48 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
 
   return (
     <aside className="sidebar-gradient flex flex-col h-full border-r border-border/50">
+      {session?.user?.role === "ADMIN" && (
+        <div className="mx-3 mt-3 rounded-xl border-2 border-primary/35 bg-primary/8 p-2.5 shadow-md">
+          <p className="text-[10px] font-bold text-center uppercase tracking-widest text-muted-foreground mb-2">
+            Workspace
+          </p>
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                onNavigate?.();
+                window.location.assign("/dashboard");
+              }}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 rounded-lg py-2.5 px-1 text-center text-[11px] font-semibold leading-tight transition-all",
+                !pathname.startsWith("/admin")
+                  ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/40"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <User className="h-4 w-4 shrink-0" />
+              Customer View
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                onNavigate?.();
+                window.location.assign("/admin");
+              }}
+              className={cn(
+                "flex flex-col items-center justify-center gap-1 rounded-lg py-2.5 px-1 text-center text-[11px] font-semibold leading-tight transition-all",
+                pathname.startsWith("/admin")
+                  ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/40"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <Shield className="h-4 w-4 shrink-0" />
+              Admin Workspace
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Logo */}
       <div className="px-4 py-5 flex-shrink-0">
         <Logo size="md" />
@@ -138,25 +179,6 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
             <LayoutDashboard className="w-4 h-4" />
             User Dashboard
           </Link>
-        )}
-
-        {variant === "user" && isAdmin && (
-          <button
-            type="button"
-            onClick={() => {
-              onNavigate?.();
-              window.location.assign("/admin");
-            }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 mt-1 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all text-left"
-            style={{
-              color: "oklch(0.72 0.17 150)",
-              background: "oklch(0.72 0.17 150 / 0.10)",
-              border: "1px solid oklch(0.72 0.17 150 / 0.20)",
-            }}
-          >
-            <ShieldCheck className="w-4 h-4 flex-shrink-0" />
-            Admin Management
-          </button>
         )}
 
         <button

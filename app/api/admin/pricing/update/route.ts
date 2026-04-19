@@ -52,7 +52,10 @@ export async function POST(req: Request) {
     }
 
     if (typeof basePrice !== "number") {
-      return NextResponse.json({ error: "basePrice is required for country updates (stored as samplePrice)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "basePrice is required for country updates (stored as samplePrice)" },
+        { status: 400 }
+      );
     }
     const existing = await prisma.country.findUnique({ where: { slug: countrySlug! } });
     if (!existing) {

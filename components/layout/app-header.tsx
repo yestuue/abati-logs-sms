@@ -113,6 +113,9 @@ export function AppHeader({
               <div className="flex flex-col gap-0.5">
                 <p className="font-semibold text-sm">{userName}</p>
                 <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
+                <p className="text-[11px] font-semibold text-primary pt-0.5">
+                  {userRole === "ADMIN" ? "Abati Admin" : "Abati User"}
+                </p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -137,7 +140,7 @@ export function AppHeader({
               <DropdownMenuItem asChild>
                 <Link href="/admin">
                   <Shield className="w-4 h-4" />
-                  Abati Admin
+                  Open admin panel
                 </Link>
               </DropdownMenuItem>
             )}
