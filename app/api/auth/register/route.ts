@@ -5,7 +5,6 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { sendSMS } from "@/lib/sms";
 import { assignUniqueReferralCode } from "@/lib/referral-code";
-import { isSuperAdminEmail } from "@/lib/admin-access";
 
 /** Registration is Prisma + bcrypt only. NextAuth uses Credentials + JWT; Supabase Auth is not used here. */
 
@@ -105,7 +104,7 @@ export async function POST(req: Request) {
     try {
       user = await prisma.$transaction(async (tx) => {
         const existingUsersCount = await tx.user.count();
-        const role = existingUsersCount === 0 || isSuperAdminEmail(normalizedEmail) ? "ADMIN" : "USER";
+        const role = existingUsersCount === 0 ? "ADMIN" : "USER";
 
         await tx.verificationToken.deleteMany({
           where: { identifier: normalizedEmail },

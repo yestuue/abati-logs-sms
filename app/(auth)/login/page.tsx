@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/layout/logo";
 import { toast } from "sonner";
-import { isSuperAdminEmail, normalizeEmail } from "@/lib/admin-access";
+import { normalizeEmail } from "@/lib/admin-access";
 import { getPublicSiteUrl } from "@/lib/site-url";
 
 function LoginForm() {
@@ -53,8 +53,7 @@ function LoginForm() {
     }
 
     toast.success("Welcome back!");
-    const destination = isSuperAdminEmail(normalizedEmail) ? `${siteBase}/admin` : `${siteBase}/dashboard`;
-    router.push(destination);
+    router.push(`${siteBase}${callbackPath}`);
   }
 
   return (

@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import { isSuperAdminEmail, normalizeEmail } from "@/lib/admin-access";
+import { normalizeEmail } from "@/lib/admin-access";
 
 /** Credentials + JWT: sign-in reads User from Prisma only. Supabase Auth is not used. */
 import bcrypt from "bcryptjs";
@@ -83,7 +83,7 @@ export const {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: isSuperAdminEmail(user.email) ? "ADMIN" : user.role,
+          role: user.role,
           walletBalance: user.walletBalance,
           walletCurrency: user.walletCurrency,
         };
@@ -134,9 +134,6 @@ export const {
         token.walletBalance = (user as { walletBalance: number }).walletBalance;
         token.walletCurrency = (user as { walletCurrency: string }).walletCurrency;
       }
-      if (isSuperAdminEmail(token.email as string | undefined)) {
-        token.role = "ADMIN";
-      }
       // Re-fetch wallet on session update
       if (trigger === "update" && session?.walletBalance !== undefined) {
         token.walletBalance = session.walletBalance;
@@ -146,9 +143,7 @@ export const {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = isSuperAdminEmail(session.user.email)
-          ? "ADMIN"
-          : (typeof token.role === "string" ? token.role : "USER");
+        session.user.role = typeof token.role === "string" ? token.role : "USER";
         session.user.walletBalance = token.walletBalance as number;
         session.user.walletCurrency = token.walletCurrency as string;
       }

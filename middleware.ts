@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { isSuperAdminEmail } from "@/lib/admin-access";
 
 const PUBLIC_PREFIXES = ["/", "/login", "/register", "/api/auth", "/terms", "/privacy", "/_next", "/images"];
 
@@ -53,12 +52,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/login", request.url), 307);
   }
 
-  // Admin hard-gate: only ADMIN role or whitelisted super-admin emails may access /admin.
+  // Admin hard-gate: only ADMIN role may access /admin.
   if (pathname.startsWith("/admin")) {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
     const role = typeof token?.role === "string" ? token.role : "";
-    const email = typeof token?.email === "string" ? token.email : "";
-    if (role !== "ADMIN" && !isSuperAdminEmail(email)) {
+    if (role !== "ADMIN") {
       return NextResponse.redirect(new URL("/dashboard", request.url), 307);
     }
   }

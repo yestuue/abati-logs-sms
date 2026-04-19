@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/layout/logo";
 import { toast } from "sonner";
 import { signIn } from "next-auth/react";
-import { isSuperAdminEmail, normalizeEmail } from "@/lib/admin-access";
+import { normalizeEmail } from "@/lib/admin-access";
 import { getPublicSiteUrl } from "@/lib/site-url";
 
 const PERKS = [
@@ -130,7 +130,7 @@ export default function RegisterPage() {
       callbackUrl: `${siteBase}/dashboard`,
     });
 
-    router.push(isSuperAdminEmail(normalizedEmail) ? `${siteBase}/admin` : `${siteBase}/dashboard`);
+    router.push(`${siteBase}/dashboard`);
   }
 
   const passwordStrength = form.password.length === 0 ? 0
