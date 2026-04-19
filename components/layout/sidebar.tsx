@@ -69,7 +69,7 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
           <div className="mt-2 flex items-center gap-1.5 px-1">
             <Shield className="w-3 h-3 text-amber-400" />
             <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">
-              Admin Panel
+              Verralogs Admin
             </span>
           </div>
         )}

@@ -163,6 +163,7 @@ export function ServerSelector({
   const [activeAssignments, setActiveAssignments] = useState<ActiveAssignment[]>([]);
   const [loadingActive, setLoadingActive] = useState(false);
   const [purchaseLegalAccepted, setPurchaseLegalAccepted] = useState(false);
+  const [serviceFetchError, setServiceFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (selected) setPurchaseLegalAccepted(false);
@@ -176,6 +177,7 @@ export function ServerSelector({
       const normalized = normalizeServiceSearchQuery(rawQuery);
       if (normalized.length < MIN_SERVICE_QUERY_LEN) {
         setServiceResults([]);
+        setServiceFetchError(null);
         return;
       }
 
@@ -191,10 +193,19 @@ export function ServerSelector({
         );
         const searchData = await searchRes.json();
         if (!searchRes.ok) {
-          toast.error(searchData.error ?? "Search failed");
+          const msg =
+            searchData?.error ??
+            (searchRes.status === 401
+              ? "Invalid API Key"
+              : searchRes.status === 404
+                ? "Server 2 Busy"
+                : "Search failed");
+          setServiceFetchError(msg);
+          toast.error(msg);
           setServiceResults([]);
           return;
         }
+        setServiceFetchError(null);
 
         const svcRows = (searchData.services ?? []) as {
           key: string;
@@ -221,6 +232,7 @@ export function ServerSelector({
           return { ...row };
         });
       } catch {
+        setServiceFetchError("Server 2 Busy");
         toast.error("Search failed");
         setServiceResults([]);
       } finally {
@@ -282,6 +294,7 @@ export function ServerSelector({
     setCountrySearch("");
     setCountryOpen(false);
     setPreferredAreaCode("");
+    setServiceFetchError(null);
     if (srv === "SERVER2") {
       const row = countries.find((c) => c.slug === server2Country);
       setServer2CountryId(row?.id ?? server2Country);
@@ -303,6 +316,7 @@ export function ServerSelector({
     setCountrySearch("");
     setCountryOpen(false);
     setPreferredAreaCode("");
+    setServiceFetchError(null);
   }
 
   function onSearchChange(next: string) {
@@ -314,6 +328,7 @@ export function ServerSelector({
       setCountrySearch("");
       setCountryOpen(false);
       setPreferredAreaCode("");
+      setServiceFetchError(null);
     }
   }
 
@@ -883,6 +898,11 @@ export function ServerSelector({
                   </div>
                 )}
               </div>
+              {serviceFetchError && (
+                <p className="mt-1.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                  {serviceFetchError}
+                </p>
+              )}
             </CardHeader>
             <CardContent className="p-3 pt-0">
               {!queryReady && (

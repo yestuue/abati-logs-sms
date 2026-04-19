@@ -11,7 +11,7 @@ import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
 import { Logo } from "@/components/layout/logo";
 
-export const metadata = { title: "Admin — Overview" };
+export const metadata = { title: "Verralogs Admin" };
 
 const TYPE_ICONS: Record<string, React.ElementType> = {
   WALLET_TOPUP:    Wallet,
@@ -218,7 +218,7 @@ export default async function AdminPage() {
         <div className="flex items-center gap-3">
           <Logo size="sm" />
           <div>
-          <h1 className="text-2xl font-bold text-foreground">Admin Overview</h1>
+          <h1 className="text-2xl font-bold text-foreground">Verralogs Admin</h1>
           <p className="text-sm text-muted-foreground mt-0.5">Platform health &amp; live activity</p>
           </div>
         </div>

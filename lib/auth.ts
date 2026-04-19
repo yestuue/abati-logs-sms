@@ -146,7 +146,9 @@ export const {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = isSuperAdminEmail(session.user.email) ? "ADMIN" : (token.role as string);
+        session.user.role = isSuperAdminEmail(session.user.email)
+          ? "ADMIN"
+          : (typeof token.role === "string" ? token.role : "USER");
         session.user.walletBalance = token.walletBalance as number;
         session.user.walletCurrency = token.walletCurrency as string;
       }

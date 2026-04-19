@@ -137,7 +137,7 @@ export function AppHeader({
               <DropdownMenuItem asChild>
                 <Link href="/admin">
                   <Shield className="w-4 h-4" />
-                  Admin Panel
+                  Verralogs Admin
                 </Link>
               </DropdownMenuItem>
             )}

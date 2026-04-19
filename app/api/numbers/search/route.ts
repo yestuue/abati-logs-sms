@@ -90,8 +90,19 @@ export async function GET(req: Request) {
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       console.error("[numbers/search] 5SIM guest products error:", err);
+      let message =
+        typeof err === "object" && err && "message" in err
+          ? String((err as { message: string }).message)
+          : "Failed to fetch 5SIM products";
+      if (res.status === 401) {
+        message = "Invalid API Key";
+      } else if (res.status === 404) {
+        message = serverForPremium === "SERVER2" ? "Server 2 Busy" : "Service unavailable";
+      } else if (res.status >= 500) {
+        message = "Server 2 Busy";
+      }
       return NextResponse.json(
-        { error: typeof err === "object" && err && "message" in err ? String((err as { message: string }).message) : "Failed to fetch 5SIM products" },
+        { error: message, providerStatus: res.status },
         { status: res.status }
       );
     }
