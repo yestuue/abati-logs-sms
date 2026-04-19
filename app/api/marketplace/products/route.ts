@@ -16,7 +16,7 @@ export async function GET() {
     prisma.logCategory.findMany({
       where: { enabled: true },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, price: true },
+      select: { id: true, name: true, description: true, price: true },
     }),
     prisma.log.findMany({
       where: { status: "AVAILABLE" },
@@ -44,7 +44,8 @@ export async function GET() {
         slug: slugify(cat.name),
         title: cat.name,
         description:
-          agg.rules ??
+          cat.description?.trim() ||
+          agg.rules ||
           "Do not change password or security settings for 24 hours after purchase.",
         price: Math.ceil(basePrice),
         available: agg.count,

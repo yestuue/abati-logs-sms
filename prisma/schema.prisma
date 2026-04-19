@@ -167,6 +167,7 @@ model Service {
 model LogCategory {
   id        String   @id @default(cuid())
   name      String   @unique
+  description String?
   price     Float
   stock     Int      @default(0)
   enabled   Boolean  @default(true)

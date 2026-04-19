@@ -35,7 +35,7 @@ type CountryCfg = {
   samplePrice?: number;
   server?: string;
 };
-type LogCategory = { id: string; name: string; price: number; stock: number; enabled: boolean };
+type LogCategory = { id: string; name: string; description?: string | null; price: number; stock: number; enabled: boolean };
 type LogItem = { id: string; category: string; username: string; price: number; status: string };
 
 export default function AdminPricingPage() {
@@ -48,6 +48,7 @@ export default function AdminPricingPage() {
   const [categories, setCategories] = useState<LogCategory[]>([]);
   const [logs, setLogs] = useState<LogItem[]>([]);
   const [newCategory, setNewCategory] = useState("");
+  const [newCategoryDescription, setNewCategoryDescription] = useState("");
   const [newCategoryPrice, setNewCategoryPrice] = useState("");
   const [bulkPct, setBulkPct] = useState("");
   const [loading, setLoading] = useState(false);
@@ -413,20 +414,33 @@ export default function AdminPricingPage() {
     const res = await fetch("/api/admin/marketplace/update-price", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "createCategory", categoryName: newCategory, price }),
+      body: JSON.stringify({
+        action: "createCategory",
+        categoryName: newCategory,
+        description: newCategoryDescription,
+        price,
+      }),
     });
     const data = await res.json();
     if (!res.ok) return toast.error(data.error ?? "Category create failed");
     setNewCategory("");
+    setNewCategoryDescription("");
     setNewCategoryPrice("");
     setCategories((prev) => [data.category, ...prev]);
   }
 
-  async function updateCategory(id: string, patch: Partial<Pick<LogCategory, "name" | "price" | "enabled">>) {
+  async function updateCategory(id: string, patch: Partial<Pick<LogCategory, "name" | "description" | "price" | "enabled">>) {
     const res = await fetch("/api/admin/marketplace/update-price", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "updateCategory", categoryId: id, categoryName: patch.name, price: patch.price, enabled: patch.enabled }),
+      body: JSON.stringify({
+        action: "updateCategory",
+        categoryId: id,
+        categoryName: patch.name,
+        description: patch.description,
+        price: patch.price,
+        enabled: patch.enabled,
+      }),
     });
     const data = await res.json();
     if (!res.ok) return toast.error(data.error ?? "Category update failed");
@@ -741,6 +755,14 @@ export default function AdminPricingPage() {
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1"><Label>New Category</Label><Input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="Facebook High Quality" /></div>
+            <div className="space-y-1 min-w-[260px] flex-1">
+              <Label>Rules</Label>
+              <Input
+                value={newCategoryDescription}
+                onChange={(e) => setNewCategoryDescription(e.target.value)}
+                placeholder="Do not change password for 24 hours..."
+              />
+            </div>
             <div className="space-y-1"><Label>Price</Label><Input value={newCategoryPrice} onChange={(e) => setNewCategoryPrice(e.target.value.replace(/[^\d.]/g, ""))} placeholder="3500" /></div>
             <Button onClick={() => void createCategory()}>Create Category</Button>
           </div>
@@ -751,16 +773,26 @@ export default function AdminPricingPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-sm">
-              <thead><tr className="border-b border-border"><th className="text-left py-2">Category</th><th className="text-left py-2">Price</th><th className="text-left py-2">Enabled</th><th className="text-right py-2">Actions</th></tr></thead>
+            <table className="w-full min-w-[920px] text-sm">
+              <thead><tr className="border-b border-border"><th className="text-left py-2">Category</th><th className="text-left py-2">Rules</th><th className="text-left py-2">Price</th><th className="text-left py-2">Enabled</th><th className="text-right py-2">Actions</th></tr></thead>
               <tbody>
                 {categories.map((c) => (
                   <tr key={c.id} className="border-b border-border/50">
                     <td className="py-2">{c.name}</td>
+                    <td className="py-2 max-w-[340px] truncate text-muted-foreground">{c.description || "—"}</td>
                     <td className="py-2">₦{Math.round(c.price).toLocaleString()}</td>
                     <td className="py-2">{c.enabled ? "Yes" : "No"}</td>
                     <td className="py-2 text-right space-x-2">
                       <Button size="sm" variant="outline" onClick={() => void updateCategory(c.id, { price: Number(prompt(`New price for ${c.name}`, String(c.price)) || c.price) })}>Edit</Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void updateCategory(c.id, {
+                          description: String(prompt(`Rules for ${c.name}`, c.description ?? "") ?? c.description ?? ""),
+                        })}
+                      >
+                        Rules
+                      </Button>
                       <Button size="sm" variant="outline" onClick={() => void updateCategory(c.id, { enabled: !c.enabled })}>{c.enabled ? "Disable" : "Enable"}</Button>
                       <Button size="sm" variant="destructive" onClick={() => void deleteCategory(c.id)}>Delete</Button>
                     </td>

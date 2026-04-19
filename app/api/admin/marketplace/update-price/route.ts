@@ -7,6 +7,7 @@ const bodySchema = z.object({
   action: z.enum(["createCategory", "updateCategory", "deleteCategory", "updateItemPrice", "bulkAdjust"]),
   categoryId: z.string().optional(),
   categoryName: z.string().optional(),
+  description: z.string().optional(),
   price: z.number().optional(),
   enabled: z.boolean().optional(),
   logId: z.string().optional(),
@@ -44,7 +45,12 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: "categoryName and price required" }, { status: 400 });
       }
       const created = await prisma.logCategory.create({
-        data: { name: body.categoryName.trim(), price: body.price, enabled: body.enabled ?? true },
+        data: {
+          name: body.categoryName.trim(),
+          description: body.description?.trim() || null,
+          price: body.price,
+          enabled: body.enabled ?? true,
+        },
       });
       return NextResponse.json({ category: created });
     }
@@ -55,6 +61,7 @@ export async function PUT(req: Request) {
         where: { id: body.categoryId },
         data: {
           ...(body.categoryName ? { name: body.categoryName.trim() } : {}),
+          ...(typeof body.description === "string" ? { description: body.description.trim() || null } : {}),
           ...(typeof body.price === "number" ? { price: body.price } : {}),
           ...(typeof body.enabled === "boolean" ? { enabled: body.enabled } : {}),
         },
