@@ -69,7 +69,7 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
           <div className="mt-2 flex items-center gap-1.5 px-1">
             <Shield className="w-3 h-3 text-amber-400" />
             <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">
-              Verralogs Admin
+              Abati Admin
             </span>
           </div>
         )}
@@ -141,10 +141,13 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
         )}
 
         {variant === "user" && isAdmin && (
-          <Link
-            href="/admin"
-            onClick={onNavigate}
-            className="flex items-center gap-3 px-3 py-2.5 mt-1 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all"
+          <button
+            type="button"
+            onClick={() => {
+              onNavigate?.();
+              window.location.assign("/admin");
+            }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 mt-1 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all text-left"
             style={{
               color: "oklch(0.72 0.17 150)",
               background: "oklch(0.72 0.17 150 / 0.10)",
@@ -153,7 +156,7 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
           >
             <ShieldCheck className="w-4 h-4 flex-shrink-0" />
             Admin Management
-          </Link>
+          </button>
         )}
 
         <button

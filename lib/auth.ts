@@ -134,9 +134,19 @@ export const {
         token.walletBalance = (user as { walletBalance: number }).walletBalance;
         token.walletCurrency = (user as { walletCurrency: string }).walletCurrency;
       }
+      if (!token.role && typeof token.email === "string" && token.email.trim()) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: normalizeEmail(token.email) },
+          select: { role: true },
+        });
+        token.role = dbUser?.role ?? "USER";
+      }
       // Re-fetch wallet on session update
       if (trigger === "update" && session?.walletBalance !== undefined) {
         token.walletBalance = session.walletBalance;
+      }
+      if (trigger === "update" && session?.user?.role) {
+        token.role = session.user.role;
       }
       return token;
     },

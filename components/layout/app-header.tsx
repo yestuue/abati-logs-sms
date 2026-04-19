@@ -137,7 +137,7 @@ export function AppHeader({
               <DropdownMenuItem asChild>
                 <Link href="/admin">
                   <Shield className="w-4 h-4" />
-                  Verralogs Admin
+                  Abati Admin
                 </Link>
               </DropdownMenuItem>
             )}

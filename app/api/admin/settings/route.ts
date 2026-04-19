@@ -7,6 +7,7 @@ import { z } from "zod";
 const patchSchema = z.object({
   premiumTarget: z.enum(["SERVER1", "SERVER2"]),
   marginPct: z.number().min(0).max(500),
+  siteName: z.string().trim().min(1).max(120).optional(),
 });
 
 async function requireAdmin() {
@@ -28,6 +29,7 @@ export async function GET() {
   const settings = await prisma.globalSettings.findFirst({
     orderBy: { updatedAt: "desc" },
     select: {
+      siteName: true,
       s1Margin: true,
       s2Margin: true,
       smsGlobalPremiumRate: true,
@@ -39,6 +41,7 @@ export async function GET() {
   const s2 = settings?.s2Margin ?? (settings?.smsGlobalPremiumRateServer2 ?? 0.35) * 100;
 
   return NextResponse.json({
+    siteName: settings?.siteName ?? "Abati Digital",
     S1_MARGIN: s1,
     S2_MARGIN: s2,
   });
@@ -54,10 +57,19 @@ export async function PATCH(req: Request) {
 
   const { premiumTarget, marginPct } = parsed.data;
   const settingsId = await getLatestSettingsId();
+  const normalizedSiteName = parsed.data.siteName?.trim();
   const data =
     premiumTarget === "SERVER2"
-      ? { s2Margin: marginPct, smsGlobalPremiumRateServer2: marginPct / 100 }
-      : { s1Margin: marginPct, smsGlobalPremiumRate: marginPct / 100 };
+      ? {
+          s2Margin: marginPct,
+          smsGlobalPremiumRateServer2: marginPct / 100,
+          ...(normalizedSiteName ? { siteName: normalizedSiteName } : {}),
+        }
+      : {
+          s1Margin: marginPct,
+          smsGlobalPremiumRate: marginPct / 100,
+          ...(normalizedSiteName ? { siteName: normalizedSiteName } : {}),
+        };
 
   if (settingsId) {
     await prisma.globalSettings.update({ where: { id: settingsId }, data });
