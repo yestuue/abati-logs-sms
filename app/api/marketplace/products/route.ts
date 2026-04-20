@@ -49,6 +49,7 @@ export async function GET() {
           "Do not change password or security settings for 24 hours after purchase.",
         price: Math.ceil(basePrice),
         available: agg.count,
+        status: agg.count > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
       };
     })
     .filter((p) => p.available > 0)

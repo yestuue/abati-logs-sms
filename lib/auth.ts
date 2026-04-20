@@ -153,7 +153,10 @@ export const {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.role = typeof token.role === "string" ? token.role : "USER";
+        session.user.role = token.role as string;
+        if (typeof session.user.role !== "string" || session.user.role.length === 0) {
+          session.user.role = "USER";
+        }
         session.user.walletBalance = token.walletBalance as number;
         session.user.walletCurrency = token.walletCurrency as string;
       }

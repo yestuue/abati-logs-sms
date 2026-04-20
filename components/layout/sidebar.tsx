@@ -1,15 +1,17 @@
 "use client";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, MessageSquare, Settings,
   LogOut, Shield, BarChart3, Users, Server, Phone,
-  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch, BadgeDollarSign, Gift, User,
+  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch, BadgeDollarSign, Gift, User, ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { signOut, useSession } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/components/theme-provider";
 
@@ -53,6 +55,23 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
   const { theme } = useTheme();
   const { data: session } = useSession();
   const nav = variant === "admin" ? adminNav : userNav;
+  const [viewMode, setViewMode] = useState<"admin" | "customer">("customer");
+  const isAdmin = session?.user?.role === "ADMIN";
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    const stored = window.localStorage.getItem("abati_view_mode");
+    if (stored === "admin" || stored === "customer") {
+      setViewMode(stored);
+      return;
+    }
+    setViewMode(pathname.startsWith("/admin") ? "admin" : "customer");
+  }, [isAdmin, pathname]);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    window.localStorage.setItem("abati_view_mode", viewMode);
+  }, [isAdmin, viewMode]);
 
   const isActive = (href: string) => {
     if (href === "/dashboard" || href === "/admin") return pathname === href;
@@ -61,44 +80,35 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
 
   return (
     <aside className="sidebar-gradient flex flex-col h-full border-r border-border/50">
-      {session?.user?.role === "ADMIN" && (
-        <div className="mx-3 mt-3 rounded-xl border-2 border-primary/35 bg-primary/8 p-2.5 shadow-md">
+      {isAdmin && (
+        <div className="mx-3 mt-3 rounded-xl border-2 border-primary/35 bg-primary/10 p-3 shadow-md">
           <p className="text-[10px] font-bold text-center uppercase tracking-widest text-muted-foreground mb-2">
-            Workspace
+            View Mode
           </p>
-          <div className="grid grid-cols-2 gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                onNavigate?.();
-                window.location.assign("/dashboard");
-              }}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 rounded-lg py-2.5 px-1 text-center text-[11px] font-semibold leading-tight transition-all",
-                !pathname.startsWith("/admin")
-                  ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/40"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-card px-2.5 py-2">
+            <div className="flex items-center gap-2 text-xs font-semibold">
+              {viewMode === "admin" ? (
+                <>
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  <span>Admin Workspace</span>
+                </>
+              ) : (
+                <>
+                  <User className="h-4 w-4 text-primary" />
+                  <span>Customer View</span>
+                </>
               )}
-            >
-              <User className="h-4 w-4 shrink-0" />
-              Customer View
-            </button>
-            <button
-              type="button"
-              onClick={() => {
+            </div>
+            <Switch
+              checked={viewMode === "admin"}
+              onCheckedChange={(checked) => {
+                const nextMode = checked ? "admin" : "customer";
+                setViewMode(nextMode);
                 onNavigate?.();
-                window.location.assign("/admin");
+                window.location.assign(checked ? "/admin" : "/dashboard");
               }}
-              className={cn(
-                "flex flex-col items-center justify-center gap-1 rounded-lg py-2.5 px-1 text-center text-[11px] font-semibold leading-tight transition-all",
-                pathname.startsWith("/admin")
-                  ? "bg-primary text-primary-foreground shadow-sm ring-1 ring-primary/40"
-                  : "bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <Shield className="h-4 w-4 shrink-0" />
-              Admin Workspace
-            </button>
+              aria-label="Toggle admin workspace view mode"
+            />
           </div>
         </div>
       )}

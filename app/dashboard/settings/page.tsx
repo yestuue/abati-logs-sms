@@ -33,7 +33,7 @@ export default function SettingsPage() {
       });
       if (!res.ok) throw new Error();
       await update({ name });
-      toast.success("Name updated!");
+      toast.success("Profile Updated Successfully");
     } catch {
       toast.error("Failed to update name");
     } finally {
@@ -106,6 +106,7 @@ export default function SettingsPage() {
                 <Label>Email</Label>
                 <Input
                   value={session?.user?.email ?? ""}
+                  readOnly
                   disabled
                   className="opacity-60"
                 />

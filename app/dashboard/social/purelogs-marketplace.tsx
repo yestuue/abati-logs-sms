@@ -15,6 +15,7 @@ type Product = {
   description: string;
   price: number;
   available: number;
+  status?: "IN_STOCK" | "OUT_OF_STOCK";
 };
 
 type LogItem = {
@@ -55,6 +56,13 @@ export function PurelogsMarketplace() {
   }, []);
 
   async function openProduct(product: Product) {
+    if (product.status === "OUT_OF_STOCK" || product.available <= 0) {
+      setSelectedProduct(product);
+      setSelectedIds(new Set());
+      setItems([]);
+      toast.error("Out of Stock");
+      return;
+    }
     setSelectedProduct(product);
     setSelectedIds(new Set());
     setItems([]);
@@ -144,7 +152,11 @@ export function PurelogsMarketplace() {
           {visibleProducts.map((product) => (
             <Card
               key={product.id}
-              className="bg-white border border-zinc-200 shadow-sm cursor-pointer hover:border-blue-300 transition-colors"
+              className={`bg-white border border-zinc-200 shadow-sm transition-colors ${
+                product.status === "OUT_OF_STOCK" || product.available <= 0
+                  ? "opacity-70 cursor-not-allowed"
+                  : "cursor-pointer hover:border-blue-300"
+              }`}
               onClick={() => void openProduct(product)}
             >
               <CardContent className="p-4 space-y-3">
@@ -163,10 +175,14 @@ export function PurelogsMarketplace() {
 
                 <div className="flex items-center justify-between pt-1">
                   <Badge className="bg-blue-600 text-white hover:bg-blue-600">{formatNgn(product.price)}</Badge>
-                  <Badge variant="secondary" className="bg-zinc-100 text-zinc-700 border border-zinc-200">
-                    <ShieldCheck className="w-3 h-3 mr-1" />
-                    Admin Verified
-                  </Badge>
+                  {product.status === "OUT_OF_STOCK" || product.available <= 0 ? (
+                    <Badge variant="destructive">Out of Stock</Badge>
+                  ) : (
+                    <Badge variant="secondary" className="bg-zinc-100 text-zinc-700 border border-zinc-200">
+                      <ShieldCheck className="w-3 h-3 mr-1" />
+                      Admin Verified
+                    </Badge>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -230,10 +246,19 @@ export function PurelogsMarketplace() {
 
             <Button
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-              disabled={buying || selectedIds.size === 0}
+              disabled={
+                buying ||
+                selectedIds.size === 0 ||
+                selectedProduct.status === "OUT_OF_STOCK" ||
+                selectedProduct.available <= 0
+              }
               onClick={() => void buySelected()}
             >
-              {buying ? "Processing..." : "Buy Now"}
+              {selectedProduct.status === "OUT_OF_STOCK" || selectedProduct.available <= 0
+                ? "Out of Stock"
+                : buying
+                  ? "Processing..."
+                  : "Buy Now"}
             </Button>
           </CardContent>
         </Card>

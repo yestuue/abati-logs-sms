@@ -483,8 +483,19 @@ export function ServerSelector({
   });
 
   const server1PremiumActive = activeServer === "SERVER1";
-  const selectedPremiumRate = selectedService?.premiumRate ?? 0.35;
-  const premiumPercentLabel = Math.round(selectedPremiumRate * 100);
+  const hasAreaCodePreference = preferredAreaCode
+    .split(",")
+    .map((s) => s.trim())
+    .some((s) => /^\d{3}$/.test(s));
+  const hasCarrierPreference = carrier !== "any";
+  const server1PreferencePremiumActive =
+    server1PremiumActive && (hasCarrierPreference || hasAreaCodePreference);
+  const server1PreferencePremiumRate = 0.35;
+  const selectedPremiumRate =
+    activeServer === "SERVER1"
+      ? (server1PreferencePremiumActive ? server1PreferencePremiumRate : 0)
+      : (selectedService?.premiumRate ?? 0.35);
+  const premiumPercentLabel = 35;
 
   function getServer1Price(basePrice: number, premiumRate = selectedPremiumRate) {
     return Math.ceil(basePrice * (1 + premiumRate));
@@ -499,9 +510,9 @@ export function ServerSelector({
   }
 
   const selectedServicePremiumDelta = useMemo(() => {
-    if (!server1PremiumActive || !selectedService) return 0;
-    return preferencePremiumDeltaNgn(selectedService.priceNGN, selectedPremiumRate);
-  }, [server1PremiumActive, selectedService, selectedPremiumRate]);
+    if (!server1PreferencePremiumActive || !selectedService) return 0;
+    return preferencePremiumDeltaNgn(selectedService.priceNGN, server1PreferencePremiumRate);
+  }, [server1PreferencePremiumActive, selectedService]);
 
   /** Charge base must match /api/payments/initialize when serviceKey is sent (catalog / custom service price). */
   function getPurchaseChargeBase(item: NumberItem): number {
@@ -708,7 +719,7 @@ export function ServerSelector({
               US area codes only (digits + commas). Premium applies when carrier is specific or any valid code is entered.
             </p>
           </div>
-          {server1PremiumActive && (
+          {server1PreferencePremiumActive && (
             <p className="text-xs mt-2 font-medium text-amber-700 dark:text-amber-400">
               +{premiumPercentLabel}% preference premium applied to USA prices below (carrier and/or area codes — not stacked)
             </p>
@@ -869,7 +880,7 @@ export function ServerSelector({
                               <div className="text-right shrink-0">
                                 <span
                                   className={`text-[13px] font-semibold block ${
-                                    activeServer === "SERVER1" && server1PremiumActive
+                                    activeServer === "SERVER1" && server1PreferencePremiumActive
                                       ? "text-amber-500"
                                       : "text-violet-700 dark:text-violet-300"
                                   }`}
@@ -880,7 +891,7 @@ export function ServerSelector({
                                     : getServer2CatalogDisplayPrice(row.priceNGN, row.premiumRate ?? 0.35)
                                   ).toLocaleString()}
                                 </span>
-                                {activeServer === "SERVER1" && server1PremiumActive && (
+                                {activeServer === "SERVER1" && server1PreferencePremiumActive && (
                                   <span className="text-[10px] font-medium text-amber-700/90 dark:text-amber-400/90 block mt-0.5">
                                     Premium price: +₦
                                     {preferencePremiumDeltaNgn(
@@ -926,7 +937,7 @@ export function ServerSelector({
               {selectedService && search.trim() !== "" && (
                 <div
                   className={
-                    activeServer === "SERVER1" && server1PremiumActive
+                    activeServer === "SERVER1" && server1PreferencePremiumActive
                       ? "rounded-xl border border-amber-500/50 bg-amber-50/80 dark:bg-amber-950/25 p-3"
                       : "rounded-xl border border-violet-300/60 bg-violet-50/80 dark:bg-violet-950/25 dark:border-violet-800 p-3"
                   }
@@ -935,7 +946,7 @@ export function ServerSelector({
                     <div>
                       <p
                         className={
-                          activeServer === "SERVER1" && server1PremiumActive
+                          activeServer === "SERVER1" && server1PreferencePremiumActive
                             ? "text-[11px] font-semibold uppercase tracking-wide text-amber-500"
                             : "text-[11px] font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-300"
                         }
@@ -952,7 +963,7 @@ export function ServerSelector({
                       )}
                       <div
                         className={`text-[11px] font-medium mt-0.5 ${
-                          activeServer === "SERVER1" && server1PremiumActive
+                          activeServer === "SERVER1" && server1PreferencePremiumActive
                             ? "text-amber-500"
                             : "text-emerald-700 dark:text-emerald-400"
                         }`}
@@ -964,7 +975,7 @@ export function ServerSelector({
                             : getServer2CatalogDisplayPrice(selectedService.priceNGN)
                           ).toLocaleString()}
                         </p>
-                        {activeServer === "SERVER1" && server1PremiumActive && (
+                        {activeServer === "SERVER1" && server1PreferencePremiumActive && (
                           <p className="text-[10px] mt-0.5 opacity-95">
                             Premium price: +₦{selectedServicePremiumDelta.toLocaleString()}
                           </p>
