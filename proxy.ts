@@ -54,8 +54,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
   const role = typeof token?.role === "string" ? token.role : "";
+  const session = { user: { role } };
 
-  if (role === "ADMIN") {
+  // God Mode: admins can access /dashboard and /admin freely.
+  if (session?.user?.role === "ADMIN") {
     return NextResponse.next();
   }
 

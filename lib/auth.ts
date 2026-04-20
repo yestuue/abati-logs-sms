@@ -134,7 +134,8 @@ export const {
         token.walletBalance = (user as { walletBalance: number }).walletBalance;
         token.walletCurrency = (user as { walletCurrency: string }).walletCurrency;
       }
-      if (!token.role && typeof token.email === "string" && token.email.trim()) {
+      // Keep role synced from DB on each JWT callback.
+      if (typeof token.email === "string" && token.email.trim()) {
         const dbUser = await prisma.user.findUnique({
           where: { email: normalizeEmail(token.email) },
           select: { role: true },

@@ -105,7 +105,7 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
                 const nextMode = checked ? "admin" : "customer";
                 setViewMode(nextMode);
                 onNavigate?.();
-                window.location.assign(checked ? "/admin" : "/dashboard");
+                window.location.href = checked ? "/admin" : "/dashboard";
               }}
               aria-label="Toggle admin workspace view mode"
             />
