@@ -128,13 +128,13 @@ export const {
     },
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as { role: string }).role;
+        token.role = (user as { role?: string } | null | undefined)?.role || "USER";
       }
       return token;
     },
     async session({ session, token }) {
-      if (token && session.user) {
-        session.user.role = token.role as string;
+      if (session?.user) {
+        session.user.role = (token?.role as string) || "USER";
       }
       return session;
     },
