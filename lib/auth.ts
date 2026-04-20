@@ -126,40 +126,15 @@ export const {
       }
       return `${origin}/login`;
     },
-    async jwt({ token, user, trigger, session }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
         token.role = (user as { role: string }).role;
-        token.email = (user as { email?: string }).email ?? token.email;
-        token.walletBalance = (user as { walletBalance: number }).walletBalance;
-        token.walletCurrency = (user as { walletCurrency: string }).walletCurrency;
-      }
-      // Keep role synced from DB on each JWT callback.
-      if (typeof token.email === "string" && token.email.trim()) {
-        const dbUser = await prisma.user.findUnique({
-          where: { email: normalizeEmail(token.email) },
-          select: { role: true },
-        });
-        token.role = dbUser?.role ?? "USER";
-      }
-      // Re-fetch wallet on session update
-      if (trigger === "update" && session?.walletBalance !== undefined) {
-        token.walletBalance = session.walletBalance;
-      }
-      if (trigger === "update" && session?.user?.role) {
-        token.role = session.user.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
-        session.user.id = token.id as string;
         session.user.role = token.role as string;
-        if (typeof session.user.role !== "string" || session.user.role.length === 0) {
-          session.user.role = "USER";
-        }
-        session.user.walletBalance = token.walletBalance as number;
-        session.user.walletCurrency = token.walletCurrency as string;
       }
       return session;
     },
