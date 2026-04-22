@@ -51,12 +51,17 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   if (!sessionCookie) {
     return NextResponse.redirect(new URL("/login", request.url), 307);
   }
-
-  const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
-  const role = typeof token?.role === "string" ? token.role : "";
-  const session = { user: { role: role || undefined } };
-  const sessionRole = session?.user?.role;
-  console.log("Current User Role:", sessionRole);
+  let sessionRole: string | undefined;
+  try {
+    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    const role = typeof token?.role === "string" ? token.role : "";
+    const session = { user: { role: role || undefined } };
+    sessionRole = session?.user?.role;
+    console.log("Current User Role:", sessionRole);
+  } catch (error) {
+    console.error("Proxy session fetch failed:", error);
+    return NextResponse.redirect(new URL("/login?error=session", request.url), 307);
+  }
 
   // God Mode: admins can access /dashboard and /admin freely.
   if (sessionRole === "ADMIN") {
