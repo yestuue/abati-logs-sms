@@ -60,12 +60,20 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
 
   useEffect(() => {
     if (!isAdmin) return;
+    // Pathname is source of truth when we are inside either workspace.
+    if (pathname.startsWith("/admin")) {
+      setViewMode("admin");
+      return;
+    }
+    if (pathname.startsWith("/dashboard")) {
+      setViewMode("customer");
+      return;
+    }
+    // Fallback for other pages.
     const stored = window.localStorage.getItem("abati_view_mode");
     if (stored === "admin" || stored === "customer") {
       setViewMode(stored);
-      return;
     }
-    setViewMode(pathname.startsWith("/admin") ? "admin" : "customer");
   }, [isAdmin, pathname]);
 
   useEffect(() => {
