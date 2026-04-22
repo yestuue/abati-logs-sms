@@ -53,13 +53,19 @@ interface SidebarProps {
 export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const nav = variant === "admin" ? adminNav : userNav;
   const [viewMode, setViewMode] = useState<"admin" | "customer">("customer");
+  const [mounted, setMounted] = useState(false);
   const isAdmin = session?.user?.role === "ADMIN";
+  const isAdminMode = viewMode === "admin";
 
   useEffect(() => {
-    if (!isAdmin) return;
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !isAdmin) return;
     // Pathname is source of truth when we are inside either workspace.
     if (pathname.startsWith("/admin")) {
       setViewMode("admin");
@@ -74,12 +80,12 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
     if (stored === "admin" || stored === "customer") {
       setViewMode(stored);
     }
-  }, [isAdmin, pathname]);
+  }, [mounted, isAdmin, pathname]);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!mounted || !isAdmin) return;
     window.localStorage.setItem("abati_view_mode", viewMode);
-  }, [isAdmin, viewMode]);
+  }, [mounted, isAdmin, viewMode]);
 
   const isActive = (href: string) => {
     if (href === "/dashboard" || href === "/admin") return pathname === href;
@@ -88,14 +94,14 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
 
   return (
     <aside className="sidebar-gradient flex flex-col h-full border-r border-border/50">
-      {isAdmin && (
+      {mounted && status !== "loading" && isAdmin && (
         <div className="mx-3 mt-3 rounded-xl border-2 border-primary/35 bg-primary/10 p-3 shadow-md">
           <p className="text-[10px] font-bold text-center uppercase tracking-widest text-muted-foreground mb-2">
             View Mode
           </p>
           <div className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-card px-2.5 py-2">
             <div className="flex items-center gap-2 text-xs font-semibold">
-              {viewMode === "admin" ? (
+              {isAdminMode ? (
                 <>
                   <ShieldCheck className="h-4 w-4 text-primary" />
                   <span>Admin Workspace</span>
@@ -108,7 +114,7 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
               )}
             </div>
             <Switch
-              checked={viewMode === "admin"}
+              checked={isAdminMode}
               onCheckedChange={(checked) => {
                 const nextMode = checked ? "admin" : "customer";
                 setViewMode(nextMode);
