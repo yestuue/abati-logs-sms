@@ -1,17 +1,15 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, MessageSquare, Settings,
   LogOut, Shield, BarChart3, Users, Server, Phone,
-  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch, BadgeDollarSign, Gift, User, ShieldCheck,
+  CreditCard, ShoppingBag, Wallet, Archive, PackageSearch, BadgeDollarSign, Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
 import { signOut, useSession } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/components/theme-provider";
 
@@ -53,39 +51,9 @@ interface SidebarProps {
 export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const nav = variant === "admin" ? adminNav : userNav;
-  const [viewMode, setViewMode] = useState<"admin" | "customer">("customer");
-  const [mounted, setMounted] = useState(false);
   const isAdmin = session?.user?.role === "ADMIN";
-  const isAdminMode = viewMode === "admin";
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted || !isAdmin) return;
-    // Pathname is source of truth when we are inside either workspace.
-    if (pathname.startsWith("/admin")) {
-      setViewMode("admin");
-      return;
-    }
-    if (pathname.startsWith("/dashboard")) {
-      setViewMode("customer");
-      return;
-    }
-    // Fallback for other pages.
-    const stored = window.localStorage.getItem("abati_view_mode");
-    if (stored === "admin" || stored === "customer") {
-      setViewMode(stored);
-    }
-  }, [mounted, isAdmin, pathname]);
-
-  useEffect(() => {
-    if (!mounted || !isAdmin) return;
-    window.localStorage.setItem("abati_view_mode", viewMode);
-  }, [mounted, isAdmin, viewMode]);
 
   const isActive = (href: string) => {
     if (href === "/dashboard" || href === "/admin") return pathname === href;
@@ -94,39 +62,6 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
 
   return (
     <aside className="sidebar-gradient flex flex-col h-full border-r border-border/50">
-      {mounted && status !== "loading" && isAdmin && (
-        <div className="mx-3 mt-3 rounded-xl border-2 border-primary/35 bg-primary/10 p-3 shadow-md">
-          <p className="text-[10px] font-bold text-center uppercase tracking-widest text-muted-foreground mb-2">
-            View Mode
-          </p>
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-border/60 bg-card px-2.5 py-2">
-            <div className="flex items-center gap-2 text-xs font-semibold">
-              {isAdminMode ? (
-                <>
-                  <ShieldCheck className="h-4 w-4 text-primary" />
-                  <span>Admin Workspace</span>
-                </>
-              ) : (
-                <>
-                  <User className="h-4 w-4 text-primary" />
-                  <span>Customer View</span>
-                </>
-              )}
-            </div>
-            <Switch
-              checked={isAdminMode}
-              onCheckedChange={(checked) => {
-                const nextMode = checked ? "admin" : "customer";
-                setViewMode(nextMode);
-                onNavigate?.();
-                window.location.href = checked ? "/admin" : "/dashboard";
-              }}
-              aria-label="Toggle admin workspace view mode"
-            />
-          </div>
-        </div>
-      )}
-
       {/* Logo */}
       <div className="px-4 py-5 flex-shrink-0">
         <Logo size="md" />
@@ -177,6 +112,40 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
             </Link>
           );
         })}
+
+        {variant === "user" && isAdmin && (
+          <div className="mt-4 rounded-xl border border-indigo-500/25 bg-indigo-500/10 p-2.5 space-y-1.5">
+            <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-indigo-300">
+              Admin Management
+            </p>
+            {[
+              { label: "Admin Dashboard", href: "/admin", icon: Shield },
+              { label: "User Management", href: "/admin/users", icon: Users },
+              { label: "Manage Products", href: "/admin/products", icon: PackageSearch },
+              { label: "Global Transactions", href: "/admin/transactions", icon: CreditCard },
+              { label: "Site Settings", href: "/admin/settings", icon: Settings },
+            ].map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
+                    active
+                      ? "text-primary bg-primary/10 border border-primary/25"
+                      : "text-indigo-100/90 hover:bg-indigo-500/15 hover:text-indigo-50"
+                  )}
+                >
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <span className="flex-1">{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
       </nav>
 
       <Separator />
