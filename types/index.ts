@@ -62,16 +62,4 @@ export interface SafeTransaction {
   createdAt: Date;
 }
 
-// Extend NextAuth session types
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      role: string;
-      walletBalance: number;
-      walletCurrency: string;
-    };
-  }
-}
+// NextAuth module augmentation lives in types/next-auth.d.ts

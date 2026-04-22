@@ -129,6 +129,7 @@ export const {
     async jwt({ token, user }) {
       try {
         if (user) {
+          token.role = user.role;
           const u = user as {
             id?: string;
             email?: string | null;
