@@ -22,11 +22,11 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: {
-    default: "Abati Digital | Global Business Infrastructure",
+    default: "Abati Digital | B2B SMS & Digital Infrastructure",
     template: "%s | Abati Digital",
   },
   description:
-    "Specialized in digital transformation, process automation, and corporate infrastructure solutions for global businesses.",
+    "Abati Digital provides secure SMS verification APIs, 2FA infrastructure, and digital automation solutions for developers and global enterprises.",
   keywords: ["digital transformation", "process automation", "corporate infrastructure", "Abati Digital", "global business"],
   manifest: "/manifest.json",
   icons: {
@@ -34,9 +34,9 @@ export const metadata: Metadata = {
     apple: "/logo.png",
   },
   openGraph: {
-    title: "Abati Digital | Global Business Infrastructure",
+    title: "Abati Digital | B2B SMS & Digital Infrastructure",
     description:
-      "Specialized in digital transformation, process automation, and corporate infrastructure solutions for global businesses.",
+      "Abati Digital provides secure SMS verification APIs, 2FA infrastructure, and digital automation solutions for developers and global enterprises.",
     url: "https://abatidigital.com",
     siteName: "Abati Digital",
     images: [{ url: "/logo.png", width: 1200, height: 630, alt: "Abati Digital" }],
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Abati Digital | Global Business Infrastructure",
+    title: "Abati Digital | B2B SMS & Digital Infrastructure",
     description:
-      "Specialized in digital transformation, process automation, and corporate infrastructure solutions for global businesses.",
+      "Abati Digital provides secure SMS verification APIs, 2FA infrastructure, and digital automation solutions for developers and global enterprises.",
     images: ["/logo.png"],
   },
   appleWebApp: {

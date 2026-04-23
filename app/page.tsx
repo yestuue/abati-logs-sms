@@ -8,7 +8,7 @@ import { FloatingSupport } from "@/components/landing/floating-support";
 import {
   ArrowRight, CheckCircle, Zap, Globe, Shield,
   Star, Users, BadgeCheck, TrendingUp,
-  Mail, Building2, Workflow, BriefcaseBusiness,
+  Mail, Building2, Workflow, BriefcaseBusiness, ShieldCheck, Code2,
 } from "lucide-react";
 
 // ── Animation primitives ──────────────────────────────────────────────────────
@@ -73,9 +73,14 @@ function CountUpNumber({ end, suffix = "", duration = 1800 }: { end: number; suf
 
 // ── Data ───────────────────────────────────────────────────────────────────────
 const features = [
-  { icon: Zap,    title: "Fast Deployment", description: "Launch business-ready digital infrastructure quickly with guided onboarding." },
+  {
+    icon: ShieldCheck,
+    title: "Secure OTP & 2FA Infrastructure for Developers",
+    description:
+      "Abati Digital provides SMS verification APIs that help businesses deliver one-time passwords to their own users. Integrate reliable OTP delivery, two-factor authentication, and transactional alerts into your app or website. Built for developers, startups, and marketing agencies.",
+  },
   { icon: Globe,  title: "Global Operations", description: "Operate across regions with scalable systems built for international growth." },
-  { icon: Shield, title: "Compliance-Ready", description: "Built with reliability, governance, and operational trust in mind." },
+  { icon: Code2, title: "Developer-First Integration", description: "Connect your systems quickly with implementation-ready workflows and technical support." },
   { icon: TrendingUp, title: "Enterprise Growth", description: "Support expansion with modern tooling, reporting, and process consistency." },
 ];
 
@@ -304,7 +309,7 @@ export default function LandingPage() {
                 background: "rgba(0,229,160,0.05)",
               }}
             >
-              Sign In
+              Documentation
             </Link>
           </motion.div>
 
@@ -370,21 +375,21 @@ export default function LandingPage() {
                 className="text-xs font-semibold uppercase tracking-widest mb-3"
                 style={{ color: MINT }}
               >
-                Our Services
+                Global Business Support Tools
               </motion.p>
               <motion.h2
                 variants={fadeUp}
                 className="text-3xl sm:text-[2.6rem] mb-3 text-white"
                 style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
               >
-                Everything Digital, All in One Place
+                Enterprise Solutions for Modern Teams
               </motion.h2>
               <motion.p
                 variants={fadeUp}
                 className="text-sm sm:text-base max-w-xl mx-auto"
                 style={{ color: "rgba(255,255,255,0.52)" }}
               >
-                Premium corporate solutions built for sustainable, international business growth.
+                Scalable infrastructure, automation, and implementation support built for long-term business performance.
               </motion.p>
             </div>
 
@@ -705,15 +710,15 @@ export default function LandingPage() {
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[10px] text-base font-bold transition-all hover:opacity-90 hover:-translate-y-0.5 active:scale-95"
                   style={{ background: `linear-gradient(135deg, ${MINT}, ${MINT_DARK})`, color: "#09090d" }}
                 >
-                  Create Free Account
+                  Get Started
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <a
-                  href="mailto:Abatiemmanuel24@gmail.com"
+                  href="/login"
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[10px] text-base font-medium transition-all hover:-translate-y-0.5 active:scale-95"
                   style={{ border: `1px solid ${MINT}28`, color: MINT, background: `${MINT}08` }}
                 >
-                  Contact Us
+                  Documentation
                 </a>
               </div>
             </motion.div>
