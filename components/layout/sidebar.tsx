@@ -128,12 +128,15 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
               const Icon = item.icon;
               const active = isActive(item.href);
               return (
-                <Link
+                <button
                   key={item.href}
-                  href={item.href}
-                  onClick={onNavigate}
+                  type="button"
+                  onClick={() => {
+                    onNavigate?.();
+                    window.location.href = item.href;
+                  }}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
+                    "w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer",
                     active
                       ? "text-primary bg-primary/10 border border-primary/25"
                       : "text-indigo-100/90 hover:bg-indigo-500/15 hover:text-indigo-50"
@@ -141,7 +144,7 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
                 >
                   <Icon className="w-4 h-4 flex-shrink-0" />
                   <span className="flex-1">{item.label}</span>
-                </Link>
+                </button>
               );
             })}
           </div>
