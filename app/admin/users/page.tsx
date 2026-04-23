@@ -12,6 +12,7 @@ export default async function AdminUsersPage() {
       name: true,
       email: true,
       role: true,
+      isBanned: true,
       walletBalance: true,
       walletCurrency: true,
       isVerified: true,

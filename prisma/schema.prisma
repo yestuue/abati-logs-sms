@@ -18,6 +18,7 @@ model User {
   email          String          @unique
   password       String?
   role           Role            @default(USER)
+  isBanned       Boolean         @default(false)
   isVerified     Boolean         @default(false)
   walletBalance  Float           @default(0)
   walletCurrency Currency        @default(NGN)
@@ -40,6 +41,8 @@ model User {
   sessions       Session[]
   transactions   Transaction[]
   numbers        VirtualNumber[]
+  manualFundingRequests ManualFundingRequest[] @relation("FundingRequester")
+  reviewedFundingRequests ManualFundingRequest[] @relation("FundingReviewer")
   referredBy     User?           @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull, onUpdate: NoAction)
   referrals      User[]          @relation("UserReferrals")
 }
@@ -225,6 +228,23 @@ model ServerConfig {
   updatedAt DateTime   @default(now()) @updatedAt
 }
 
+model ManualFundingRequest {
+  id           String              @id @default(cuid())
+  userId       String
+  amount       Float
+  currency     Currency            @default(NGN)
+  proofUrl     String
+  note         String?
+  status       ManualFundingStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt   DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @default(now()) @updatedAt
+
+  user         User                @relation("FundingRequester", fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  reviewedBy   User?               @relation("FundingReviewer", fields: [reviewedById], references: [id], onDelete: SetNull, onUpdate: NoAction)
+}
+
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -276,4 +296,10 @@ enum TransactionType {
   ADMIN_CREDIT
   REFERRAL_REWARD
   REFERRAL_WELCOME_BONUS
+}
+
+enum ManualFundingStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

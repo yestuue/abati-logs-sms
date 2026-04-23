@@ -4,15 +4,15 @@ import { motion } from "framer-motion";
 import {
   Search,
   Wallet,
-  CheckCircle,
   XCircle,
   Shield,
-  User,
   Phone,
   CreditCard,
   MessageSquare,
   Loader2,
   Plus,
+  Ban,
+  Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ type UserRow = {
   name: string | null;
   email: string;
   role: string;
+  isBanned: boolean;
   walletBalance: number;
   walletCurrency: string;
   isVerified: boolean;
@@ -58,6 +59,9 @@ export function UserAudit({ users }: UserAuditProps) {
     { id: string; amount: number; currency: string; type: string; status: string; createdAt: Date }[]
   >([]);
   const [txLoading, setTxLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [deleteAllOpen, setDeleteAllOpen] = useState(false);
+  const [deleteAllConfirm, setDeleteAllConfirm] = useState("");
 
   const filtered = users.filter(
     (u) =>
@@ -105,6 +109,62 @@ export function UserAudit({ users }: UserAuditProps) {
     }
   }
 
+  async function handleToggleBan() {
+    if (!selected) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${selected.id}/ban`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to update user");
+      toast.success(data.isBanned ? "User banned successfully" : "User unbanned successfully");
+      setSelected(null);
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update ban status");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleDeleteUser() {
+    if (!selected) return;
+    if (!confirm(`Delete ${selected.email}? This cannot be undone.`)) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/${selected.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Failed to delete user");
+      toast.success("User deleted");
+      setSelected(null);
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete user");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  async function handleDeleteAllUsers() {
+    setActionLoading(true);
+    try {
+      const res = await fetch("/api/admin/users/delete-all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: deleteAllConfirm }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "Delete all failed");
+      toast.success(`Deleted ${data.deletedUsers ?? 0} users`);
+      setDeleteAllConfirm("");
+      setDeleteAllOpen(false);
+      router.refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Delete all failed");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   return (
     <>
       <Card>
@@ -120,6 +180,14 @@ export function UserAudit({ users }: UserAuditProps) {
               />
             </div>
             <Badge variant="secondary">{filtered.length} users</Badge>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={() => setDeleteAllOpen(true)}
+            >
+              <Trash2 className="w-3.5 h-3.5 mr-1" />
+              Delete All Users
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -147,6 +215,7 @@ export function UserAudit({ users }: UserAuditProps) {
                     {u.role === "ADMIN" && (
                       <Shield className="w-3 h-3 text-amber-400 flex-shrink-0" />
                     )}
+                    {u.isBanned && <Badge variant="destructive" className="text-[10px]">BANNED</Badge>}
                     {!u.isVerified && (
                       <XCircle className="w-3 h-3 text-muted-foreground flex-shrink-0" />
                     )}
@@ -194,6 +263,25 @@ export function UserAudit({ users }: UserAuditProps) {
 
           {selected && (
             <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant={selected.isBanned ? "outline" : "secondary"}
+                  onClick={handleToggleBan}
+                  disabled={actionLoading}
+                >
+                  {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ban className="w-3.5 h-3.5" />}
+                  {selected.isBanned ? "Unban User" : "Ban User"}
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteUser}
+                  disabled={actionLoading}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete User
+                </Button>
+              </div>
+
               {/* User stats */}
               <div className="grid grid-cols-3 gap-3">
                 {[
@@ -303,6 +391,35 @@ export function UserAudit({ users }: UserAuditProps) {
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelected(null)}>
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteAllOpen} onOpenChange={setDeleteAllOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete All Non-Admin Users</DialogTitle>
+            <DialogDescription>
+              This permanently removes all non-admin users. Type <strong>DELETE ALL</strong> to continue.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={deleteAllConfirm}
+            onChange={(e) => setDeleteAllConfirm(e.target.value)}
+            placeholder="Type DELETE ALL"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteAllOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAllUsers}
+              disabled={actionLoading || deleteAllConfirm !== "DELETE ALL"}
+            >
+              {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+              Confirm Delete All
             </Button>
           </DialogFooter>
         </DialogContent>

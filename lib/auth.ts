@@ -75,6 +75,7 @@ export const {
         });
 
         if (!user || !user.password) return null;
+        if (user.isBanned) return null;
 
         const valid = await bcrypt.compare(password, user.password);
         if (!valid) return null;
@@ -84,6 +85,7 @@ export const {
           name: user.name,
           email: user.email,
           role: user.role,
+          isBanned: user.isBanned,
           walletBalance: user.walletBalance,
           walletCurrency: user.walletCurrency,
         };
@@ -134,12 +136,14 @@ export const {
             id?: string;
             email?: string | null;
             role?: string;
+            isBanned?: boolean;
             walletBalance?: number;
             walletCurrency?: string;
           };
           token.id = u.id ?? (token.id as string | undefined);
           token.email = u.email ?? (token.email as string | undefined);
           token.role = u.role || "USER";
+          token.isBanned = !!u.isBanned;
           token.walletBalance = typeof u.walletBalance === "number" ? u.walletBalance : (token.walletBalance as number | undefined) ?? 0;
           token.walletCurrency = u.walletCurrency || (token.walletCurrency as string | undefined) || "NGN";
         }
@@ -152,6 +156,7 @@ export const {
             select: {
               id: true,
               role: true,
+              isBanned: true,
               walletBalance: true,
               walletCurrency: true,
             },
@@ -159,17 +164,20 @@ export const {
           if (dbUser) {
             token.id = dbUser.id;
             token.role = dbUser.role || "USER";
+            token.isBanned = !!dbUser.isBanned;
             token.walletBalance = dbUser.walletBalance ?? 0;
             token.walletCurrency = dbUser.walletCurrency || "NGN";
           }
         } else {
           token.role = (token.role as string) || "USER";
+          token.isBanned = !!token.isBanned;
           token.walletBalance = (token.walletBalance as number | undefined) ?? 0;
           token.walletCurrency = (token.walletCurrency as string | undefined) || "NGN";
         }
       } catch (error) {
         console.error("Auth JWT callback failed:", error);
         token.role = (token.role as string) || "USER";
+        token.isBanned = !!token.isBanned;
         token.walletBalance = (token.walletBalance as number | undefined) ?? 0;
         token.walletCurrency = (token.walletCurrency as string | undefined) || "NGN";
       }
@@ -179,6 +187,7 @@ export const {
       if (session?.user) {
         session.user.id = (token?.id as string) || "";
         session.user.role = (token?.role as string) || "USER";
+        session.user.isBanned = !!token?.isBanned;
         session.user.walletBalance = (token?.walletBalance as number) ?? 0;
         session.user.walletCurrency = (token?.walletCurrency as string) || "NGN";
       }

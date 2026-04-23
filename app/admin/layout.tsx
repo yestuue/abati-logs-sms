@@ -18,7 +18,9 @@ export default async function AdminLayout({
       userEmail={session.user.email ?? undefined}
       userRole={session.user.role ?? undefined}
     >
-      {children}
+      <div className="min-h-[calc(100vh-7rem)] rounded-2xl border border-indigo-500/20 bg-slate-950/40 p-4 md:p-5">
+        {children}
+      </div>
     </AppShell>
   );
 }

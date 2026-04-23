@@ -50,15 +50,20 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     request.cookies.get("__Secure-authjs.session-token")?.value;
 
   if (!sessionCookie) {
+    if (pathname.startsWith("/admin")) {
+      return NextResponse.redirect(new URL("/dashboard", request.url), 307);
+    }
     return NextResponse.redirect(new URL("/login", request.url), 307);
   }
   let sessionRole: string | undefined;
   let sessionEmail = "";
+  let isBanned = false;
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
     const role = typeof token?.role === "string" ? token.role : "";
     sessionRole = role || undefined;
     sessionEmail = typeof token?.email === "string" ? normalizeEmail(token.email) : "";
+    isBanned = !!token?.isBanned;
     console.log("Current User Role:", sessionRole);
   } catch (error) {
     console.error("Proxy session fetch failed:", error);
@@ -68,13 +73,21 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const isPrivilegedAdminEmail =
     sessionEmail === "abatiemmanuel24@gmail.com" || sessionEmail === "growthprofesors@gmail.com";
 
+  if (isBanned) {
+    return NextResponse.redirect(new URL("/login?error=banned", request.url), 307);
+  }
+
+  // Admin routes are private and never shown to non-admin users.
+  if (pathname.startsWith("/admin")) {
+    if (sessionRole === "ADMIN" || isPrivilegedAdminEmail) {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL("/dashboard", request.url), 307);
+  }
+
   // God Mode: admins can access /dashboard and /admin freely.
   if (sessionRole === "ADMIN" || isPrivilegedAdminEmail) {
     return NextResponse.next();
-  }
-
-  if (pathname.startsWith("/admin")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url), 307);
   }
 
   return NextResponse.next();

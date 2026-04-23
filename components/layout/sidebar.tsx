@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "./logo";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { Separator } from "@/components/ui/separator";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useTheme } from "@/components/theme-provider";
@@ -27,6 +27,7 @@ const userNav: NavItem[] = [
   { label: "My Vault",     href: "/dashboard/orders",       icon: Archive },
   { label: "SMS Inbox",    href: "/dashboard/sms",          icon: MessageSquare },
   { label: "Wallet",       href: "/dashboard/wallet",       icon: Wallet },
+  { label: "Fund Wallet",  href: "/dashboard/fund",         icon: BadgeDollarSign },
   { label: "Referral Program", href: "/referrals",          icon: Gift },
   { label: "Transactions", href: "/dashboard/transactions", icon: CreditCard },
   { label: "Settings",     href: "/dashboard/settings",     icon: Settings },
@@ -40,6 +41,7 @@ const adminNav: NavItem[] = [
   { label: "Services",   href: "/admin/services",    icon: MessageSquare },
   { label: "Inventory",  href: "/admin/inventory",   icon: PackageSearch },
   { label: "Users",      href: "/admin/users",       icon: Users },
+  { label: "Funding Requests", href: "/admin/funding", icon: Wallet },
   { label: "Revenue",    href: "/admin/revenue",     icon: BarChart3 },
 ];
 
@@ -51,9 +53,7 @@ interface SidebarProps {
 export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
-  const { data: session } = useSession();
   const nav = variant === "admin" ? adminNav : userNav;
-  const isAdmin = session?.user?.role === "ADMIN";
 
   const isActive = (href: string) => {
     if (href === "/dashboard" || href === "/admin") return pathname === href;
@@ -113,42 +113,6 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
           );
         })}
 
-        {variant === "user" && isAdmin && (
-          <div className="mt-4 rounded-xl border border-indigo-500/25 bg-indigo-500/10 p-2.5 space-y-1.5">
-            <p className="px-2 pb-1 text-[10px] font-bold uppercase tracking-widest text-indigo-300">
-              Admin Management
-            </p>
-            {[
-              { label: "Admin Dashboard", href: "/admin", icon: Shield },
-              { label: "User Management", href: "/admin/users", icon: Users },
-              { label: "Manage Products", href: "/admin/products", icon: PackageSearch },
-              { label: "Global Transactions", href: "/admin/transactions", icon: CreditCard },
-              { label: "Site Settings", href: "/admin/settings", icon: Settings },
-            ].map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.href);
-              return (
-                <button
-                  key={item.href}
-                  type="button"
-                  onClick={() => {
-                    onNavigate?.();
-                    window.location.href = item.href;
-                  }}
-                  className={cn(
-                    "w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150 cursor-pointer",
-                    active
-                      ? "text-primary bg-primary/10 border border-primary/25"
-                      : "text-indigo-100/90 hover:bg-indigo-500/15 hover:text-indigo-50"
-                  )}
-                >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
-                  <span className="flex-1">{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </nav>
 
       <Separator />
