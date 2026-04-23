@@ -67,25 +67,41 @@ export async function POST(req: Request) {
   const currencyRaw = formData.get("currency");
   const noteRaw = formData.get("note");
   const proofFile = formData.get("proof");
+  const proofUrlRaw = formData.get("proofUrl");
 
   const amount = Number(amountRaw);
   const currency = currencyRaw === "USD" ? "USD" : "NGN";
   const note = typeof noteRaw === "string" ? noteRaw.trim() : "";
+  const proofUrlInput = typeof proofUrlRaw === "string" ? proofUrlRaw.trim() : "";
 
   if (!Number.isFinite(amount) || amount <= 0) {
     return NextResponse.json({ error: "Enter a valid amount" }, { status: 400 });
   }
 
-  if (!(proofFile instanceof File)) {
-    return NextResponse.json({ error: "Payment proof image is required" }, { status: 400 });
-  }
-
-  if (proofFile.size > 6 * 1024 * 1024) {
-    return NextResponse.json({ error: "Image must be 6MB or less" }, { status: 400 });
-  }
-
   try {
-    const proofUrl = await uploadProofToCloudinary(proofFile);
+    let proofUrl = "";
+    if (proofFile instanceof File && proofFile.size > 0) {
+      if (proofFile.size > 6 * 1024 * 1024) {
+        return NextResponse.json({ error: "Image must be 6MB or less" }, { status: 400 });
+      }
+      proofUrl = await uploadProofToCloudinary(proofFile);
+    } else if (proofUrlInput) {
+      try {
+        const parsed = new URL(proofUrlInput);
+        if (!["http:", "https:"].includes(parsed.protocol)) {
+          return NextResponse.json({ error: "Invalid proof URL" }, { status: 400 });
+        }
+        proofUrl = parsed.toString();
+      } catch {
+        return NextResponse.json({ error: "Invalid proof URL" }, { status: 400 });
+      }
+    } else {
+      return NextResponse.json(
+        { error: "Upload payment proof image or provide proof URL" },
+        { status: 400 }
+      );
+    }
+
     const created = await prisma.manualFundingRequest.create({
       data: {
         userId: session.user.id,
@@ -102,7 +118,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("Manual funding request failed:", error);
     return NextResponse.json(
-      { error: "Could not submit funding request. Confirm Cloudinary env vars are set." },
+      { error: "Could not submit funding request." },
       { status: 500 }
     );
   }

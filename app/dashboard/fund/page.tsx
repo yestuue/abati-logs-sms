@@ -25,6 +25,7 @@ export default function FundWalletPage() {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofUrl, setProofUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState<FundingRequest[]>([]);
@@ -54,8 +55,8 @@ export default function FundWalletPage() {
       toast.error("Enter a valid amount");
       return;
     }
-    if (!proofFile) {
-      toast.error("Upload payment proof screenshot");
+    if (!proofFile && !proofUrl.trim()) {
+      toast.error("Upload proof image or provide proof URL");
       return;
     }
 
@@ -63,7 +64,12 @@ export default function FundWalletPage() {
     formData.append("amount", String(numericAmount));
     formData.append("currency", "NGN");
     formData.append("note", note);
-    formData.append("proof", proofFile);
+    if (proofFile) {
+      formData.append("proof", proofFile);
+    }
+    if (proofUrl.trim()) {
+      formData.append("proofUrl", proofUrl.trim());
+    }
 
     setSubmitting(true);
     try {
@@ -77,6 +83,7 @@ export default function FundWalletPage() {
       setAmount("");
       setNote("");
       setProofFile(null);
+      setProofUrl("");
       await loadRequests();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Submit failed");
@@ -90,7 +97,7 @@ export default function FundWalletPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Manual Funding</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Upload payment proof and wait for admin approval to credit your wallet.
+          Upload payment proof or paste proof URL, then wait for admin approval to credit your wallet.
         </p>
       </div>
 
@@ -120,9 +127,19 @@ export default function FundWalletPage() {
                   type="file"
                   accept="image/*"
                   onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
-                  required
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="proof-url">Or Proof Image URL</Label>
+              <Input
+                id="proof-url"
+                type="url"
+                value={proofUrl}
+                onChange={(e) => setProofUrl(e.target.value)}
+                placeholder="https://..."
+              />
             </div>
 
             <div className="space-y-2">
