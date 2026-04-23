@@ -22,21 +22,21 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: {
-    default: "Abati Digital — Virtual Numbers & OTP Platform",
+    default: "Abati Digital | Global Business Infrastructure",
     template: "%s | Abati Digital",
   },
   description:
-    "Get instant virtual phone numbers from USA and 50+ countries. Receive OTPs in real time.",
-  keywords: ["virtual number", "OTP", "SMS", "Abati Digital", "Nigeria"],
+    "Specialized in digital transformation, process automation, and corporate infrastructure solutions for global businesses.",
+  keywords: ["digital transformation", "process automation", "corporate infrastructure", "Abati Digital", "global business"],
   manifest: "/manifest.json",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
   },
   openGraph: {
-    title: "Abati Digital — Virtual Numbers & OTP Platform",
+    title: "Abati Digital | Global Business Infrastructure",
     description:
-      "Get instant virtual phone numbers from USA and 50+ countries. Receive OTPs in real time.",
+      "Specialized in digital transformation, process automation, and corporate infrastructure solutions for global businesses.",
     url: "https://abatidigital.com",
     siteName: "Abati Digital",
     images: [{ url: "/logo.png", width: 1200, height: 630, alt: "Abati Digital" }],
@@ -44,9 +44,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Abati Digital — Virtual Numbers & OTP Platform",
+    title: "Abati Digital | Global Business Infrastructure",
     description:
-      "Get instant virtual phone numbers from USA and 50+ countries. Receive OTPs in real time.",
+      "Specialized in digital transformation, process automation, and corporate infrastructure solutions for global businesses.",
     images: ["/logo.png"],
   },
   appleWebApp: {

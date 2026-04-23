@@ -6,9 +6,9 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo } from "@/components/layout/logo";
 import { FloatingSupport } from "@/components/landing/floating-support";
 import {
-  ArrowRight, CheckCircle, Zap, Globe, MessageSquare, Shield,
-  Star, Users, Phone, Clock, BadgeCheck, TrendingUp,
-  Send, Mail, HeartHandshake, ShoppingBag, CreditCard,
+  ArrowRight, CheckCircle, Zap, Globe, Shield,
+  Star, Users, BadgeCheck, TrendingUp,
+  Mail, Building2, Workflow, BriefcaseBusiness,
 } from "lucide-react";
 
 // ── Animation primitives ──────────────────────────────────────────────────────
@@ -73,76 +73,76 @@ function CountUpNumber({ end, suffix = "", duration = 1800 }: { end: number; suf
 
 // ── Data ───────────────────────────────────────────────────────────────────────
 const features = [
-  { icon: Zap,           title: "Instant Activation",  description: "Get a virtual number in seconds, start receiving OTPs immediately." },
-  { icon: Globe,         title: "Two Server System",   description: "Server 1 for USA (+1) numbers. Server 2 for global coverage across 50+ countries." },
-  { icon: MessageSquare, title: "Real-Time SMS Inbox", description: "OTPs and messages routed directly to your private dashboard." },
-  { icon: Shield,        title: "Secure Wallet",       description: "Fund your wallet via Paystack and use it across all purchases." },
+  { icon: Zap,    title: "Fast Deployment", description: "Launch business-ready digital infrastructure quickly with guided onboarding." },
+  { icon: Globe,  title: "Global Operations", description: "Operate across regions with scalable systems built for international growth." },
+  { icon: Shield, title: "Compliance-Ready", description: "Built with reliability, governance, and operational trust in mind." },
+  { icon: TrendingUp, title: "Enterprise Growth", description: "Support expansion with modern tooling, reporting, and process consistency." },
 ];
 
 const services = [
   {
-    icon: Phone,
-    emoji: "📱",
-    title: "Virtual Numbers",
-    description: "Receive OTPs for WhatsApp, Telegram, Google, and 50+ services instantly. USA numbers via Server 1, global numbers via Server 2.",
+    icon: Building2,
+    emoji: "🏢",
+    title: "Strategic Business Infrastructure",
+    description: "Build resilient digital foundations for teams, operations, and enterprise-level service delivery.",
     color: "#00E5A0",
-    tags: ["WhatsApp", "Telegram", "Google", "USA & Global"],
+    tags: ["Enterprise", "Infrastructure", "Scalable", "Reliable"],
   },
   {
-    icon: ShoppingBag,
-    emoji: "📲",
-    title: "Social Logs",
-    description: "High-quality Facebook, Instagram, TikTok, Twitter/X, and Gmail accounts with aged history. Phone-verified and ready to use.",
+    icon: Workflow,
+    emoji: "⚙️",
+    title: "Corporate Process Automation",
+    description: "Automate repetitive workflows, streamline approvals, and improve operational speed across departments.",
     color: "#6366f1",
-    tags: ["Facebook", "Instagram", "TikTok", "Twitter/X"],
+    tags: ["Automation", "Workflow", "Efficiency", "Operations"],
   },
   {
-    icon: CreditCard,
-    emoji: "🏦",
-    title: "Business Tools",
-    description: "Verification solutions for PayPal, Stripe, and global business platforms. Get verified accounts for your business operations.",
+    icon: BriefcaseBusiness,
+    emoji: "🌍",
+    title: "International Business Formation",
+    description: "Support for global market entry, legal setup pathways, and cross-border business structuring.",
     color: "#f59e0b",
-    tags: ["PayPal", "Stripe", "Business", "Verified"],
+    tags: ["Global Expansion", "Formation", "Structure", "Advisory"],
   },
 ];
 
 const trustStats = [
-  { icon: Users,      value: "2,500+",  label: "Active Users",   countTo: 2500,  suffix: "+" },
-  { icon: Phone,      value: "10,000+", label: "Numbers Issued", countTo: 10000, suffix: "+" },
-  { icon: BadgeCheck, value: "99.9%",   label: "Uptime",         countTo: null,  suffix: "" },
-  { icon: Clock,      value: "< 5s",    label: "OTP Delivery",   countTo: null,  suffix: "" },
+  { icon: Users,      value: "2,500+",  label: "Active Clients", countTo: 2500,  suffix: "+" },
+  { icon: Building2,  value: "10,000+", label: "Projects Supported", countTo: 10000, suffix: "+" },
+  { icon: BadgeCheck, value: "99.9%",   label: "Service Uptime", countTo: null,  suffix: "" },
+  { icon: TrendingUp, value: "24/7",    label: "Operational Support", countTo: null, suffix: "" },
 ];
 
 const testimonials = [
   {
     name: "Adebayo Okonkwo", handle: "@adebayo_ok", avatar: "AO", stars: 5,
-    text: "Abati Digital is hands down the best virtual number service I've used. Got my OTP in under 3 seconds. No stress, no lag. 100% recommend!",
-    tag: "Verified User",
+    text: "Abati Digital helped us structure our operations and deploy systems faster than expected. Clear process and reliable team.",
+    tag: "Enterprise Client",
   },
   {
     name: "Chiamaka Ezeh", handle: "@chiamaka_e", avatar: "CE", stars: 5,
-    text: "I needed a USA number for verification and Server 1 delivered instantly. The wallet top-up via Paystack was super smooth too.",
-    tag: "Server 1 User",
+    text: "The automation support reduced manual workload in our back office. We now operate with more consistency and speed.",
+    tag: "Operations Lead",
   },
   {
     name: "Tunde Fashola", handle: "@tunde_f", avatar: "TF", stars: 5,
-    text: "Been using this for 3 months now. The dashboard is clean, SMS arrives fast, and the support team responds on WhatsApp within minutes.",
-    tag: "Power User",
+    text: "Excellent implementation discipline. They translated our business needs into a clean, practical infrastructure setup.",
+    tag: "Founder",
   },
   {
     name: "Kelechi Nwosu", handle: "@kel_nw", avatar: "KN", stars: 5,
-    text: "Global numbers from Server 2 are perfect for my international accounts. The platform just works — no downtime, no excuses.",
-    tag: "Server 2 User",
+    text: "Strong global support model. We were able to move confidently into new markets with their guidance.",
+    tag: "Growth Team",
   },
   {
     name: "Fatimah Aliyu", handle: "@fatimah_a", avatar: "FA", stars: 5,
-    text: "The real-time SMS inbox is a game changer. I can see OTPs the moment they arrive. Clean UI, great service. Keep it up!",
-    tag: "Verified User",
+    text: "Professional communication and high execution quality. Timelines were respected and outcomes were measurable.",
+    tag: "Corporate Client",
   },
   {
     name: "Emeka Obi", handle: "@emeka_obi", avatar: "EO", stars: 5,
-    text: "Cheapest and most reliable virtual number service in Nigeria. I've tried others but Abati Digital is superior in every way.",
-    tag: "Long-term User",
+    text: "From planning to rollout, the project was handled with precision. Great fit for businesses that need dependable systems.",
+    tag: "Long-term Partner",
   },
 ];
 
@@ -253,7 +253,7 @@ export default function LandingPage() {
               }}
             >
               <Zap className="w-3 h-3" />
-              Your All-in-One Digital Communication &amp; Verification Hub
+              Premium Business Transformation Partner
             </span>
           </motion.div>
 
@@ -263,10 +263,10 @@ export default function LandingPage() {
             className="text-[2.4rem] sm:text-5xl lg:text-[4rem] leading-[1.12] mb-5 px-2 text-white"
             style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
           >
-            Virtual Numbers &amp; Aged Profiles
+            Global Business Infrastructure
             <br />
             <motion.span variants={fadeUp} style={{ color: MINT }}>
-              for Business
+              &amp; Digital Solutions
             </motion.span>
           </motion.h1>
 
@@ -276,8 +276,8 @@ export default function LandingPage() {
             className="text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8 px-2"
             style={{ color: "rgba(255,255,255,0.62)" }}
           >
-            Instant access to USA &amp; global virtual numbers for SMS verification. Pre-warmed profiles for marketing
-            and outreach. Fast delivery, reliable support.
+            Empowering modern enterprises with scalable digital infrastructure, process automation, and global
+            business support tools. Fast deployment, reliable results.
           </motion.p>
 
           {/* CTA buttons */}
@@ -384,7 +384,7 @@ export default function LandingPage() {
                 className="text-sm sm:text-base max-w-xl mx-auto"
                 style={{ color: "rgba(255,255,255,0.52)" }}
               >
-                From instant OTP numbers to premium social accounts — we have it all.
+                Premium corporate solutions built for sustainable, international business growth.
               </motion.p>
             </div>
 
@@ -511,7 +511,7 @@ export default function LandingPage() {
               {[
                 { step: "01", title: "Register",      desc: "Sign up free in under 60 seconds — no credit card required." },
                 { step: "02", title: "Fund Wallet",   desc: "Top up via Paystack — cards, bank transfer, or USSD." },
-                { step: "03", title: "Use Services",  desc: "Buy numbers, get OTPs, or browse premium social logs instantly." },
+                { step: "03", title: "Scale Operations",  desc: "Deploy automation and infrastructure solutions across your workflow." },
               ].map((s) => (
                 <motion.div key={s.step} variants={fadeUp} className="flex flex-col items-center">
                   <div
@@ -639,9 +639,9 @@ export default function LandingPage() {
                   <motion.div variants={staggerContainer} className="space-y-3">
                     {[
                       "Paystack-powered wallet — instant funding",
-                      "Two dedicated servers for redundancy",
-                      "WhatsApp support available 24/7",
-                      "Numbers &amp; logs delivered in under 5 seconds",
+                      "Scalable enterprise infrastructure",
+                      "Dedicated support available 24/7",
+                      "Process automation implementation",
                       "NGN &amp; USD pricing supported",
                     ].map((item) => (
                       <motion.div key={item} variants={fadeUp} className="flex items-center gap-3 text-sm text-white/80">
@@ -654,10 +654,10 @@ export default function LandingPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { icon: TrendingUp,     value: "₦500",  label: "Starting from",  sub: "Per number" },
-                    { icon: Globe,          value: "50+",   label: "Countries",      sub: "Global coverage" },
-                    { icon: Clock,          value: "< 5s",  label: "OTP Speed",      sub: "Real-time delivery" },
-                    { icon: HeartHandshake, value: "24/7",  label: "Support",        sub: "WhatsApp & chat" },
+                    { icon: TrendingUp, value: "₦500", label: "Starting from", sub: "Flexible plans" },
+                    { icon: Globe, value: "50+", label: "Global Reach", sub: "International support" },
+                    { icon: Building2, value: "99.9%", label: "Platform Reliability", sub: "Enterprise-grade" },
+                    { icon: Shield, value: "24/7", label: "Support", sub: "Dedicated assistance" },
                   ].map((s) => {
                     const Icon = s.icon;
                     return (
@@ -697,7 +697,7 @@ export default function LandingPage() {
                 Ready to Get Started?
               </h2>
               <p className="mb-8 leading-relaxed" style={{ color: "rgba(255,255,255,0.52)" }}>
-                Create your free account and get a virtual number in under a minute.
+                Create your free account and start building high-performance business infrastructure.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Link
@@ -709,13 +709,11 @@ export default function LandingPage() {
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 <a
-                  href="https://api.whatsapp.com/send?phone=2349049386397"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="mailto:Abatiemmanuel24@gmail.com"
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[10px] text-base font-medium transition-all hover:-translate-y-0.5 active:scale-95"
                   style={{ border: `1px solid ${MINT}28`, color: MINT, background: `${MINT}08` }}
                 >
-                  Chat with Us
+                  Contact Us
                 </a>
               </div>
             </motion.div>
@@ -734,12 +732,10 @@ export default function LandingPage() {
             <div className="col-span-2 sm:col-span-1">
               <Logo size="md" />
               <p className="text-sm mt-3 leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
-                Nigeria&apos;s reliable virtual number &amp; digital account platform. Delivered instantly.
+                Premium partner for digital transformation, process automation, and global business infrastructure.
               </p>
               <div className="flex items-center gap-3 mt-4">
                 {[
-                  { href: "https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL", icon: MessageSquare, label: "WhatsApp" },
-                  { href: "https://t.me/abatilogs", icon: Send, label: "Telegram" },
                   { href: "mailto:Abatiemmanuel24@gmail.com", icon: Mail, label: "Email" },
                 ].map(({ href, icon: Icon, label }) => (
                   <a
@@ -765,9 +761,9 @@ export default function LandingPage() {
               <div className="space-y-2.5">
                 {[
                   { label: "Dashboard",    href: "/dashboard" },
-                  { label: "Buy Numbers",  href: "/register" },
-                  { label: "Social Logs",  href: "/register" },
-                  { label: "SMS Inbox",    href: "/dashboard/sms" },
+                  { label: "Solutions",  href: "/register" },
+                  { label: "Funding",  href: "/dashboard/fund" },
+                  { label: "Client Portal",    href: "/login" },
                 ].map((l) => (
                   <Link
                     key={l.label}
@@ -823,9 +819,9 @@ export default function LandingPage() {
               </p>
               <div className="space-y-2.5">
                 {[
-                  { label: "WhatsApp Chat",  href: "https://api.whatsapp.com/send?phone=2349049386397" },
-                  { label: "WhatsApp Group", href: "https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL" },
-                  { label: "Telegram",       href: "https://t.me/abatilogs" },
+                  { label: "Business Inquiry",  href: "mailto:Abatiemmanuel24@gmail.com" },
+                  { label: "Partnership", href: "mailto:Abatiemmanuel24@gmail.com" },
+                  { label: "Operations Desk",       href: "mailto:Abatiemmanuel24@gmail.com" },
                   { label: "Email Us",       href: "mailto:Abatiemmanuel24@gmail.com" },
                 ].map((l) => (
                   <a
@@ -847,8 +843,8 @@ export default function LandingPage() {
             className="mb-8 max-w-3xl text-center text-[11px] leading-relaxed sm:text-left sm:text-xs mx-auto sm:mx-0"
             style={{ color: "rgba(255,255,255,0.42)" }}
           >
-            Abati Digital is an independent provider. We are not affiliated with Meta, Google, TikTok, or any social
-            platform. Users must comply with all third-party Terms of Service.
+            Abati Digital delivers corporate-grade digital infrastructure and automation services with a focus on reliability,
+            compliance, and long-term business value.
           </p>
 
           {/* Bottom bar */}
