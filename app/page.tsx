@@ -77,7 +77,7 @@ const features = [
     icon: ShieldCheck,
     title: "Secure OTP & 2FA Infrastructure for Developers",
     description:
-      "Abati Digital provides SMS verification APIs that help businesses deliver one-time passwords to their own users. Integrate reliable OTP delivery, two-factor authentication, and transactional alerts into your app or website. Built for developers, startups, and marketing agencies.",
+      "Abati Digital provides SMS verification APIs that help businesses deliver one-time passwords to their own users.",
   },
   { icon: Globe,  title: "Global Operations", description: "Operate across regions with scalable systems built for international growth." },
   { icon: Code2, title: "Developer-First Integration", description: "Connect your systems quickly with implementation-ready workflows and technical support." },
@@ -281,8 +281,8 @@ export default function LandingPage() {
             className="text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-8 px-2"
             style={{ color: "rgba(255,255,255,0.62)" }}
           >
-            Empowering modern enterprises with scalable digital infrastructure, process automation, and global
-            business support tools. Fast deployment, reliable results.
+            The most reliable SMS API for Nigerian businesses. Send OTPs, secure transactions, and deliver alerts
+            to your verified users via direct telecom routes.
           </motion.p>
 
           {/* CTA buttons */}
@@ -741,7 +741,7 @@ export default function LandingPage() {
               </p>
               <div className="flex items-center gap-3 mt-4">
                 {[
-                  { href: "mailto:Abatiemmanuel24@gmail.com", icon: Mail, label: "Email" },
+                  { href: "mailto:support@abatidigital.com", icon: Mail, label: "Email" },
                 ].map(({ href, icon: Icon, label }) => (
                   <a
                     key={label}
@@ -790,9 +790,9 @@ export default function LandingPage() {
               <div className="space-y-2.5">
                 {[
                   { label: "About", href: "#" },
-                  { label: "Contact", href: "mailto:Abatiemmanuel24@gmail.com" },
+                  { label: "Contact", href: "mailto:support@abatidigital.com" },
                   { label: "Privacy Policy", href: "/privacy" },
-                  { label: "Terms of Service", href: "/terms" },
+                  { label: "Terms & Conditions", href: "/terms" },
                 ].map((l) =>
                   l.href.startsWith("mailto:") ? (
                     <a
@@ -824,10 +824,10 @@ export default function LandingPage() {
               </p>
               <div className="space-y-2.5">
                 {[
-                  { label: "Business Inquiry",  href: "mailto:Abatiemmanuel24@gmail.com" },
-                  { label: "Partnership", href: "mailto:Abatiemmanuel24@gmail.com" },
-                  { label: "Operations Desk",       href: "mailto:Abatiemmanuel24@gmail.com" },
-                  { label: "Email Us",       href: "mailto:Abatiemmanuel24@gmail.com" },
+                  { label: "Business Inquiry", href: "mailto:support@abatidigital.com" },
+                  { label: "Partnership", href: "mailto:support@abatidigital.com" },
+                  { label: "Operations Desk", href: "mailto:support@abatidigital.com" },
+                  { label: "support@abatidigital.com", href: "mailto:support@abatidigital.com" },
                 ].map((l) => (
                   <a
                     key={l.label}
@@ -848,8 +848,8 @@ export default function LandingPage() {
             className="mb-8 max-w-3xl text-center text-[11px] leading-relaxed sm:text-left sm:text-xs mx-auto sm:mx-0"
             style={{ color: "rgba(255,255,255,0.42)" }}
           >
-            Abati Digital delivers corporate-grade digital infrastructure and automation services with a focus on reliability,
-            compliance, and long-term business value.
+            Abati Digital delivers SMS verification APIs for Nigerian businesses with a focus on delivery reliability,
+            transactional compliance, and secure user authentication.
           </p>
 
           {/* Bottom bar */}
@@ -858,14 +858,23 @@ export default function LandingPage() {
             style={{ borderTop: `1px solid ${MINT}10` }}
           >
             <p className="text-xs" style={{ color: "rgba(255,255,255,0.30)" }}>
-              © {new Date().getFullYear()} Abati Digital. All rights reserved.
+              © 2026 Abati Digital. SMS API for Nigerian businesses to send OTPs &amp; transactional alerts to their
+              own verified users.
             </p>
-            <div className="flex items-center gap-1.5 text-xs" style={{ color: MINT }}>
-              <span
-                className="w-1.5 h-1.5 rounded-full animate-pulse"
-                style={{ background: MINT }}
-              />
-              All systems operational
+            <div className="flex items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5" style={{ color: MINT }}>
+                <span
+                  className="w-1.5 h-1.5 rounded-full animate-pulse"
+                  style={{ background: MINT }}
+                />
+                All systems operational
+              </div>
+              <div
+                className="px-2.5 py-1 rounded-full border text-[11px]"
+                style={{ color: "rgba(255,255,255,0.72)", borderColor: "rgba(0,229,160,0.30)" }}
+              >
+                Powered by Flutterwave
+              </div>
             </div>
           </div>
         </div>

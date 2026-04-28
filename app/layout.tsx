@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | Abati Digital",
   },
   description:
-    "Abati Digital provides secure SMS verification APIs, 2FA infrastructure, and digital automation solutions for developers and global enterprises.",
+    "Abati Digital: The most reliable SMS API for Nigerian businesses. Send secure OTPs, transactional alerts, and 2FA via direct telecom routes.",
   keywords: ["digital transformation", "process automation", "corporate infrastructure", "Abati Digital", "global business"],
   manifest: "/manifest.json",
   icons: {
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Abati Digital | B2B SMS & Digital Infrastructure",
     description:
-      "Abati Digital provides secure SMS verification APIs, 2FA infrastructure, and digital automation solutions for developers and global enterprises.",
+      "Abati Digital: The most reliable SMS API for Nigerian businesses. Send secure OTPs, transactional alerts, and 2FA via direct telecom routes.",
     url: "https://abatidigital.com",
     siteName: "Abati Digital",
     images: [{ url: "/logo.png", width: 1200, height: 630, alt: "Abati Digital" }],
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Abati Digital | B2B SMS & Digital Infrastructure",
     description:
-      "Abati Digital provides secure SMS verification APIs, 2FA infrastructure, and digital automation solutions for developers and global enterprises.",
+      "Abati Digital: The most reliable SMS API for Nigerian businesses. Send secure OTPs, transactional alerts, and 2FA via direct telecom routes.",
     images: ["/logo.png"],
   },
   appleWebApp: {

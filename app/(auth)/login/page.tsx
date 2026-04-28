@@ -63,7 +63,7 @@ function LoginForm() {
           Sign in to Abati Digital
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Access virtual numbers, social logs, and your wallet
+          Access OTP APIs, delivery logs, and your wallet
         </p>
       </div>
 

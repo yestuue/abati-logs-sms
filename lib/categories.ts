@@ -1,5 +1,5 @@
 export const CATEGORY_GROUPS = {
-  "Social Logs": {
+  "Delivery Logs": {
     icon: "🌐",
     categories: ["Facebook", "Instagram", "Twitter/X", "TikTok", "Snapchat", "Gmail"],
   },

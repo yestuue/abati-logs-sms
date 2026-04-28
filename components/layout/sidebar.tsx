@@ -23,7 +23,7 @@ interface NavItem {
 const userNav: NavItem[] = [
   { label: "Dashboard",    href: "/dashboard",              icon: LayoutDashboard },
   { label: "Buy Number",   href: "/dashboard/buy",          icon: ShoppingCart },
-  { label: "Social Logs",  href: "/dashboard/social",       icon: ShoppingBag },
+  { label: "Delivery Logs",  href: "/dashboard/social",       icon: ShoppingBag },
   { label: "My Vault",     href: "/dashboard/orders",       icon: Archive },
   { label: "SMS Inbox",    href: "/dashboard/sms",          icon: MessageSquare },
   { label: "Wallet",       href: "/dashboard/wallet",       icon: Wallet },

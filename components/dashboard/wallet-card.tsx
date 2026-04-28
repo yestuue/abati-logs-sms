@@ -143,7 +143,7 @@ export function WalletCard({ balance, currency }: WalletCardProps) {
               >
                 <a href="/dashboard/social">
                   <ArrowUpRight className="w-4 h-4" />
-                  Social Logs
+                  Delivery Logs
                 </a>
               </Button>
             </div>
@@ -218,7 +218,7 @@ export function WalletCard({ balance, currency }: WalletCardProps) {
               <span>
                 I agree to the{" "}
                 <Link href="/terms" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-                  Terms of Service
+                  Terms &amp; Conditions
                 </Link>{" "}
                 and{" "}
                 <Link href="/privacy" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">
