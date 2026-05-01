@@ -163,7 +163,7 @@ export function WalletCard({ balance, currency }: WalletCardProps) {
           <DialogHeader>
             <DialogTitle>Fund Wallet</DialogTitle>
             <DialogDescription>
-              Add funds via Paystack — card, bank transfer, or USSD
+              Add funds via card or USSD
             </DialogDescription>
           </DialogHeader>
 
@@ -238,7 +238,7 @@ export function WalletCard({ balance, currency }: WalletCardProps) {
               disabled={loading || !amount || !fundLegalAccepted}
             >
               {loading
-                ? "Redirecting to Paystack…"
+                ? "Redirecting to payment…"
                 : `Pay ${amount ? `₦${parseFloat(amount).toLocaleString()}` : ""}`}
             </Button>
           </div>

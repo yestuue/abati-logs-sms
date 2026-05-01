@@ -1254,7 +1254,7 @@ export function ServerSelector({
                 <span>
                   I agree to the{" "}
                   <Link href="/terms" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-                    Terms of Service
+                    Terms &amp; Conditions
                   </Link>{" "}
                   and{" "}
                   <Link href="/privacy" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">

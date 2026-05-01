@@ -502,7 +502,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 text-center">
               {[
                 { step: "01", title: "Register",      desc: "Sign up free in under 60 seconds — no credit card required." },
-                { step: "02", title: "Fund Wallet",   desc: "Top up via Paystack — cards, bank transfer, or USSD." },
+                { step: "02", title: "Fund Wallet",   desc: "Top up securely with card and USSD options." },
                 { step: "03", title: "Scale Operations",  desc: "Deploy automation and infrastructure solutions across your workflow." },
               ].map((s) => (
                 <motion.div key={s.step} variants={fadeUp} className="flex flex-col items-center">

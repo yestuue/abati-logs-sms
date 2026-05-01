@@ -34,7 +34,7 @@ function formatCurrency(n: number) {
   return `₦${abs.toLocaleString()}`;
 }
 
-// ── Fund via Paystack Modal ───────────────────────────────────────────────────
+// ── Fund Wallet Modal ─────────────────────────────────────────────────────────
 function PaystackModal({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
@@ -80,9 +80,9 @@ function PaystackModal({ onClose }: { onClose: () => void }) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Plus className="w-5 h-5" style={{ color: "var(--primary)" }} />
-            Fund via Paystack
+            Fund Wallet
           </DialogTitle>
-          <DialogDescription>Card payment and USSD</DialogDescription>
+          <DialogDescription>Card and USSD payments</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -125,7 +125,7 @@ function PaystackModal({ onClose }: { onClose: () => void }) {
             <span>
               I agree to the{" "}
               <Link href="/terms" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">
-                Terms of Service
+                Terms &amp; Conditions
               </Link>{" "}
               and{" "}
               <Link href="/privacy" className="font-medium text-primary hover:underline" target="_blank" rel="noopener noreferrer">
