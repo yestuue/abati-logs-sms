@@ -3,12 +3,16 @@ import { auth } from "@/lib/auth";
 import { isPrivilegedAdminEmail } from "@/lib/admin-access";
 
 function resolvePaystackSecret(): string {
-  return (
-    process.env.PAYSTACK_SECRET_KEY ||
-    process.env.PAYSTACK_LIVE_SECRET_KEY ||
-    process.env.PAYSTACK_SECRET ||
-    ""
-  );
+  const candidates = [
+    process.env.PAYSTACK_LIVE_SECRET_KEY,
+    process.env.PAYSTACK_SECRET_KEY,
+    process.env.PAYSTACK_SECRET,
+  ].filter((v): v is string => !!v && v.trim().length > 0);
+
+  const live = candidates.find((v) => v.startsWith("sk_live_"));
+  if (live) return live;
+
+  return candidates[0] ?? "";
 }
 
 export async function GET() {

@@ -2,11 +2,21 @@ import crypto from "crypto";
 
 const PAYSTACK_BASE = "https://api.paystack.co";
 
+function resolvePaystackSecret(): string {
+  const candidates = [
+    process.env.PAYSTACK_LIVE_SECRET_KEY,
+    process.env.PAYSTACK_SECRET_KEY,
+    process.env.PAYSTACK_SECRET,
+  ].filter((v): v is string => !!v && v.trim().length > 0);
+
+  const live = candidates.find((v) => v.startsWith("sk_live_"));
+  if (live) return live;
+
+  return candidates[0] ?? "";
+}
+
 function getSecret(): string {
-  const secret =
-    process.env.PAYSTACK_SECRET_KEY ||
-    process.env.PAYSTACK_LIVE_SECRET_KEY ||
-    process.env.PAYSTACK_SECRET;
+  const secret = resolvePaystackSecret();
   if (!secret) {
     throw new Error(
       "[Paystack] Missing secret key. Set PAYSTACK_SECRET_KEY (or PAYSTACK_LIVE_SECRET_KEY)."
