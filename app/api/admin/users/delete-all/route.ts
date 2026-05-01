@@ -30,11 +30,6 @@ export async function POST(req: Request) {
     });
     await tx.sMS.deleteMany({ where: { userId: { in: ids } } });
     await tx.transaction.deleteMany({ where: { userId: { in: ids } } });
-    await tx.manualFundingRequest.deleteMany({
-      where: {
-        OR: [{ userId: { in: ids } }, { reviewedById: { in: ids } }],
-      },
-    });
     await tx.account.deleteMany({ where: { userId: { in: ids } } });
     await tx.session.deleteMany({ where: { userId: { in: ids } } });
     await tx.user.deleteMany({ where: { id: { in: ids } } });

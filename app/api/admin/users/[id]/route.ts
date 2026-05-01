@@ -34,11 +34,6 @@ export async function DELETE(
     });
     await tx.sMS.deleteMany({ where: { userId: id } });
     await tx.transaction.deleteMany({ where: { userId: id } });
-    await tx.manualFundingRequest.deleteMany({
-      where: {
-        OR: [{ userId: id }, { reviewedById: id }],
-      },
-    });
     await tx.account.deleteMany({ where: { userId: id } });
     await tx.session.deleteMany({ where: { userId: id } });
     await tx.user.delete({ where: { id } });

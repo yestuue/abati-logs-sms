@@ -27,7 +27,7 @@ const userNav: NavItem[] = [
   { label: "My Vault",     href: "/dashboard/orders",       icon: Archive },
   { label: "SMS Inbox",    href: "/dashboard/sms",          icon: MessageSquare },
   { label: "Wallet",       href: "/dashboard/wallet",       icon: Wallet },
-  { label: "Fund Wallet",  href: "/dashboard/fund",         icon: BadgeDollarSign },
+  { label: "Fund Wallet",  href: "/dashboard/wallet",       icon: BadgeDollarSign },
   { label: "Referral Program", href: "/referrals",          icon: Gift },
   { label: "Transactions", href: "/dashboard/transactions", icon: CreditCard },
   { label: "Settings",     href: "/dashboard/settings",     icon: Settings },
@@ -41,7 +41,6 @@ const adminNav: NavItem[] = [
   { label: "Services",   href: "/admin/services",    icon: MessageSquare },
   { label: "Inventory",  href: "/admin/inventory",   icon: PackageSearch },
   { label: "Users",      href: "/admin/users",       icon: Users },
-  { label: "Funding Requests", href: "/admin/funding", icon: Wallet },
   { label: "Revenue",    href: "/admin/revenue",     icon: BarChart3 },
 ];
 

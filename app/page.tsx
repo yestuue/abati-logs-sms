@@ -767,7 +767,7 @@ export default function LandingPage() {
                 {[
                   { label: "Dashboard",    href: "/dashboard" },
                   { label: "Solutions",  href: "/register" },
-                  { label: "Funding",  href: "/dashboard/fund" },
+                  { label: "Wallet",  href: "/dashboard/wallet" },
                   { label: "Client Portal",    href: "/login" },
                 ].map((l) => (
                   <Link
