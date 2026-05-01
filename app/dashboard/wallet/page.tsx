@@ -3,8 +3,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Wallet, Plus, Building2, Copy, AlertTriangle,
-  CheckCircle2, Loader2, ArrowRight, TrendingDown, TrendingUp,
+  Wallet, Plus,
+  Loader2, TrendingDown, TrendingUp,
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -32,176 +32,6 @@ const TRANSACTIONS = [
 function formatCurrency(n: number) {
   const abs = Math.abs(n);
   return `₦${abs.toLocaleString()}`;
-}
-
-// ── Virtual Account Modal ──────────────────────────────────────────────────────
-function VirtualAccountModal({ onClose }: { onClose: () => void }) {
-  const [step, setStep] = useState<"confirm" | "loading" | "details">("confirm");
-
-  async function handleConfirm() {
-    setStep("loading");
-    await new Promise((r) => setTimeout(r, 2000));
-    setStep("details");
-  }
-
-  function copy(text: string, label: string) {
-    navigator.clipboard.writeText(text).then(() => {
-      toast.success(`${label} copied to clipboard`);
-    });
-  }
-
-  const bankDetails = {
-    bank:    "Wema Bank",
-    account: "0123456789",
-    name:    "Abati Digital / Your Name",
-    ref:     "ABT-" + Math.random().toString(36).slice(2, 8).toUpperCase(),
-  };
-
-  return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Building2 className="w-5 h-5" style={{ color: "var(--primary)" }} />
-            Generate Virtual Account
-          </DialogTitle>
-          <DialogDescription>Fund your wallet via bank transfer</DialogDescription>
-        </DialogHeader>
-
-        <AnimatePresence mode="wait">
-          {step === "confirm" && (
-            <motion.div
-              key="confirm"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="space-y-4"
-            >
-              {/* Warning */}
-              <div
-                className="flex gap-3 p-3 rounded-xl"
-                style={{
-                  background: "oklch(0.80 0.15 80 / 0.10)",
-                  border: "1px solid oklch(0.80 0.15 80 / 0.30)",
-                }}
-              >
-                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-amber-400" />
-                <div className="text-xs">
-                  <p className="font-semibold text-foreground mb-1">Please note</p>
-                  <ul className="text-muted-foreground space-y-1 list-disc list-inside">
-                    <li>A <strong>1.5% transaction fee</strong> applies to all deposits.</li>
-                    <li>Minimum deposit: <strong>₦500</strong></li>
-                    <li>Account is unique to your profile — do not share it.</li>
-                    <li>Transfers reflect within <strong>2–5 minutes</strong>.</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <Button variant="outline" className="flex-1" onClick={onClose}>
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1 font-semibold"
-                  style={{
-                    background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))",
-                    color: "#fff",
-                  }}
-                  onClick={handleConfirm}
-                >
-                  I Understand — Continue
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </motion.div>
-          )}
-
-          {step === "loading" && (
-            <motion.div
-              key="loading"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="py-10 flex flex-col items-center gap-4"
-            >
-              <div className="relative">
-                <div
-                  className="w-14 h-14 rounded-full border-4 animate-spin"
-                  style={{
-                    borderColor: "oklch(0.68 0.22 278 / 0.20)",
-                    borderTopColor: "oklch(0.68 0.22 278)",
-                  }}
-                />
-                <Building2
-                  className="absolute inset-0 m-auto w-5 h-5"
-                  style={{ color: "var(--primary)" }}
-                />
-              </div>
-              <div className="text-center">
-                <p className="font-semibold text-foreground">Generating your account…</p>
-                <p className="text-xs text-muted-foreground mt-1">This only takes a moment</p>
-              </div>
-            </motion.div>
-          )}
-
-          {step === "details" && (
-            <motion.div
-              key="details"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-3"
-            >
-              <div className="flex items-center gap-2 text-sm font-medium" style={{ color: "oklch(0.65 0.18 150)" }}>
-                <CheckCircle2 className="w-4 h-4" />
-                Account generated successfully
-              </div>
-
-              {/* Bank details */}
-              {[
-                { label: "Bank",           value: bankDetails.bank },
-                { label: "Account Number", value: bankDetails.account },
-                { label: "Account Name",   value: bankDetails.name },
-                { label: "Reference",      value: bankDetails.ref },
-              ].map(({ label, value }) => (
-                <div
-                  key={label}
-                  className="flex items-center justify-between p-3 rounded-xl"
-                  style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
-                >
-                  <div>
-                    <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wide">{label}</p>
-                    <p className="text-sm font-semibold text-foreground mt-0.5">{value}</p>
-                  </div>
-                  <button
-                    onClick={() => copy(value, label)}
-                    className="p-1.5 rounded-lg transition-all hover:bg-accent"
-                    title="Copy"
-                  >
-                    <Copy className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
-                  </button>
-                </div>
-              ))}
-
-              <p className="text-[11px] text-muted-foreground text-center">
-                Transfer to this account to fund your wallet. 1.5% fee applies.
-              </p>
-
-              <Button
-                className="w-full font-semibold"
-                style={{
-                  background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))",
-                  color: "#fff",
-                }}
-                onClick={onClose}
-              >
-                Done
-              </Button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </DialogContent>
-    </Dialog>
-  );
 }
 
 // ── Fund via Paystack Modal ───────────────────────────────────────────────────
@@ -252,7 +82,7 @@ function PaystackModal({ onClose }: { onClose: () => void }) {
             <Plus className="w-5 h-5" style={{ color: "var(--primary)" }} />
             Fund via Paystack
           </DialogTitle>
-          <DialogDescription>Card, bank transfer, or USSD</DialogDescription>
+          <DialogDescription>Card payment and USSD</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -320,7 +150,6 @@ function PaystackModal({ onClose }: { onClose: () => void }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function WalletPage() {
-  const [showVA, setShowVA] = useState(false);
   const [showPaystack, setShowPaystack] = useState(false);
 
   const totalSpent = TRANSACTIONS.filter((t) => t.type === "debit").reduce((s, t) => s + Math.abs(t.amount), 0);
@@ -388,15 +217,6 @@ export default function WalletPage() {
                 <Plus className="w-4 h-4" />
                 Fund via Card
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-white/15 text-white/70 hover:bg-white/10 hover:text-white font-semibold"
-                onClick={() => setShowVA(true)}
-              >
-                <Building2 className="w-4 h-4" />
-                Bank Transfer
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -425,33 +245,6 @@ export default function WalletPage() {
           </Card>
         ))}
       </div>
-
-      {/* How to fund */}
-      <Card style={{ border: "1px solid var(--border)" }}>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Building2 className="w-4 h-4" style={{ color: "var(--primary)" }} />
-            How to Fund via Bank Transfer
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {[
-            { step: "1", text: 'Click "Bank Transfer" above to generate your dedicated virtual account.' },
-            { step: "2", text: "Transfer any amount from your bank app or USSD to the generated account number." },
-            { step: "3", text: "Your balance will update within 2–5 minutes. A 1.5% fee is deducted." },
-          ].map(({ step, text }) => (
-            <div key={step} className="flex items-start gap-3">
-              <div
-                className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold"
-                style={{ background: "oklch(0.68 0.22 278 / 0.15)", color: "var(--primary)" }}
-              >
-                {step}
-              </div>
-              <p className="text-sm text-muted-foreground">{text}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
 
       {/* Recent transactions */}
       <Card style={{ border: "1px solid var(--border)" }}>
@@ -501,7 +294,6 @@ export default function WalletPage() {
       </Card>
 
       {/* Modals */}
-      {showVA && <VirtualAccountModal onClose={() => setShowVA(false)} />}
       {showPaystack && <PaystackModal onClose={() => setShowPaystack(false)} />}
     </div>
   );
