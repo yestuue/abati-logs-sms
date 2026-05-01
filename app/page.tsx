@@ -298,19 +298,6 @@ export default function LandingPage() {
               Create Free Account
               <ArrowRight className="w-4 h-4" />
             </Link>
-            {/* Glass-morphism Sign In */}
-            <Link
-              href="/login"
-              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-[10px] text-[15px] font-medium transition-all hover:-translate-y-0.5 active:scale-95"
-              style={{
-                border: `1px solid rgba(0,229,160,0.30)`,
-                color: "rgba(255,255,255,0.75)",
-                backdropFilter: "blur(8px)",
-                background: "rgba(0,229,160,0.05)",
-              }}
-            >
-              Documentation
-            </Link>
           </motion.div>
 
           {/* Trust badges */}
@@ -713,13 +700,6 @@ export default function LandingPage() {
                   Get Started
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <a
-                  href="/login"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[10px] text-base font-medium transition-all hover:-translate-y-0.5 active:scale-95"
-                  style={{ border: `1px solid ${MINT}28`, color: MINT, background: `${MINT}08` }}
-                >
-                  Documentation
-                </a>
               </div>
             </motion.div>
           </InView>
