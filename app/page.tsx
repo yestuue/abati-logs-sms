@@ -268,10 +268,10 @@ export default function LandingPage() {
             className="text-[2.4rem] sm:text-5xl lg:text-[4rem] leading-[1.12] mb-5 px-2 text-white"
             style={{ fontFamily: "var(--font-heading)", fontWeight: 800 }}
           >
-            Global Business Infrastructure
+            Reliable SMS API Infrastructure
             <br />
             <motion.span variants={fadeUp} style={{ color: MINT }}>
-              &amp; Digital Solutions
+              for Nigerian Businesses
             </motion.span>
           </motion.h1>
 

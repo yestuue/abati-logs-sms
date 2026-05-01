@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
-import { normalizeEmail } from "@/lib/admin-access";
+import { isPrivilegedAdminEmail, normalizeEmail } from "@/lib/admin-access";
 
 /** Credentials + JWT: sign-in reads User from Prisma only. Supabase Auth is not used. */
 import bcrypt from "bcryptjs";
@@ -167,6 +167,9 @@ export const {
             token.isBanned = !!dbUser.isBanned;
             token.walletBalance = dbUser.walletBalance ?? 0;
             token.walletCurrency = dbUser.walletCurrency || "NGN";
+          }
+          if (isPrivilegedAdminEmail(email)) {
+            token.role = "ADMIN";
           }
         } else {
           token.role = (token.role as string) || "USER";

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { normalizeEmail } from "@/lib/admin-access";
+import { isPrivilegedAdminEmail, normalizeEmail } from "@/lib/admin-access";
 
 const PUBLIC_PREFIXES = ["/", "/login", "/register", "/api/auth", "/terms", "/privacy", "/_next", "/images"];
 
@@ -70,8 +70,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL("/login?error=session", request.url), 307);
   }
 
-  const isPrivilegedAdminEmail =
-    sessionEmail === "abatiemmanuel24@gmail.com" || sessionEmail === "growthprofesors@gmail.com";
+  const hasPrivilegedAdminEmail = isPrivilegedAdminEmail(sessionEmail);
 
   if (isBanned) {
     return NextResponse.redirect(new URL("/login?error=banned", request.url), 307);
@@ -79,14 +78,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // Admin routes are private and never shown to non-admin users.
   if (pathname.startsWith("/admin")) {
-    if (sessionRole === "ADMIN" || isPrivilegedAdminEmail) {
+    if (sessionRole === "ADMIN" || hasPrivilegedAdminEmail) {
       return NextResponse.next();
     }
     return NextResponse.redirect(new URL("/dashboard", request.url), 307);
   }
 
   // God Mode: admins can access /dashboard and /admin freely.
-  if (sessionRole === "ADMIN" || isPrivilegedAdminEmail) {
+  if (sessionRole === "ADMIN" || hasPrivilegedAdminEmail) {
     return NextResponse.next();
   }
 
