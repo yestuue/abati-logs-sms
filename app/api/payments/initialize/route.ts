@@ -17,6 +17,30 @@ const schema = z.object({
   serviceKey: z.string().max(120).optional(),
 });
 
+function normalizeInitError(message: string): { error: string; status: number } {
+  if (!message) return { error: "Payment initialization failed. Please try again.", status: 500 };
+
+  if (message.includes("[Paystack] Missing secret key")) {
+    return {
+      error: "Payment gateway is not configured yet. Please contact support.",
+      status: 500,
+    };
+  }
+
+  if (message.includes("[Paystack] Production is using a test secret key")) {
+    return {
+      error: "Payment gateway is in test mode on production. Please contact support.",
+      status: 500,
+    };
+  }
+
+  if (message.toLowerCase().includes("invalid key")) {
+    return { error: "Payment gateway key is invalid. Please contact support.", status: 502 };
+  }
+
+  return { error: "Payment initialization failed. Please try again.", status: 500 };
+}
+
 export async function POST(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -162,12 +186,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: paystackRes.data.authorization_url, reference });
   } catch (err) {
-    // Rule 4: detailed error log
     const error = err as { response?: { data?: unknown }; message?: string };
-    console.error("PAYSTACK_INIT_ERROR:", error.response?.data || error.message || err);
+    const message = error.message ?? "";
+    const normalized = normalizeInitError(message);
+    console.error("PAYSTACK_INIT_ERROR:", error.response?.data || message || err);
     return NextResponse.json(
-      { error: "Server error", detail: error.message },
-      { status: 500 }
+      { error: normalized.error, detail: message || undefined },
+      { status: normalized.status }
     );
   }
 }

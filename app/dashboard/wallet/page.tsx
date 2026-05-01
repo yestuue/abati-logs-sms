@@ -227,7 +227,10 @@ function PaystackModal({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({ amount: amt, type: "WALLET_TOPUP" }),
       });
       const data = await res.json();
-      if (!res.ok || !data.url) { toast.error(data.error ?? "Payment failed"); return; }
+      if (!res.ok || !data.url) {
+        toast.error(data.error ?? "Payment failed");
+        return;
+      }
       window.location.href = data.url;
     } catch {
       toast.error("Network error. Try again.");
