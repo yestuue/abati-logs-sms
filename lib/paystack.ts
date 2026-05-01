@@ -3,9 +3,22 @@ import crypto from "crypto";
 const PAYSTACK_BASE = "https://api.paystack.co";
 
 function getSecret(): string {
-  const secret = process.env.PAYSTACK_SECRET_KEY;
+  const secret =
+    process.env.PAYSTACK_SECRET_KEY ||
+    process.env.PAYSTACK_LIVE_SECRET_KEY ||
+    process.env.PAYSTACK_SECRET;
   if (!secret) {
-    throw new Error("[Paystack] PAYSTACK_SECRET_KEY is not set in environment variables.");
+    throw new Error(
+      "[Paystack] Missing secret key. Set PAYSTACK_SECRET_KEY (or PAYSTACK_LIVE_SECRET_KEY)."
+    );
+  }
+
+  const isProd = process.env.NODE_ENV === "production";
+  const allowTestInProd = process.env.ALLOW_PAYSTACK_TEST_IN_PROD === "true";
+  if (isProd && !allowTestInProd && secret.startsWith("sk_test_")) {
+    throw new Error(
+      "[Paystack] Production is using a test secret key (sk_test_*). Use a live key (sk_live_*)."
+    );
   }
   return secret;
 }
