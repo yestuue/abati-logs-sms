@@ -24,6 +24,20 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { nextUrl } = request;
   const { pathname } = nextUrl;
 
+  // Redirect legacy static dashboard/admin pages to the live app routes.
+  if (pathname === "/dashboard.html" || pathname === "/admin.html") {
+    const sessionCookie =
+      request.cookies.get("authjs.session-token")?.value ||
+      request.cookies.get("__Secure-authjs.session-token")?.value;
+
+    if (!sessionCookie) {
+      return NextResponse.redirect(new URL("/login", request.url), 307);
+    }
+
+    const target = pathname === "/admin.html" ? "/admin" : "/dashboard";
+    return NextResponse.redirect(new URL(target, request.url), 307);
+  }
+
   if (nextUrl.host === "www.abatidigital.com") {
     const redirectUrl = new URL(request.url);
     redirectUrl.protocol = "https:";
