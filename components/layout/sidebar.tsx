@@ -46,10 +46,11 @@ const adminNav: NavItem[] = [
 
 interface SidebarProps {
   variant?: "user" | "admin";
+  canAccessAdmin?: boolean;
   onNavigate?: () => void;
 }
 
-export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
+export function Sidebar({ variant = "user", canAccessAdmin = false, onNavigate }: SidebarProps) {
   const pathname = usePathname();
   const { theme } = useTheme();
   const nav = variant === "admin" ? adminNav : userNav;
@@ -137,6 +138,16 @@ export function Sidebar({ variant = "user", onNavigate }: SidebarProps) {
           >
             <LayoutDashboard className="w-4 h-4" />
             User Dashboard
+          </Link>
+        )}
+        {variant === "user" && canAccessAdmin && (
+          <Link
+            href="/admin"
+            onClick={onNavigate}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
+          >
+            <Shield className="w-4 h-4" />
+            Admin Panel
           </Link>
         )}
 

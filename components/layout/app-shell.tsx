@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { Sidebar } from "./sidebar";
 import { AppHeader } from "./app-header";
+import { isPrivilegedAdminEmail } from "@/lib/admin-access";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -27,6 +28,8 @@ export function AppShell({
   verifyBanner,
 }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const canAccessAdmin =
+    userRole === "ADMIN" || isPrivilegedAdminEmail(userEmail);
 
   // Close drawer on route change / escape
   useEffect(() => {
@@ -48,7 +51,7 @@ export function AppShell({
     <div className="min-h-screen" style={{ background: "var(--background)" }}>
       {/* ── Desktop Sidebar ──────────────────────────────────────────────── */}
       <div className="hidden lg:flex flex-col w-[240px] h-screen fixed left-0 top-0 z-30">
-        <Sidebar variant={variant} />
+        <Sidebar variant={variant} canAccessAdmin={canAccessAdmin} />
       </div>
 
       {/* ── Mobile Drawer Overlay ────────────────────────────────────────── */}
@@ -84,7 +87,11 @@ export function AppShell({
               >
                 <X className="w-4 h-4" />
               </button>
-              <Sidebar variant={variant} onNavigate={() => setDrawerOpen(false)} />
+              <Sidebar
+                variant={variant}
+                canAccessAdmin={canAccessAdmin}
+                onNavigate={() => setDrawerOpen(false)}
+              />
             </motion.div>
           </>
         )}
