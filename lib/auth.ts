@@ -149,7 +149,10 @@ export const {
         }
 
         // Keep token in sync with DB so dashboard has required fields.
+        // Prefer email lookup; fall back to id lookup for older tokens missing email.
         const email = typeof token.email === "string" ? normalizeEmail(token.email) : "";
+        const tokenId = typeof token.id === "string" ? token.id : "";
+
         if (email) {
           const dbUser = await prisma.user.findUnique({
             where: { email },
@@ -171,6 +174,29 @@ export const {
           if (isPrivilegedAdminEmail(email)) {
             token.role = "ADMIN";
           }
+        } else if (tokenId) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: tokenId },
+            select: {
+              id: true,
+              email: true,
+              role: true,
+              isBanned: true,
+              walletBalance: true,
+              walletCurrency: true,
+            },
+          });
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.email = dbUser.email;
+            token.role = dbUser.role || "USER";
+            token.isBanned = !!dbUser.isBanned;
+            token.walletBalance = dbUser.walletBalance ?? 0;
+            token.walletCurrency = dbUser.walletCurrency || "NGN";
+            if (isPrivilegedAdminEmail(dbUser.email)) {
+              token.role = "ADMIN";
+            }
+          }
         } else {
           token.role = (token.role as string) || "USER";
           token.isBanned = !!token.isBanned;
@@ -190,6 +216,9 @@ export const {
       if (session?.user) {
         session.user.id = (token?.id as string) || "";
         session.user.role = (token?.role as string) || "USER";
+        if (isPrivilegedAdminEmail(session.user.email)) {
+          session.user.role = "ADMIN";
+        }
         session.user.isBanned = !!token?.isBanned;
         session.user.walletBalance = (token?.walletBalance as number) ?? 0;
         session.user.walletCurrency = (token?.walletCurrency as string) || "NGN";
