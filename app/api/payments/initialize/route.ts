@@ -20,7 +20,7 @@ const schema = z.object({
 function normalizeInitError(message: string): { error: string; status: number } {
   if (!message) return { error: "Payment initialization failed. Please try again.", status: 500 };
 
-  if (message.includes("Missing secret key") || message.includes("FLUTTERWAVE_SECRET_KEY")) {
+  if (message.includes("Missing secret key") || message.includes("FLUTTERWAVE_SECRET_KEY") || message.includes("FLW_SECRET_KEY")) {
     return {
       error: "Payment gateway is not configured yet. Please contact support.",
       status: 500,

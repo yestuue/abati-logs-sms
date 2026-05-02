@@ -45,7 +45,7 @@ async function resolveUserIdFromTxRef(txRef: string): Promise<string | null> {
 }
 
 export async function POST(req: Request) {
-  const expectedHash = process.env.FLUTTERWAVE_SECRET_HASH;
+  const expectedHash = process.env.FLW_SECRET_HASH || process.env.FLUTTERWAVE_SECRET_HASH;
   const incomingHash = req.headers.get("verif-hash");
 
   if (!expectedHash || incomingHash !== expectedHash) {

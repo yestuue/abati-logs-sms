@@ -3,9 +3,9 @@ import crypto from "crypto";
 const FLUTTERWAVE_BASE = "https://api.flutterwave.com/v3";
 
 function getSecret(): string {
-  const secret = process.env.FLUTTERWAVE_SECRET_KEY;
+  const secret = process.env.FLW_SECRET_KEY || process.env.FLUTTERWAVE_SECRET_KEY;
   if (!secret) {
-    throw new Error("Missing secret key. Set FLUTTERWAVE_SECRET_KEY.");
+    throw new Error("Missing secret key. Set FLW_SECRET_KEY.");
   }
   return secret;
 }
@@ -45,7 +45,7 @@ export async function initializeFlutterwavePayment(params: {
 }
 
 export function verifyFlutterwaveSignature(body: string, signature: string): boolean {
-  const secretHash = process.env.FLUTTERWAVE_SECRET_HASH;
+  const secretHash = process.env.FLW_SECRET_HASH || process.env.FLUTTERWAVE_SECRET_HASH;
   if (!secretHash) return false;
   return signature === secretHash;
 }

@@ -130,24 +130,40 @@ export function Sidebar({ variant = "user", canAccessAdmin = false, onNavigate }
           <ThemeToggle />
         </div>
 
-        {variant === "admin" && (
+        {/* Admin Mode Toggle */}
+        {canAccessAdmin && (
           <Link
-            href="/dashboard"
+            href={variant === "admin" ? "/dashboard" : "/admin"}
             onClick={onNavigate}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
+            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all group"
+            style={{ 
+              background: variant === "admin" ? "oklch(0.68 0.22 278 / 0.15)" : "var(--accent)",
+              border: variant === "admin" ? "1px solid oklch(0.68 0.22 278 / 0.30)" : "1px solid transparent"
+            }}
           >
-            <LayoutDashboard className="w-4 h-4" />
-            User Dashboard
-          </Link>
-        )}
-        {variant === "user" && canAccessAdmin && (
-          <Link
-            href="/admin"
-            onClick={onNavigate}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-all"
-          >
-            <Shield className="w-4 h-4" />
-            Admin Panel
+            <div className="flex items-center gap-3">
+              <Shield className={cn(
+                "w-4 h-4 transition-colors",
+                variant === "admin" ? "text-primary" : "text-muted-foreground"
+              )} />
+              <span className={variant === "admin" ? "text-primary" : "text-muted-foreground"}>
+                Admin Mode
+              </span>
+            </div>
+            <div 
+              className={cn(
+                "w-8 h-4 rounded-full relative transition-all duration-300",
+                variant === "admin" ? "bg-primary" : "bg-muted-foreground/30"
+              )}
+            >
+              <div 
+                className={cn(
+                  "absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all duration-300 shadow-sm",
+                  variant === "admin" ? "left-4.5" : "left-0.5"
+                )}
+                style={{ left: variant === "admin" ? "calc(100% - 14px)" : "2px" }}
+              />
+            </div>
           </Link>
         )}
 
