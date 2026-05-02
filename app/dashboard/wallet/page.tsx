@@ -16,18 +16,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
 
-// ── Simulated data ─────────────────────────────────────────────────────────────
-const BALANCE = 12500;
-const CURRENCY = "NGN";
+import { useSession } from "next-auth/react";
 
-const TRANSACTIONS = [
-  { id: "tx1", type: "credit", label: "Wallet Top-up",       amount: 5000,  date: "Apr 2, 2026",   status: "success" },
-  { id: "tx2", type: "debit",  label: "Buy USA Number",      amount: -800,  date: "Apr 1, 2026",   status: "success" },
-  { id: "tx3", type: "debit",  label: "Instagram Account",   amount: -1800, date: "Mar 30, 2026",  status: "success" },
-  { id: "tx4", type: "credit", label: "Wallet Top-up",       amount: 10000, date: "Mar 28, 2026",  status: "success" },
-  { id: "tx5", type: "debit",  label: "Buy France Number",   amount: -550,  date: "Mar 27, 2026",  status: "success" },
-  { id: "tx6", type: "debit",  label: "TikTok Account",      amount: -2200, date: "Mar 26, 2026",  status: "success" },
-];
+// TRANSACTIONS will be empty for now or fetched from an API if implemented.
+// For now, let's just make the balance real.
+
 
 function formatCurrency(n: number) {
   const abs = Math.abs(n);
@@ -35,7 +28,7 @@ function formatCurrency(n: number) {
 }
 
 // ── Fund Wallet Modal ─────────────────────────────────────────────────────────
-function PaystackModal({ onClose }: { onClose: () => void }) {
+function FundWalletModal({ onClose }: { onClose: () => void }) {
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [fundLegalAccepted, setFundLegalAccepted] = useState(false);
@@ -150,10 +143,26 @@ function PaystackModal({ onClose }: { onClose: () => void }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function WalletPage() {
-  const [showPaystack, setShowPaystack] = useState(false);
+  const { data: session, status } = useSession();
+  const [showFundWallet, setShowFundWallet] = useState(false);
 
-  const totalSpent = TRANSACTIONS.filter((t) => t.type === "debit").reduce((s, t) => s + Math.abs(t.amount), 0);
-  const totalFunded = TRANSACTIONS.filter((t) => t.type === "credit").reduce((s, t) => s + t.amount, 0);
+  if (status === "loading") {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const balance = session?.user?.walletBalance ?? 0;
+  const currency = session?.user?.walletCurrency ?? "NGN";
+  
+  // Note: Transaction history is usually fetched from /api/user/transactions
+  // For now we set it to empty since we removed the mock data
+  const transactions: any[] = []; 
+
+  const totalSpent = transactions.filter((t) => t.type === "debit").reduce((s, t) => s + Math.abs(t.amount), 0);
+  const totalFunded = transactions.filter((t) => t.type === "credit").reduce((s, t) => s + t.amount, 0);
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -192,13 +201,16 @@ export default function WalletPage() {
                   </span>
                 </div>
                 <p className="text-4xl font-extrabold text-white" style={{ fontFamily: "var(--font-heading)" }}>
-                  ₦{BALANCE.toLocaleString()}
+                  ₦{balance.toLocaleString()}
                 </p>
                 <p className="text-xs mt-1.5" style={{ color: "oklch(0.68 0.12 278)" }}>
-                  {CURRENCY} · Available for services
+                  {currency} · Available for services
                 </p>
               </div>
-              <button className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all">
+              <button 
+                onClick={() => window.location.reload()}
+                className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all"
+              >
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
@@ -212,7 +224,7 @@ export default function WalletPage() {
                   color: "#fff",
                   boxShadow: "0 4px 14px oklch(0.68 0.22 278 / 0.40)",
                 }}
-                onClick={() => setShowPaystack(true)}
+                onClick={() => setShowFundWallet(true)}
               >
                 <Plus className="w-4 h-4" />
                 Fund via Card
@@ -251,50 +263,57 @@ export default function WalletPage() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base">Recent Transactions</CardTitle>
-            <a href="/dashboard/transactions" className="text-xs" style={{ color: "var(--primary)" }}>
+            <Link href="/dashboard/transactions" className="text-xs" style={{ color: "var(--primary)" }}>
               View all →
-            </a>
+            </Link>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border/40">
-            {TRANSACTIONS.map((tx) => (
-              <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
-                <div
-                  className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
-                  style={{
-                    background: tx.type === "credit"
-                      ? "oklch(0.62 0.18 150 / 0.14)"
-                      : "oklch(0.60 0.20 340 / 0.14)",
-                  }}
-                >
-                  {tx.type === "credit"
-                    ? <TrendingUp className="w-4 h-4" style={{ color: "oklch(0.62 0.18 150)" }} />
-                    : <TrendingDown className="w-4 h-4" style={{ color: "oklch(0.60 0.20 340)" }} />
-                  }
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">{tx.label}</p>
-                  <p className="text-xs text-muted-foreground">{tx.date}</p>
-                </div>
-                <p
-                  className="text-sm font-bold flex-shrink-0"
-                  style={{
-                    color: tx.type === "credit"
-                      ? "oklch(0.62 0.18 150)"
-                      : "oklch(0.60 0.20 340)",
-                  }}
-                >
-                  {tx.type === "credit" ? "+" : "-"}{formatCurrency(tx.amount)}
-                </p>
+            {transactions.length === 0 ? (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                No transactions found
               </div>
-            ))}
+            ) : (
+              transactions.map((tx) => (
+                <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                    style={{
+                      background: tx.type === "credit"
+                        ? "oklch(0.62 0.18 150 / 0.14)"
+                        : "oklch(0.60 0.20 340 / 0.14)",
+                    }}
+                  >
+                    {tx.type === "credit"
+                      ? <TrendingUp className="w-4 h-4" style={{ color: "oklch(0.62 0.18 150)" }} />
+                      : <TrendingDown className="w-4 h-4" style={{ color: "oklch(0.60 0.20 340)" }} />
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{tx.label}</p>
+                    <p className="text-xs text-muted-foreground">{tx.date}</p>
+                  </div>
+                  <p
+                    className="text-sm font-bold flex-shrink-0"
+                    style={{
+                      color: tx.type === "credit"
+                        ? "oklch(0.62 0.18 150)"
+                        : "oklch(0.60 0.20 340)",
+                    }}
+                  >
+                    {tx.type === "credit" ? "+" : "-"}{formatCurrency(tx.amount)}
+                  </p>
+                </div>
+              ))
+            )}
           </div>
         </CardContent>
       </Card>
 
       {/* Modals */}
-      {showPaystack && <PaystackModal onClose={() => setShowPaystack(false)} />}
+      {showFundWallet && <FundWalletModal onClose={() => setShowFundWallet(false)} />}
     </div>
   );
 }
+

@@ -136,7 +136,7 @@ export function AppHeader({
               </Link>
             </DropdownMenuItem>
 
-            {userRole === "ADMIN" && (
+            {(userRole === "ADMIN" || isPrivilegedAdminEmail(userEmail)) && (
               <DropdownMenuItem asChild>
                 <Link href="/admin">
                   <Shield className="w-4 h-4" />

@@ -73,7 +73,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   let sessionEmail = "";
   let isBanned = false;
   try {
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+    const authSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
+    const token = await getToken({ req: request, secret: authSecret });
     const role = typeof token?.role === "string" ? token.role : "";
     sessionRole = role || undefined;
     sessionEmail = typeof token?.email === "string" ? normalizeEmail(token.email) : "";

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { initializeTransaction } from "@/lib/paystack";
+import { initializeFlutterwavePayment } from "@/lib/flutterwave";
 import { finalNumberPurchasePriceNGN, normalizePurchaseCarrier } from "@/lib/number-purchase-price";
 import { generateReference } from "@/lib/utils";
 import { grantReferralPurchaseCommissionInTx } from "@/lib/referral-reward";
@@ -20,16 +20,9 @@ const schema = z.object({
 function normalizeInitError(message: string): { error: string; status: number } {
   if (!message) return { error: "Payment initialization failed. Please try again.", status: 500 };
 
-  if (message.includes("[Paystack] Missing secret key")) {
+  if (message.includes("Missing secret key") || message.includes("FLUTTERWAVE_SECRET_KEY")) {
     return {
       error: "Payment gateway is not configured yet. Please contact support.",
-      status: 500,
-    };
-  }
-
-  if (message.includes("[Paystack] Production is using a test secret key")) {
-    return {
-      error: "Payment gateway is in test mode on production. Please contact support.",
       status: 500,
     };
   }
@@ -43,7 +36,7 @@ function normalizeInitError(message: string): { error: string; status: number } 
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session || !session.user?.email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const body = await req.json();
@@ -56,7 +49,7 @@ export async function POST(req: Request) {
     const userId = session.user.id;
     const email = session.user.email;
 
-    // ── NUMBER_PURCHASE: debit wallet directly, no Paystack ──────────────────
+    // ── NUMBER_PURCHASE: debit wallet directly ──────────────────
     if (type === "NUMBER_PURCHASE" && numberId) {
       const [user, number] = await Promise.all([
         prisma.user.findUnique({ where: { id: userId }, select: { walletBalance: true } }),
@@ -145,30 +138,32 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, number: number.number, expiresAt });
     }
 
-    // ── WALLET_TOPUP: initialize Paystack transaction ─────────────────────────
+    // ── WALLET_TOPUP: initialize Flutterwave transaction ─────────────────────────
     const reference = generateReference();
 
-    // Rule 1: amount in kobo (NGN * 100)
-    const amountKobo = Math.round(amount * 100);
+    // Flutterwave uses the actual amount, not kobo/cents
+    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/wallet`;
 
-    // Rule 3: use PAYSTACK_CALLBACK_URL env var, fall back to derived URL
-    const callbackUrl =
-      process.env.PAYSTACK_CALLBACK_URL ??
-      `${process.env.NEXTAUTH_URL}/api/payments/verify?reference=${reference}`;
-
-    const paystackRes = await initializeTransaction({
-      email,
-      amount: amountKobo,
-      currency: "NGN", // Rule 2: explicit currency
-      reference,
-      callback_url: callbackUrl,
-      metadata: { userId, type, amount },
+    const paymentRes = await initializeFlutterwavePayment({
+      tx_ref: reference,
+      amount: amount,
+      currency: "NGN",
+      redirect_url: callbackUrl,
+      customer: {
+        email: email,
+        name: session.user.name || email.split("@")[0],
+      },
+      customizations: {
+        title: process.env.NEXT_PUBLIC_APP_NAME || "Wallet Topup",
+        description: `Funding wallet with ₦${amount.toLocaleString()}`,
+        logo: `${process.env.NEXT_PUBLIC_APP_URL}/logo.png`,
+      },
     });
 
-    if (!paystackRes.status) {
-      console.error("[payments/initialize] Paystack rejected:", paystackRes.message);
+    if (paymentRes.status !== "success") {
+      console.error("[payments/initialize] Flutterwave rejected:", paymentRes.message);
       return NextResponse.json(
-        { error: "Payment initialization failed", detail: paystackRes.message },
+        { error: "Payment initialization failed", detail: paymentRes.message },
         { status: 502 }
       );
     }
@@ -181,18 +176,22 @@ export async function POST(req: Request) {
         reference,
         status: "PENDING",
         type: "WALLET_TOPUP",
+        metadata: {
+          provider: "Flutterwave",
+        },
       },
     });
 
-    return NextResponse.json({ url: paystackRes.data.authorization_url, reference });
+    return NextResponse.json({ url: paymentRes.data.link, reference });
   } catch (err) {
     const error = err as { response?: { data?: unknown }; message?: string };
     const message = error.message ?? "";
     const normalized = normalizeInitError(message);
-    console.error("PAYSTACK_INIT_ERROR:", error.response?.data || message || err);
+    console.error("PAYMENT_INIT_ERROR:", error.response?.data || message || err);
     return NextResponse.json(
       { error: normalized.error, detail: message || undefined },
       { status: normalized.status }
     );
   }
 }
+

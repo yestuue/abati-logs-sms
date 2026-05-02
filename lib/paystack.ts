@@ -18,17 +18,13 @@ function resolvePaystackSecret(): string {
 function getSecret(): string {
   const secret = resolvePaystackSecret();
   if (!secret) {
-    throw new Error(
-      "[Paystack] Missing secret key. Set PAYSTACK_SECRET_KEY (or PAYSTACK_LIVE_SECRET_KEY)."
-    );
+    throw new Error("Missing secret key. Set PAYSTACK_SECRET_KEY (or PAYSTACK_LIVE_SECRET_KEY).");
   }
 
   const isProd = process.env.NODE_ENV === "production";
   const allowTestInProd = process.env.ALLOW_PAYSTACK_TEST_IN_PROD === "true";
   if (isProd && !allowTestInProd && secret.startsWith("sk_test_")) {
-    throw new Error(
-      "[Paystack] Production is using a test secret key (sk_test_*). Use a live key (sk_live_*)."
-    );
+    throw new Error("Production is using a test secret key (sk_test_*). Use a live key (sk_live_*).");
   }
   return secret;
 }
