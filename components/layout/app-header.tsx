@@ -13,6 +13,7 @@ import {
 import { Logo } from "./logo";
 import { formatCurrency } from "@/lib/utils";
 import Link from "next/link";
+import { isPrivilegedAdminEmail } from "@/lib/admin-access";
 
 interface AppHeaderProps {
   variant?: "user" | "admin";
