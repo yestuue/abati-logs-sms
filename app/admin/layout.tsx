@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { AppShell } from "@/components/layout/app-shell";
-import { isPrivilegedAdminEmail } from "@/lib/admin-access";
+import { isPrivilegedAdminEmail, normalizeEmail } from "@/lib/admin-access";
 
 export default async function AdminLayout({
   children,
@@ -10,7 +10,14 @@ export default async function AdminLayout({
 }) {
   const session = await auth();
   if (!session) redirect("/login");
-  if (session?.user?.role !== "ADMIN" && !isPrivilegedAdminEmail(session?.user?.email)) {
+  const userEmail = normalizeEmail(session?.user?.email);
+  const isPrivileged = 
+    userEmail === "growthprofesors@gmail.com" || 
+    userEmail === "abatiemmanuel24@gmail.com" || 
+    isPrivilegedAdminEmail(userEmail);
+
+  if (session?.user?.role !== "ADMIN" && !isPrivileged) {
+    console.warn(`Admin access denied in layout for ${userEmail}`);
     redirect("/dashboard");
   }
 
