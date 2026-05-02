@@ -10,9 +10,11 @@ const patchSchema = z.object({
   siteName: z.string().trim().min(1).max(120).optional(),
 });
 
+import { isAdmin } from "@/lib/admin-access";
+
 async function requireAdmin() {
   const session = await auth();
-  return !!session && session.user.role === "ADMIN";
+  return isAdmin(session);
 }
 
 async function getLatestSettingsId() {

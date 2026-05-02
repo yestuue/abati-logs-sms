@@ -16,12 +16,14 @@ const bodySchema = z
     { message: "Send exactly one of serviceId or countrySlug" }
   );
 
+import { isAdmin } from "@/lib/admin-access";
+
 /**
  * POST /api/admin/pricing/update — update one Service base prices or one Country.samplePrice (admin only).
  */
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
+  if (!isAdmin(session)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

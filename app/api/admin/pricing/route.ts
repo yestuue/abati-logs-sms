@@ -5,9 +5,11 @@ import { computeSmsDisplayPriceNgn, fiveSimFetch, getFiveSimApiBase } from "@/li
 import { getGlobalSmsPremiumRate } from "@/lib/price-calculator";
 import { seedServices } from "@/prisma/seed-admin-data";
 
+import { isAdmin } from "@/lib/admin-access";
+
 async function requireAdmin() {
   const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
+  if (!isAdmin(session)) {
     return null;
   }
   return session;

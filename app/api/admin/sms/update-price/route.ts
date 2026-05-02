@@ -24,13 +24,15 @@ const bodySchema = z.object({
   countrySlug: z.string().optional(),
 });
 
-async function isAdmin() {
+import { isAdmin } from "@/lib/admin-access";
+
+async function checkAdmin() {
   const session = await auth();
-  return !!session && session.user.role === "ADMIN";
+  return isAdmin(session);
 }
 
 export async function GET() {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!(await checkAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const [services, settings, servers, countries] = await Promise.all([
     prisma.service.findMany({ orderBy: { serviceKey: "asc" } }),
@@ -51,7 +53,7 @@ export async function GET() {
 }
 
 export async function PUT(req: Request) {
-  if (!(await isAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!(await checkAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   try {
     const parsed = bodySchema.safeParse(await req.json());

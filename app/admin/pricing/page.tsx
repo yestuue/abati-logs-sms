@@ -65,8 +65,11 @@ export default function AdminPricingPage() {
     setServicesLoading(true);
     try {
       const res = await fetch("/api/admin/pricing", { cache: "no-store" });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server error (${res.status}): ${text.substring(0, 50)}`);
+      }
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to load services");
       const list = (data.services ?? []) as Service[];
       setServices(list);
       setServiceDrafts(
@@ -95,8 +98,11 @@ export default function AdminPricingPage() {
 
   async function loadSms() {
     const res = await fetch("/api/admin/sms/update-price", { cache: "no-store" });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`SMS load error (${res.status}): ${text.substring(0, 50)}`);
+    }
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "Failed to load SMS pricing");
     const list = (data.countries ?? []) as CountryCfg[];
     setServers(data.servers ?? []);
     setCountries(list);
@@ -112,8 +118,11 @@ export default function AdminPricingPage() {
 
   async function loadPremiumSettings() {
     const res = await fetch("/api/admin/settings", { cache: "no-store" });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Settings error (${res.status}): ${text.substring(0, 50)}`);
+    }
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "Failed to load settings");
     const s1 = Number(data.S1_MARGIN ?? 35) || 35;
     const s2 = Number(data.S2_MARGIN ?? 35) || 35;
     setGlobalPremiumS1Pct(String(Math.round(s1)));
@@ -122,8 +131,11 @@ export default function AdminPricingPage() {
 
   async function loadMarketplace() {
     const res = await fetch("/api/admin/marketplace/update-price", { cache: "no-store" });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Marketplace error (${res.status}): ${text.substring(0, 50)}`);
+    }
     const data = await res.json();
-    if (!res.ok) throw new Error(data.error ?? "Failed to load marketplace pricing");
     setCategories(data.categories ?? []);
     setLogs(data.logs ?? []);
   }

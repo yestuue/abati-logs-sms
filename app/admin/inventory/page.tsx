@@ -113,8 +113,11 @@ export default function AdminInventoryPage() {
     setLoadingSessions(true);
     try {
       const res = await fetch("/api/admin/marketplace/update-price", { cache: "no-store" });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server error (${res.status}): ${text.substring(0, 50)}`);
+      }
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to load inventory");
       const logs = (data.logs ?? []) as Array<{ id: string; category: string; createdAt?: string }>;
       const grouped = new Map<string, Session>();
       for (const row of logs) {
@@ -183,13 +186,14 @@ export default function AdminInventoryPage() {
           })),
         }),
       });
-
-      const data = await res.json();
-
+      
       if (!res.ok) {
-        toast.error(data.error ?? "Upload failed");
+        const text = await res.text();
+        toast.error(`Upload failed (${res.status}): ${text.substring(0, 50)}`);
         return;
       }
+
+      const data = await res.json();
 
       toast.success(data.message);
       if (data.skipped > 0) {
