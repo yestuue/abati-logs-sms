@@ -3,7 +3,7 @@ import crypto from "crypto";
 const FLUTTERWAVE_BASE = "https://api.flutterwave.com/v3";
 
 function getSecret(): string {
-  const secret = process.env.FLW_SECRET_KEY || process.env.FLUTTERWAVE_SECRET_KEY;
+  const secret = (process.env.FLW_SECRET_KEY || process.env.FLUTTERWAVE_SECRET_KEY)?.trim();
   if (!secret) {
     throw new Error("Missing secret key. Set FLW_SECRET_KEY.");
   }
@@ -32,7 +32,14 @@ export async function initializeFlutterwavePayment(params: {
       Authorization: `Bearer ${getSecret()}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(params),
+    body: JSON.stringify({
+      ...params,
+      amount: String(params.amount),
+      customizations: {
+        ...params.customizations,
+        logo: undefined, // Remove logo to prevent potential hang if URL is problematic
+      }
+    }),
   });
 
   return res.json() as Promise<{

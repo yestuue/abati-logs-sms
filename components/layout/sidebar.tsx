@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard, ShoppingCart, MessageSquare, Settings,
   LogOut, Shield, BarChart3, Users, Server, Phone,
@@ -52,6 +52,7 @@ interface SidebarProps {
 
 export function Sidebar({ variant = "user", canAccessAdmin = false, onNavigate }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme } = useTheme();
   const nav = variant === "admin" ? adminNav : userNav;
 
@@ -132,10 +133,12 @@ export function Sidebar({ variant = "user", canAccessAdmin = false, onNavigate }
 
         {/* Admin Mode Toggle */}
         {canAccessAdmin && (
-          <Link
-            href={variant === "admin" ? "/dashboard" : "/admin"}
-            onClick={onNavigate}
-            className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all group"
+          <button
+            onClick={() => {
+              onNavigate?.();
+              router.push(variant === "admin" ? "/dashboard" : "/admin");
+            }}
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all group cursor-pointer hover:opacity-90 active:scale-[0.98]"
             style={{ 
               background: variant === "admin" ? "oklch(0.68 0.22 278 / 0.15)" : "var(--accent)",
               border: variant === "admin" ? "1px solid oklch(0.68 0.22 278 / 0.30)" : "1px solid transparent"
@@ -164,7 +167,7 @@ export function Sidebar({ variant = "user", canAccessAdmin = false, onNavigate }
                 style={{ left: variant === "admin" ? "calc(100% - 14px)" : "2px" }}
               />
             </div>
-          </Link>
+          </button>
         )}
 
         <button

@@ -73,16 +73,36 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   let sessionEmail = "";
   let isBanned = false;
   try {
+    const isProd = process.env.NODE_ENV === "production";
     const authSecret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET;
-    const token = await getToken({ req: request, secret: authSecret });
-    const role = typeof token?.role === "string" ? token.role : "";
-    sessionRole = role || undefined;
-    sessionEmail = typeof token?.email === "string" ? normalizeEmail(token.email) : "";
-    isBanned = !!token?.isBanned;
-    console.log("Current User Role:", sessionRole);
+    
+    // Explicitly check for both secure and non-secure cookie names
+    const cookieName = isProd ? "__Secure-authjs.session-token" : "authjs.session-token";
+    
+    // Try primary cookie name
+    let token = await getToken({ 
+      req: request, 
+      secret: authSecret,
+      cookieName: cookieName
+    });
+
+    // Fallback if token is null
+    if (!token) {
+      const fallbackCookie = isProd ? "authjs.session-token" : "__Secure-authjs.session-token";
+      token = await getToken({ 
+        req: request, 
+        secret: authSecret,
+        cookieName: fallbackCookie
+      });
+    }
+
+    if (token) {
+      sessionRole = (token?.role as string) || undefined;
+      sessionEmail = typeof token?.email === "string" ? normalizeEmail(token.email) : "";
+      isBanned = !!token?.isBanned;
+    }
   } catch (error) {
     console.error("Proxy session fetch failed:", error);
-    return NextResponse.redirect(new URL("/login?error=session", request.url), 307);
   }
 
   const hasPrivilegedAdminEmail = isPrivilegedAdminEmail(sessionEmail);
@@ -91,11 +111,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.redirect(new URL("/login?error=banned", request.url), 307);
   }
 
-  // Admin routes are private and never shown to non-admin users.
+  // Admin routes: allow if role is ADMIN OR if email is privileged
   if (pathname.startsWith("/admin")) {
     if (sessionRole === "ADMIN" || hasPrivilegedAdminEmail) {
       return NextResponse.next();
     }
+    console.warn(`Admin access denied for ${sessionEmail}. Role: ${sessionRole}`);
     return NextResponse.redirect(new URL("/dashboard", request.url), 307);
   }
 
