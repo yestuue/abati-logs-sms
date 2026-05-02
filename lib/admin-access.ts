@@ -16,8 +16,13 @@ export function isPrivilegedAdminEmail(email: string | null | undefined): boolea
  * Matches if role is 'ADMIN' OR if the email is in the privileged list.
  */
 export function isAdmin(session: any): boolean {
-  if (!session?.user) return false;
-  const role = session.user.role;
-  const email = session.user.email;
-  return role === "ADMIN" || isPrivilegedAdminEmail(email);
+  try {
+    if (!session?.user) return false;
+    const role = session.user.role;
+    const email = session.user.email;
+    return role === "ADMIN" || isPrivilegedAdminEmail(email);
+  } catch (err) {
+    console.error("isAdmin check failed:", err);
+    return false;
+  }
 }

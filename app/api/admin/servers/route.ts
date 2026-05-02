@@ -8,9 +8,15 @@ const schema = z.object({
   isEnabled: z.boolean(),
 });
 
-export async function PATCH(req: Request) {
+import { isAdmin } from "@/lib/admin-access";
+
+async function checkAdmin() {
   const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
+  return isAdmin(session);
+}
+
+export async function PATCH(req: Request) {
+  if (!(await checkAdmin())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -40,8 +46,7 @@ export async function PATCH(req: Request) {
 }
 
 export async function GET(req: Request) {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
+  if (!(await checkAdmin())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

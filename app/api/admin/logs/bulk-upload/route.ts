@@ -10,9 +10,11 @@ interface LogEntry {
   twoFA?: string;
 }
 
+import { isAdmin } from "@/lib/admin-access";
+
 export async function POST(req: Request) {
   const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
+  if (!isAdmin(session)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

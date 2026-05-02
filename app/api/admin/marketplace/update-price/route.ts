@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { isAdmin } from "@/lib/admin-access";
 
 const bodySchema = z.object({
   action: z.enum(["createCategory", "updateCategory", "deleteCategory", "updateItemPrice", "bulkAdjust"]),
@@ -14,33 +15,37 @@ const bodySchema = z.object({
   percent: z.number().optional(),
 });
 
-import { isAdmin } from "@/lib/admin-access";
-
 async function checkAdmin() {
   const session = await auth();
   return isAdmin(session);
 }
 
 export async function GET() {
-  if (!(await checkAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  const [categories, logs] = await Promise.all([
-    prisma.logCategory.findMany({ orderBy: { name: "asc" } }),
-    prisma.log.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 200,
-      select: { id: true, category: true, subCategory: true, username: true, price: true, status: true, categoryId: true, createdAt: true },
-    }),
-  ]);
-  return NextResponse.json({ categories, logs });
+  try {
+    if (!(await checkAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const [categories, logs] = await Promise.all([
+      prisma.logCategory.findMany({ orderBy: { name: "asc" } }),
+      prisma.log.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 200,
+        select: { id: true, category: true, subCategory: true, username: true, price: true, status: true, categoryId: true, createdAt: true },
+      }),
+    ]);
+    return NextResponse.json({ categories, logs });
+  } catch (err: any) {
+    console.error("[MARKETPLACE_API_GET_ERROR]", err);
+    return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });
+  }
 }
 
 export async function PUT(req: Request) {
-  if (!(await checkAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-
   try {
+    if (!(await checkAdmin())) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
     const parsed = bodySchema.safeParse(await req.json());
     if (!parsed.success) return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     const body = parsed.data;
+// ...
 
     if (body.action === "createCategory") {
       if (!body.categoryName || typeof body.price !== "number") {
