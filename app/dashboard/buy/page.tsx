@@ -11,6 +11,9 @@ export default async function BuyPage() {
 
   const userId = session.user.id;
 
+  let walletBalance = 0;
+  let walletCurrency: "NGN" | "USD" = "NGN";
+  let serverConfigs: { server: "SERVER1" | "SERVER2"; name: string; isEnabled: boolean }[] = [];
   let s1Margin = 35;
   let s2Margin = 35;
 
@@ -30,7 +33,11 @@ export default async function BuyPage() {
     }
 
     if (configs.length > 0) {
-      serverConfigs = configs as typeof serverConfigs;
+      serverConfigs = configs.map((c) => ({
+        server: c.server as "SERVER1" | "SERVER2",
+        name: c.name,
+        isEnabled: c.isEnabled,
+      }));
     }
 
     if (settings) {

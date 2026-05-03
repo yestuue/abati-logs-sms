@@ -1294,7 +1294,7 @@ export function ServerSelector({
             <Button variant="outline" onClick={() => setSelected(null)}>Cancel</Button>
             <Button
               variant="brand"
-              onClick={handlePurchase}
+              onClick={() => handlePurchase()}
               disabled={
                 buying ||
                 !selected ||
