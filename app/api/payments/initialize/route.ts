@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { initializeFlutterwavePayment } from "@/lib/flutterwave";
+import { initializeFlutterwavePayment, verifyFlutterwaveSignature } from "@/lib/flutterwave";
+import { buyFiveSimNumber } from "@/lib/sms-provider";
 import { finalNumberPurchasePriceNGN, normalizePurchaseCarrier } from "@/lib/number-purchase-price";
 import { generateReference } from "@/lib/utils";
 import { grantReferralPurchaseCommissionInTx } from "@/lib/referral-reward";
@@ -15,6 +16,8 @@ const schema = z.object({
   areaCodes: z.string().max(200).optional(),
   /** When provided, per-service customPrice / premiumRate apply to the charge calculation. */
   serviceKey: z.string().max(120).optional(),
+  providerPurchase: z.boolean().optional(),
+  country: z.string().optional(),
 });
 
 function normalizeInitError(message: string): { error: string; status: number } {
@@ -45,45 +48,88 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    const { type, amount, numberId, carrier: carrierRaw, areaCodes: areaCodesRaw, serviceKey } = parsed.data;
+    const amount = Math.round(parsed.data.amount);
+    const { type, numberId, carrier: carrierRaw, areaCodes: areaCodesRaw, serviceKey } = parsed.data;
     const userId = session.user.id;
     const email = session.user.email;
 
     // ── NUMBER_PURCHASE: debit wallet directly ──────────────────
-    if (type === "NUMBER_PURCHASE" && numberId) {
-      const [user, number] = await Promise.all([
-        prisma.user.findUnique({ where: { id: userId }, select: { walletBalance: true } }),
-        prisma.virtualNumber.findUnique({ where: { id: numberId, status: "AVAILABLE" } }),
-      ]);
+    // ── NUMBER_PURCHASE: debit wallet directly ──────────────────
+    if (type === "NUMBER_PURCHASE" && (numberId || (parsed.data.providerPurchase && serviceKey))) {
+      const { providerPurchase, country: countrySlug } = parsed.data;
+      
+      let targetNumber: { 
+        id: string; 
+        number: string; 
+        priceNGN: number; 
+        priceUSD: number; 
+        server: "SERVER1" | "SERVER2"; 
+        country: string;
+        dialCode: string;
+      } | null = null;
 
-      if (!number) {
-        return NextResponse.json({ error: "Number not available" }, { status: 400 });
+      if (numberId) {
+        const row = await prisma.virtualNumber.findUnique({ where: { id: numberId, status: "AVAILABLE" } });
+        if (row) {
+          targetNumber = {
+            id: row.id,
+            number: row.number,
+            priceNGN: row.priceNGN,
+            priceUSD: row.priceUSD,
+            server: row.server as "SERVER1" | "SERVER2",
+            country: row.country,
+            dialCode: row.dialCode || "",
+          };
+        }
+      } else if (providerPurchase && serviceKey) {
+        // We will buy from provider below if validation passes
+        // We need a price estimate to check balance
+        const svc = await prisma.service.findUnique({
+          where: { serviceKey },
+          select: { basePrice: true, basePriceServer2: true, customPrice: true, premiumRate: true }
+        });
+        
+        targetNumber = {
+          id: "TEMP_PROVIDER",
+          number: "Pending...",
+          priceNGN: svc?.basePriceServer2 ?? svc?.basePrice ?? (amount / 1.35), // fallback estimate
+          priceUSD: (svc?.basePriceServer2 ?? svc?.basePrice ?? (amount / 1.35)) / 1550,
+          server: "SERVER2",
+          country: countrySlug || "any",
+          dialCode: "",
+        };
+      }
+
+      if (!targetNumber) {
+        return NextResponse.json({ error: "Number or service not available" }, { status: 400 });
       }
 
       const carrier = normalizePurchaseCarrier(carrierRaw);
       const areaCodes = areaCodesRaw ?? "";
       const settings = await prisma.globalSettings.findFirst({
         orderBy: { updatedAt: "desc" },
-        select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true },
+        select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true, s1Margin: true, s2Margin: true },
       });
-      const premiumRate =
-        number.server === "SERVER2"
-          ? (settings?.smsGlobalPremiumRateServer2 ?? 0.35)
-          : (settings?.smsGlobalPremiumRate ?? 0.35);
+      
+      const premiumRate = targetNumber.server === "SERVER2"
+        ? (settings?.s2Margin != null ? settings.s2Margin / 100 : (settings?.smsGlobalPremiumRateServer2 ?? 0.35))
+        : (settings?.s1Margin != null ? settings.s1Margin / 100 : (settings?.smsGlobalPremiumRate ?? 0.35));
 
-      let chargeBase = number.priceNGN;
+      let chargeBase = targetNumber.priceNGN;
       if (serviceKey) {
         const svc = await prisma.service.findUnique({
           where: { serviceKey },
-          select: { customPrice: true, basePrice: true },
+          select: { customPrice: true, basePrice: true, basePriceServer2: true },
         });
         if (svc?.customPrice != null) {
           chargeBase = Math.round(svc.customPrice);
+        } else if (targetNumber.server === "SERVER2" && svc?.basePriceServer2 != null) {
+          chargeBase = Math.round(svc.basePriceServer2);
         }
       }
 
       const chargeNGN = finalNumberPurchasePriceNGN(chargeBase, {
-        server: number.server,
+        server: targetNumber.server,
         carrier,
         areaCodesRaw: areaCodes,
         premiumRate,
@@ -91,27 +137,67 @@ export async function POST(req: Request) {
 
       if (Math.round(amount) !== chargeNGN) {
         return NextResponse.json(
-          { error: "Price mismatch. Refresh and try again." },
+          { error: `Price mismatch (Expected ₦${chargeNGN}, Got ₦${Math.round(amount)}). Refresh and try again.` },
           { status: 400 }
         );
       }
 
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { walletBalance: true } });
       if ((user?.walletBalance ?? 0) < chargeNGN) {
         return NextResponse.json({ error: "Insufficient wallet balance" }, { status: 400 });
       }
 
+      let finalNumberId = targetNumber.id;
+      let finalNumberStr = targetNumber.number;
+
+      if (providerPurchase && serviceKey) {
+        // Actually buy from 5sim now
+        const country = countrySlug || "usa";
+        const operator = "any";
+        const product = serviceKey;
+        
+        const activation = await buyFiveSimNumber(country, operator, product);
+        if (!activation || !activation.phone) {
+          return NextResponse.json({ error: "Failed to get number from provider. Try again later." }, { status: 502 });
+        }
+        
+        // Create the number in our DB
+        const expiresAt = activation.expires ? new Date(activation.expires) : new Date(Date.now() + 20 * 60 * 1000);
+        const newNum = await prisma.virtualNumber.create({
+          data: {
+            number: activation.phone,
+            providerId: String(activation.id),
+            server: "SERVER2",
+            status: "ASSIGNED",
+            userId,
+            assignedAt: new Date(),
+            expiresAt,
+            country: country,
+            countryCode: country,
+            priceNGN: chargeBase, // original base price
+            priceUSD: chargeBase / 1550,
+          }
+        });
+        finalNumberId = newNum.id;
+        finalNumberStr = newNum.number;
+      }
+
       const reference = generateReference();
-      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days default for inventory, but provider one might be shorter
 
       await prisma.$transaction(async (dbtx) => {
         await dbtx.user.update({
           where: { id: userId },
           data: { walletBalance: { decrement: chargeNGN } },
         });
-        await dbtx.virtualNumber.update({
-          where: { id: numberId },
-          data: { status: "ASSIGNED", userId, assignedAt: new Date(), expiresAt },
-        });
+        
+        if (!providerPurchase) {
+          await dbtx.virtualNumber.update({
+            where: { id: finalNumberId },
+            data: { status: "ASSIGNED", userId, assignedAt: new Date(), expiresAt },
+          });
+        }
+        
         await dbtx.transaction.create({
           data: {
             userId,
@@ -120,22 +206,23 @@ export async function POST(req: Request) {
             reference,
             status: "SUCCESS",
             type: "NUMBER_PURCHASE",
-            server: number.server,
-            numberId,
+            server: targetNumber!.server,
+            numberId: finalNumberId,
             metadata: {
               carrier,
               areaCodes,
-              basePriceNGN: number.priceNGN,
+              basePriceNGN: targetNumber!.priceNGN,
               chargeBaseNGN: chargeBase,
               premiumRate,
               serviceKey: serviceKey ?? null,
+              providerPurchase: providerPurchase ?? false,
             },
           },
         });
         await grantReferralPurchaseCommissionInTx(dbtx, userId, chargeNGN);
       });
 
-      return NextResponse.json({ success: true, number: number.number, expiresAt });
+      return NextResponse.json({ success: true, number: finalNumberStr, expiresAt });
     }
 
     // ── WALLET_TOPUP: initialize Flutterwave transaction ─────────────────────────

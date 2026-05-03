@@ -11,20 +11,17 @@ export default async function BuyPage() {
 
   const userId = session.user.id;
 
-  let walletBalance = 0;
-  let walletCurrency: "NGN" | "USD" = "NGN";
-  let serverConfigs: { server: "SERVER1" | "SERVER2"; name: string; isEnabled: boolean }[] = [
-    { server: "SERVER1", name: "Server 1 — USA Numbers", isEnabled: true },
-    { server: "SERVER2", name: "Server 2 — Global Numbers", isEnabled: true },
-  ];
+  let s1Margin = 35;
+  let s2Margin = 35;
 
   try {
-    const [user, configs] = await Promise.all([
+    const [user, configs, settings] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: { walletBalance: true, walletCurrency: true },
       }),
       prisma.serverConfig.findMany({ orderBy: { server: "asc" } }),
+      prisma.globalSettings.findFirst({ orderBy: { updatedAt: "desc" } }),
     ]);
 
     if (user) {
@@ -34,6 +31,11 @@ export default async function BuyPage() {
 
     if (configs.length > 0) {
       serverConfigs = configs as typeof serverConfigs;
+    }
+
+    if (settings) {
+      s1Margin = settings.s1Margin ?? (settings.smsGlobalPremiumRate != null ? settings.smsGlobalPremiumRate * 100 : 35);
+      s2Margin = settings.s2Margin ?? (settings.smsGlobalPremiumRateServer2 != null ? settings.smsGlobalPremiumRateServer2 * 100 : 35);
     }
   } catch (err) {
     console.error("[BuyPage] DB error:", err);
@@ -54,6 +56,8 @@ export default async function BuyPage() {
         walletCurrency={walletCurrency}
         serverConfigs={serverConfigs}
         userId={userId}
+        s1Margin={s1Margin}
+        s2Margin={s2Margin}
       />
     </div>
   );

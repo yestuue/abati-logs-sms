@@ -48,6 +48,7 @@ model User {
 model VirtualNumber {
   id           String        @id @default(cuid())
   number       String        @unique
+  providerId   String?
   country      String
   countryCode  String
   dialCode     String?

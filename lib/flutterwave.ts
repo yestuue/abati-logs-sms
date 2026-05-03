@@ -34,7 +34,7 @@ export async function initializeFlutterwavePayment(params: {
     },
     body: JSON.stringify({
       ...params,
-      amount: String(params.amount),
+      amount: String(Math.round(params.amount)),
       customizations: {
         ...params.customizations,
         logo: undefined, // Remove logo to prevent potential hang if URL is problematic

@@ -649,7 +649,7 @@ export default function LandingPage() {
                   </motion.p>
                   <motion.div variants={staggerContainer} className="space-y-3">
                     {[
-                      "Paystack-powered wallet — instant funding",
+                      "Flutterwave-powered wallet — instant funding",
                       "Scalable enterprise infrastructure",
                       "Dedicated support available 24/7",
                       "Process automation implementation",
@@ -877,7 +877,7 @@ export default function LandingPage() {
                 style={{ color: "rgba(255,255,255,0.85)", borderColor: "rgba(59, 130, 246, 0.4)", background: "rgba(59, 130, 246, 0.05)" }}
               >
                 <ShieldCheck className="w-3 h-3 text-blue-400" />
-                CAC Approved & Registered
+                Registered with CAC Nigeria. 🇳🇬
               </div>
               <div
                 className="px-2.5 py-1 rounded-full border text-[11px] flex items-center gap-1.5"

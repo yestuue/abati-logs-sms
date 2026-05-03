@@ -58,3 +58,14 @@ export function computeSmsDisplayPriceNgn(priceUsd: number): number {
   const raw = priceUsd * rate + (Number.isFinite(margin) ? margin : 0);
   return Math.ceil(raw);
 }
+export async function buyFiveSimNumber(country: string, operator: string, product: string): Promise<{ id: number; phone: string; operator: string; product: string; price: number; status: string; expires: string } | null> {
+  const base = getFiveSimApiBase();
+  const url = `${base}/user/buy/activation/${encodeURIComponent(country)}/${encodeURIComponent(operator)}/${encodeURIComponent(product)}`;
+  const res = await fiveSimFetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    console.error("[5sim buy error]", err);
+    return null;
+  }
+  return res.json();
+}

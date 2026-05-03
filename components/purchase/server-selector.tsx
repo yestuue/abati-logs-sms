@@ -80,6 +80,8 @@ interface ServerSelectorProps {
   walletCurrency: "NGN" | "USD";
   serverConfigs: { server: "SERVER1" | "SERVER2"; name: string; isEnabled: boolean }[];
   userId: string;
+  s1Margin: number;
+  s2Margin: number;
 }
 
 const SERVER_INFO = {
@@ -143,6 +145,8 @@ export function ServerSelector({
   walletCurrency,
   serverConfigs,
   userId: _userId,
+  s1Margin,
+  s2Margin,
 }: ServerSelectorProps) {
   const [activeServer, setActiveServer] = useState<"SERVER1" | "SERVER2">("SERVER1");
   const [numbers, setNumbers] = useState<NumberItem[]>([]);
@@ -220,7 +224,7 @@ export function ServerSelector({
           serviceName: s.name,
           availableCount: s.qty,
           priceNGN: s.priceNGN,
-          premiumRate: typeof s.premiumRate === "number" ? s.premiumRate : 0.35,
+          premiumRate: typeof s.premiumRate === "number" ? s.premiumRate : (activeServer === "SERVER2" ? s2Margin / 100 : s1Margin / 100),
         }))
           .sort((a, b) => a.serviceName.localeCompare(b.serviceName, "en", { sensitivity: "base" }));
         setServiceResults(mapped);
@@ -422,7 +426,7 @@ export function ServerSelector({
               serviceName: row.name,
               availableCount: row.qty,
               priceNGN: row.priceNGN,
-              premiumRate: typeof row.premiumRate === "number" ? row.premiumRate : 0.35,
+              premiumRate: typeof row.premiumRate === "number" ? row.premiumRate : (activeServer === "SERVER2" ? s2Margin / 100 : s1Margin / 100),
             });
           }
         } catch {
@@ -490,12 +494,12 @@ export function ServerSelector({
   const hasCarrierPreference = carrier !== "any";
   const server1PreferencePremiumActive =
     server1PremiumActive && (hasCarrierPreference || hasAreaCodePreference);
-  const server1PreferencePremiumRate = 0.35;
+  const server1PreferencePremiumRate = s1Margin / 100;
   const selectedPremiumRate =
     activeServer === "SERVER1"
       ? (server1PreferencePremiumActive ? server1PreferencePremiumRate : 0)
-      : (selectedService?.premiumRate ?? 0.35);
-  const premiumPercentLabel = 35;
+      : (selectedService?.premiumRate ?? s2Margin / 100);
+  const premiumPercentLabel = activeServer === "SERVER2" ? s2Margin : s1Margin;
 
   function getServer1Price(basePrice: number, premiumRate = selectedPremiumRate) {
     return Math.ceil(basePrice * (1 + premiumRate));
@@ -540,12 +544,15 @@ export function ServerSelector({
     return Math.round(((item.priceUSD * finalNGN) / base) * 100) / 100;
   }
 
-  async function handlePurchase() {
-    if (!selected) return;
-    if (selected.source === "provider") return;
+  async function handlePurchase(overrideItem?: NumberItem) {
+    const itemToBuy = overrideItem || selected;
+    if (!itemToBuy) return;
+    if (itemToBuy.source === "provider" && !selectedService) return;
+    
     setBuying(true);
-    const finalNGN = getPurchasePriceNGN(selected);
-    const purchaseDebit = getPurchaseWalletDebit(selected);
+    const finalNGN = getPurchasePriceNGN(itemToBuy);
+    const purchaseDebit = getPurchaseWalletDebit(itemToBuy);
+    
     if (walletBalance < purchaseDebit) {
       toast.error("Insufficient wallet balance. Please top up first.");
       setBuying(false);
@@ -557,11 +564,12 @@ export function ServerSelector({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "NUMBER_PURCHASE",
-          numberId: selected.id,
+          numberId: itemToBuy.source === "inventory" ? itemToBuy.id : undefined,
           amount: finalNGN,
           carrier,
           areaCodes: preferredAreaCode.trim(),
           ...(selectedService?.serviceKey ? { serviceKey: selectedService.serviceKey } : {}),
+          ...(itemToBuy.source === "provider" ? { providerPurchase: true, country: server2Country } : {}),
         }),
       });
       const data = await res.json();
@@ -569,7 +577,7 @@ export function ServerSelector({
       if (data.url) {
         window.location.href = data.url;
       } else if (data.success) {
-        toast.success(`${selected.number} assigned to your account!`);
+        toast.success(data.number ? `${data.number} assigned to your account!` : "Number assigned to your account!");
         setSelected(null);
         void loadActiveAssignments();
       }
@@ -990,7 +998,23 @@ export function ServerSelector({
                       onClick={() => {
                         if (activeServer !== "SERVER2") return;
                         if (numbers.length === 0) {
-                          toast.info("Inventory will appear here when numbers are in stock for this service.");
+                          // No inventory? Buy directly from provider.
+                          if (selectedService) {
+                            const dummyItem: NumberItem = {
+                              id: `provider:${selectedService.serviceKey}`,
+                              number: "New Number",
+                              country: server2Country,
+                              countryCode: server2Country,
+                              dialCode: "",
+                              server: "SERVER2",
+                              priceNGN: selectedService.priceNGN,
+                              priceUSD: selectedService.priceNGN / 1550, // rough estimate for display
+                              source: "provider",
+                            };
+                            setSelected(dummyItem);
+                          } else {
+                            toast.info("Inventory will appear here when numbers are in stock for this service.");
+                          }
                           return;
                         }
                         const el = document.getElementById("abati-buy-inventory");

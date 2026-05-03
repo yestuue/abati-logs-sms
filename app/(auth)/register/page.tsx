@@ -17,7 +17,7 @@ const PERKS = [
   "50+ countries supported",
   "Instant OTP delivery",
   "Social account marketplace",
-  "Secure Paystack funding",
+  "Secure Flutterwave funding",
 ];
 
 export default function RegisterPage() {
