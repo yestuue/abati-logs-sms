@@ -248,7 +248,7 @@ export default function LandingPage() {
           className="relative max-w-4xl mx-auto text-center"
         >
           {/* Badge */}
-          <motion.div variants={fadeIn} className="mb-6 inline-block">
+          <motion.div variants={fadeIn} className="mb-6 flex flex-wrap items-center justify-center gap-3">
             <span
               className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
               style={{
@@ -259,6 +259,17 @@ export default function LandingPage() {
             >
               <Zap className="w-3 h-3" />
               Premium Business Transformation Partner
+            </span>
+            <span
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
+              style={{
+                background: "rgba(59, 130, 246, 0.1)",
+                border: "1px solid rgba(59, 130, 246, 0.3)",
+                color: "#60a5fa",
+              }}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              CAC Approved & Registered
             </span>
           </motion.div>
 
@@ -288,16 +299,24 @@ export default function LandingPage() {
           {/* CTA buttons */}
           <motion.div
             variants={fadeUp}
-            className="flex flex-col xs:flex-row gap-3 justify-center mb-8 px-4"
+            className="flex flex-col items-center gap-4 mb-8 px-4"
           >
-            <Link
-              href="/register"
-              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-[10px] text-[15px] font-bold transition-all hover:opacity-90 hover:-translate-y-0.5 active:scale-95"
-              style={{ background: `linear-gradient(135deg, ${MINT}, ${MINT_DARK})`, color: "#09090d" }}
-            >
-              Create Free Account
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="flex flex-col xs:flex-row gap-3 w-full justify-center">
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-[10px] text-[15px] font-bold transition-all hover:opacity-90 hover:-translate-y-0.5 active:scale-95"
+                style={{ background: `linear-gradient(135deg, ${MINT}, ${MINT_DARK})`, color: "#09090d" }}
+              >
+                Create Free Account
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+            <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.40)" }}>
+              By signing up, you agree to our{" "}
+              <Link href="/terms" className="underline hover:text-white transition-colors">Terms & Conditions</Link>
+              {" "}and{" "}
+              <Link href="/privacy" className="underline hover:text-white transition-colors">Privacy Policy</Link>.
+            </p>
           </motion.div>
 
           {/* Trust badges */}
@@ -691,7 +710,7 @@ export default function LandingPage() {
               <p className="mb-8 leading-relaxed" style={{ color: "rgba(255,255,255,0.52)" }}>
                 Create your free account and start building high-performance business infrastructure.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <div className="flex flex-col items-center gap-4 justify-center">
                 <Link
                   href="/register"
                   className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-[10px] text-base font-bold transition-all hover:opacity-90 hover:-translate-y-0.5 active:scale-95"
@@ -700,6 +719,10 @@ export default function LandingPage() {
                   Get Started
                   <ArrowRight className="w-4 h-4" />
                 </Link>
+                <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.40)" }}>
+                  By signing up, you agree to our{" "}
+                  <Link href="/terms" className="underline hover:text-white transition-colors">Terms & Conditions</Link>.
+                </p>
               </div>
             </motion.div>
           </InView>
@@ -841,7 +864,7 @@ export default function LandingPage() {
               © 2026 Abati Digital. SMS API for Nigerian businesses to send OTPs &amp; transactional alerts to their
               own verified users.
             </p>
-            <div className="flex items-center gap-4 text-xs">
+            <div className="flex flex-wrap items-center justify-center sm:justify-end gap-3 text-xs">
               <div className="flex items-center gap-1.5" style={{ color: MINT }}>
                 <span
                   className="w-1.5 h-1.5 rounded-full animate-pulse"
@@ -850,8 +873,15 @@ export default function LandingPage() {
                 All systems operational
               </div>
               <div
-                className="px-2.5 py-1 rounded-full border text-[11px]"
-                style={{ color: "rgba(255,255,255,0.72)", borderColor: "rgba(0,229,160,0.30)" }}
+                className="px-2.5 py-1 rounded-full border text-[11px] flex items-center gap-1.5"
+                style={{ color: "rgba(255,255,255,0.85)", borderColor: "rgba(59, 130, 246, 0.4)", background: "rgba(59, 130, 246, 0.05)" }}
+              >
+                <ShieldCheck className="w-3 h-3 text-blue-400" />
+                CAC Approved & Registered
+              </div>
+              <div
+                className="px-2.5 py-1 rounded-full border text-[11px] flex items-center gap-1.5"
+                style={{ color: "rgba(255,255,255,0.85)", borderColor: "rgba(0,229,160,0.4)", background: "rgba(0,229,160,0.05)" }}
               >
                 Powered by Flutterwave
               </div>
