@@ -1,11 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Wallet, Plus,
   Loader2, TrendingDown, TrendingUp,
-  RefreshCw,
+  RefreshCw, CreditCard, ArrowUpRight, ArrowDownLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,17 +15,25 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 
 import { useSession } from "next-auth/react";
-
-// TRANSACTIONS will be empty for now or fetched from an API if implemented.
-// For now, let's just make the balance real.
-
 
 function formatCurrency(n: number) {
   const abs = Math.abs(n);
   return `₦${abs.toLocaleString()}`;
 }
+
+const TYPE_LABELS: Record<string, string> = {
+  WALLET_TOPUP: "Wallet Top-up",
+  NUMBER_PURCHASE: "Number Purchase",
+  NUMBER_RENEWAL: "Number Renewal",
+  ADMIN_ADJUST: "Admin Adjustment",
+  ADMIN_CREDIT: "Admin Credit",
+  REFUND: "Refund",
+  REFERRAL_REWARD: "Referral reward",
+  REFERRAL_WELCOME_BONUS: "Referral welcome bonus",
+};
 
 // ── Fund Wallet Modal ─────────────────────────────────────────────────────────
 function FundWalletModal({ onClose }: { onClose: () => void }) {
@@ -75,7 +83,7 @@ function FundWalletModal({ onClose }: { onClose: () => void }) {
             <Plus className="w-5 h-5" style={{ color: "var(--primary)" }} />
             Fund Wallet
           </DialogTitle>
-          <DialogDescription>Card and USSD payments</DialogDescription>
+          <DialogDescription>Card and USSD payments via Paystack</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -145,8 +153,30 @@ function FundWalletModal({ onClose }: { onClose: () => void }) {
 export default function WalletPage() {
   const { data: session, status } = useSession();
   const [showFundWallet, setShowFundWallet] = useState(false);
+  const [walletData, setWalletData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (status === "loading") {
+  async function fetchWallet() {
+    try {
+      const res = await fetch("/api/user/wallet");
+      if (res.ok) {
+        const data = await res.json();
+        setWalletData(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchWallet();
+    }
+  }, [status]);
+
+  if (status === "loading" || (loading && !walletData)) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -154,15 +184,10 @@ export default function WalletPage() {
     );
   }
 
-  const balance = session?.user?.walletBalance ?? 0;
-  const currency = session?.user?.walletCurrency ?? "NGN";
-  
-  // Note: Transaction history is usually fetched from /api/user/transactions
-  // For now we set it to empty since we removed the mock data
-  const transactions: any[] = []; 
-
-  const totalSpent = transactions.filter((t) => t.type === "debit").reduce((s, t) => s + Math.abs(t.amount), 0);
-  const totalFunded = transactions.filter((t) => t.type === "credit").reduce((s, t) => s + t.amount, 0);
+  const balance = walletData?.balance ?? 0;
+  const transactions = walletData?.transactions ?? [];
+  const totalSpent = walletData?.stats?.totalSpent ?? 0;
+  const totalFunded = walletData?.stats?.totalFunded ?? 0;
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -204,14 +229,17 @@ export default function WalletPage() {
                   ₦{balance.toLocaleString()}
                 </p>
                 <p className="text-xs mt-1.5" style={{ color: "oklch(0.68 0.12 278)" }}>
-                  {currency} · Available for services
+                  NGN · Available for services
                 </p>
               </div>
               <button 
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  setLoading(true);
+                  fetchWallet();
+                }}
                 className="p-2 rounded-xl text-white/40 hover:text-white hover:bg-white/10 transition-all"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </button>
             </div>
 
@@ -275,37 +303,52 @@ export default function WalletPage() {
                 No transactions found
               </div>
             ) : (
-              transactions.map((tx) => (
-                <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
-                  <div
-                    className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
-                    style={{
-                      background: tx.type === "credit"
-                        ? "oklch(0.62 0.18 150 / 0.14)"
-                        : "oklch(0.60 0.20 340 / 0.14)",
-                    }}
-                  >
-                    {tx.type === "credit"
-                      ? <TrendingUp className="w-4 h-4" style={{ color: "oklch(0.62 0.18 150)" }} />
-                      : <TrendingDown className="w-4 h-4" style={{ color: "oklch(0.60 0.20 340)" }} />
-                    }
+              transactions.map((tx: any) => {
+                const isCredit = [
+                  "WALLET_TOPUP", "ADMIN_CREDIT", "ADMIN_ADJUST", "REFUND",
+                  "REFERRAL_WELCOME_BONUS", "REFERRAL_REWARD"
+                ].includes(tx.type);
+                
+                return (
+                  <div key={tx.id} className="flex items-center gap-3 px-4 py-3">
+                    <div
+                      className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center"
+                      style={{
+                        background: isCredit
+                          ? "oklch(0.62 0.18 150 / 0.14)"
+                          : "oklch(0.60 0.20 340 / 0.14)",
+                      }}
+                    >
+                      {isCredit
+                        ? <TrendingUp className="w-4 h-4" style={{ color: "oklch(0.62 0.18 150)" }} />
+                        : <TrendingDown className="w-4 h-4" style={{ color: "oklch(0.60 0.20 340)" }} />
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{TYPE_LABELS[tx.type] ?? tx.type}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(tx.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <p
+                        className="text-sm font-bold"
+                        style={{
+                          color: isCredit
+                            ? "oklch(0.62 0.18 150)"
+                            : "var(--foreground)",
+                        }}
+                      >
+                        {isCredit ? "+" : "-"}{formatCurrency(tx.amount)}
+                      </p>
+                      <Badge 
+                        variant={tx.status === "SUCCESS" ? "success" : tx.status === "FAILED" ? "destructive" : "secondary"}
+                        className="text-[10px] h-4 px-1"
+                      >
+                        {tx.status}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{tx.label}</p>
-                    <p className="text-xs text-muted-foreground">{tx.date}</p>
-                  </div>
-                  <p
-                    className="text-sm font-bold flex-shrink-0"
-                    style={{
-                      color: tx.type === "credit"
-                        ? "oklch(0.62 0.18 150)"
-                        : "oklch(0.60 0.20 340)",
-                    }}
-                  >
-                    {tx.type === "credit" ? "+" : "-"}{formatCurrency(tx.amount)}
-                  </p>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </CardContent>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { initializeFlutterwavePayment, verifyFlutterwaveSignature } from "@/lib/flutterwave";
+import { initializeTransaction } from "@/lib/paystack";
 import { buyFiveSimNumber } from "@/lib/sms-provider";
 import { finalNumberPurchasePriceNGN, normalizePurchaseCarrier } from "@/lib/number-purchase-price";
 import { generateReference } from "@/lib/utils";
@@ -23,14 +23,14 @@ const schema = z.object({
 function normalizeInitError(message: string): { error: string; status: number } {
   if (!message) return { error: "Payment initialization failed. Please try again.", status: 500 };
 
-  if (message.includes("Missing secret key") || message.includes("FLUTTERWAVE_SECRET_KEY") || message.includes("FLW_SECRET_KEY")) {
+  if (message.includes("Missing secret key") || message.includes("PAYSTACK_SECRET_KEY") || message.includes("PAYSTACK_LIVE_SECRET_KEY")) {
     return {
       error: "Payment gateway is not configured yet. Please contact support.",
       status: 500,
     };
   }
 
-  if (message.toLowerCase().includes("invalid key")) {
+  if (message.toLowerCase().includes("invalid key") || message.toLowerCase().includes("unauthorized")) {
     return { error: "Payment gateway key is invalid. Please contact support.", status: 502 };
   }
 
@@ -53,7 +53,6 @@ export async function POST(req: Request) {
     const userId = session.user.id;
     const email = session.user.email;
 
-    // ── NUMBER_PURCHASE: debit wallet directly ──────────────────
     // ── NUMBER_PURCHASE: debit wallet directly ──────────────────
     if (type === "NUMBER_PURCHASE" && (numberId || (parsed.data.providerPurchase && serviceKey))) {
       const { providerPurchase, country: countrySlug } = parsed.data;
@@ -82,8 +81,6 @@ export async function POST(req: Request) {
           };
         }
       } else if (providerPurchase && serviceKey) {
-        // We will buy from provider below if validation passes
-        // We need a price estimate to check balance
         const svc = await prisma.service.findUnique({
           where: { serviceKey },
           select: { basePrice: true, basePriceServer2: true, customPrice: true, premiumRate: true }
@@ -92,7 +89,7 @@ export async function POST(req: Request) {
         targetNumber = {
           id: "TEMP_PROVIDER",
           number: "Pending...",
-          priceNGN: svc?.basePriceServer2 ?? svc?.basePrice ?? (amount / 1.35), // fallback estimate
+          priceNGN: svc?.basePriceServer2 ?? svc?.basePrice ?? (amount / 1.35),
           priceUSD: (svc?.basePriceServer2 ?? svc?.basePrice ?? (amount / 1.35)) / 1550,
           server: "SERVER2",
           country: countrySlug || "any",
@@ -151,7 +148,6 @@ export async function POST(req: Request) {
       let finalNumberStr = targetNumber.number;
 
       if (providerPurchase && serviceKey) {
-        // Actually buy from 5sim now
         const country = countrySlug || "usa";
         const operator = "any";
         const product = serviceKey;
@@ -161,7 +157,6 @@ export async function POST(req: Request) {
           return NextResponse.json({ error: "Failed to get number from provider. Try again later." }, { status: 502 });
         }
         
-        // Create the number in our DB
         const expiresAt = activation.expires ? new Date(activation.expires) : new Date(Date.now() + 20 * 60 * 1000);
         const newNum = await prisma.virtualNumber.create({
           data: {
@@ -174,7 +169,7 @@ export async function POST(req: Request) {
             expiresAt,
             country: country,
             countryCode: country,
-            priceNGN: chargeBase, // original base price
+            priceNGN: chargeBase,
             priceUSD: chargeBase / 1550,
           }
         });
@@ -183,7 +178,7 @@ export async function POST(req: Request) {
       }
 
       const reference = generateReference();
-      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days default for inventory, but provider one might be shorter
+      const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
       await prisma.$transaction(async (dbtx) => {
         await dbtx.user.update({
@@ -225,30 +220,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, number: finalNumberStr, expiresAt });
     }
 
-    // ── WALLET_TOPUP: initialize Flutterwave transaction ─────────────────────────
+    // ── WALLET_TOPUP: initialize Paystack transaction ─────────────────────────
     const reference = generateReference();
+    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/verify`;
 
-    // Flutterwave uses the actual amount, not kobo/cents
-    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/wallet`;
-
-    const paymentRes = await initializeFlutterwavePayment({
-      tx_ref: reference,
-      amount: amount,
-      currency: "NGN",
-      redirect_url: callbackUrl,
-      customer: {
-        email: email,
-        name: session.user.name || email.split("@")[0],
-      },
-      customizations: {
-        title: process.env.NEXT_PUBLIC_APP_NAME || "Wallet Topup",
-        description: `Funding wallet with ₦${amount.toLocaleString()}`,
-        logo: `${process.env.NEXT_PUBLIC_APP_URL}/logo.png`,
+    const paymentRes = await initializeTransaction({
+      email,
+      amount: amount * 100, // Paystack uses kobo
+      reference,
+      callback_url: callbackUrl,
+      metadata: {
+        userId,
+        type: "WALLET_TOPUP",
       },
     });
 
-    if (paymentRes.status !== "success") {
-      console.error("[payments/initialize] Flutterwave rejected:", paymentRes.message);
+    if (!paymentRes.status) {
+      console.error("[payments/initialize] Paystack rejected:", paymentRes.message);
       return NextResponse.json(
         { error: "Payment initialization failed", detail: paymentRes.message },
         { status: 502 }
@@ -264,12 +252,12 @@ export async function POST(req: Request) {
         status: "PENDING",
         type: "WALLET_TOPUP",
         metadata: {
-          provider: "Flutterwave",
+          provider: "Paystack",
         },
       },
     });
 
-    return NextResponse.json({ url: paymentRes.data.link, reference });
+    return NextResponse.json({ url: paymentRes.data.authorization_url, reference });
   } catch (err) {
     const error = err as { response?: { data?: unknown }; message?: string };
     const message = error.message ?? "";
@@ -281,4 +269,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
 
