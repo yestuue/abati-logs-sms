@@ -554,7 +554,13 @@ export function ServerSelector({
     const purchaseDebit = getPurchaseWalletDebit(itemToBuy);
     
     if (walletBalance < purchaseDebit) {
-      toast.error("Insufficient wallet balance. Please top up first.");
+      toast.error("Low Balance", {
+        description: "Your wallet balance is insufficient for this purchase.",
+        action: {
+          label: "Top Up",
+          onClick: () => window.location.href = "/dashboard/wallet",
+        },
+      });
       setBuying(false);
       return;
     }
@@ -573,7 +579,20 @@ export function ServerSelector({
         }),
       });
       const data = await res.json();
-      if (!res.ok) { toast.error(data.error ?? "Purchase failed"); return; }
+      if (!res.ok) {
+        if (data.error?.toLowerCase().includes("balance")) {
+          toast.error("Insufficient Balance", {
+            description: "Please top up your wallet to complete this purchase.",
+            action: {
+              label: "Top Up",
+              onClick: () => window.location.href = "/dashboard/wallet",
+            },
+          });
+        } else {
+          toast.error(data.error ?? "Purchase failed");
+        }
+        return;
+      }
       if (data.url) {
         window.location.href = data.url;
       } else if (data.success) {
@@ -598,17 +617,40 @@ export function ServerSelector({
   return (
     <div className="space-y-6">
       {/* Wallet balance */}
-      <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 border border-border/30">
-        <Wallet className="w-4 h-4 text-primary" />
-        <span className="text-sm text-muted-foreground">
-          Wallet Balance:{" "}
-          <span className="font-semibold text-foreground">
-            {formatCurrency(walletBalance, walletCurrency)}
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/50 border border-border/30">
+          <Wallet className="w-4 h-4 text-primary" />
+          <span className="text-sm text-muted-foreground">
+            Wallet Balance:{" "}
+            <span className="font-semibold text-foreground">
+              {formatCurrency(walletBalance, walletCurrency)}
+            </span>
           </span>
-        </span>
-        <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" asChild>
-          <a href="/dashboard">Top Up</a>
-        </Button>
+          <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" asChild>
+            <Link href="/dashboard/wallet">Top Up</Link>
+          </Button>
+        </div>
+
+        {walletBalance < 500 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400"
+          >
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="flex-1 text-[13px] font-medium">
+              Low Balance! Top up your wallet to continue purchasing numbers.
+            </div>
+            <Button
+              variant="link"
+              size="sm"
+              className="h-7 text-xs font-bold text-amber-700 dark:text-amber-300 p-0"
+              asChild
+            >
+              <Link href="/dashboard/wallet">Add Funds</Link>
+            </Button>
+          </motion.div>
+        )}
       </div>
 
       {/* Server selector cards */}
