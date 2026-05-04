@@ -34,7 +34,7 @@ export async function initializeFlutterwavePayment(params: {
     },
     body: JSON.stringify({
       ...params,
-      amount: String(Math.round(params.amount)),
+      amount: Math.round(params.amount), // Must be a number
       customizations: {
         ...params.customizations,
         logo: undefined, // Remove logo to prevent potential hang if URL is problematic
@@ -42,13 +42,42 @@ export async function initializeFlutterwavePayment(params: {
     }),
   });
 
-  return res.json() as Promise<{
+  const data = await res.json();
+  return data as {
     status: string;
     message: string;
     data: {
       link: string;
     };
-  }>;
+  };
+}
+
+export async function verifyFlutterwaveTransaction(transactionId: string) {
+  const res = await fetch(`${FLUTTERWAVE_BASE}/transactions/${transactionId}/verify`, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${getSecret()}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  const data = await res.json();
+  return data as {
+    status: string;
+    message: string;
+    data: {
+      id: number;
+      tx_ref: string;
+      flw_ref: string;
+      amount: number;
+      currency: string;
+      status: string;
+      customer: {
+        email: string;
+      };
+      meta: any;
+    };
+  };
 }
 
 export function verifyFlutterwaveSignature(body: string, signature: string): boolean {

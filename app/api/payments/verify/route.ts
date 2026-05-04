@@ -1,38 +1,40 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyTransaction } from "@/lib/paystack";
+import { verifyFlutterwaveTransaction } from "@/lib/flutterwave";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const reference = searchParams.get("reference");
+  const status = searchParams.get("status");
+  const tx_ref = searchParams.get("tx_ref");
+  const transaction_id = searchParams.get("transaction_id");
 
-  if (!reference) {
-    return NextResponse.redirect(new URL("/dashboard?error=missing_reference", req.url));
+  if (!tx_ref || !transaction_id) {
+    return NextResponse.redirect(new URL("/dashboard/wallet?error=missing_reference", req.url));
   }
 
   try {
     const tx = await prisma.transaction.findUnique({
-      where: { reference },
+      where: { reference: tx_ref },
       include: { user: { select: { id: true } } },
     });
 
     if (!tx || tx.status !== "PENDING") {
       return NextResponse.redirect(
-        new URL("/dashboard?error=invalid_transaction", req.url)
+        new URL("/dashboard/wallet?error=invalid_transaction", req.url)
       );
     }
 
-    const paystackData = await verifyTransaction(reference);
+    const flwRes = await verifyFlutterwaveTransaction(transaction_id);
 
-    if (paystackData.data.status !== "success") {
+    if (flwRes.status !== "success" || flwRes.data.status !== "successful") {
       await prisma.transaction.update({
-        where: { reference },
+        where: { reference: tx_ref },
         data: { status: "FAILED" },
       });
-      return NextResponse.redirect(new URL("/dashboard?error=payment_failed", req.url));
+      return NextResponse.redirect(new URL("/dashboard/wallet?error=payment_failed", req.url));
     }
 
-    const amountPaid = paystackData.data.amount / 100; // convert from kobo
+    const amountPaid = flwRes.data.amount;
 
     await prisma.$transaction(async (dbtx) => {
       await dbtx.user.update({
@@ -40,15 +42,16 @@ export async function GET(req: Request) {
         data: { walletBalance: { increment: amountPaid } },
       });
       await dbtx.transaction.update({
-        where: { reference },
+        where: { reference: tx_ref },
         data: { status: "SUCCESS", amount: amountPaid },
       });
     });
 
     return NextResponse.redirect(
-      new URL("/dashboard?success=wallet_topped_up", req.url)
+      new URL("/dashboard/wallet?success=wallet_topped_up", req.url)
     );
-  } catch {
-    return NextResponse.redirect(new URL("/dashboard?error=server_error", req.url));
+  } catch (err) {
+    console.error("VERIFY_ERROR:", err);
+    return NextResponse.redirect(new URL("/dashboard/wallet?error=server_error", req.url));
   }
 }

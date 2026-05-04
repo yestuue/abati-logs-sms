@@ -1,23 +1,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyPaystackSignature } from "@/lib/paystack";
+import { verifyFlutterwaveSignature } from "@/lib/flutterwave";
 
 export async function POST(req: Request) {
   const rawBody = await req.text();
-  const signature = req.headers.get("x-paystack-signature") ?? "";
+  const signature = req.headers.get("verif-hash") ?? ""; // Flutterwave uses verif-hash
 
-  if (!verifyPaystackSignature(rawBody, signature)) {
+  if (!verifyFlutterwaveSignature(rawBody, signature)) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
   try {
     const event = JSON.parse(rawBody);
 
-    if (event.event === "charge.success") {
-      const { reference, amount } = event.data;
-      const amountNGN = amount / 100;
+    if (event.status === "successful" || event["event.type"] === "CARD_TRANSACTION") {
+      const { tx_ref, amount } = event.data || event;
+      const amountNGN = amount;
 
-      const tx = await prisma.transaction.findUnique({ where: { reference } });
+      const tx = await prisma.transaction.findUnique({ where: { reference: tx_ref } });
       if (!tx || tx.status === "SUCCESS") {
         return NextResponse.json({ received: true });
       }
@@ -28,14 +28,15 @@ export async function POST(req: Request) {
           data: { walletBalance: { increment: amountNGN } },
         });
         await dbtx.transaction.update({
-          where: { reference },
+          where: { reference: tx_ref },
           data: { status: "SUCCESS", amount: amountNGN },
         });
       });
     }
 
     return NextResponse.json({ received: true });
-  } catch {
+  } catch (err) {
+    console.error("WEBHOOK_ERROR:", err);
     return NextResponse.json({ error: "Processing error" }, { status: 500 });
   }
 }

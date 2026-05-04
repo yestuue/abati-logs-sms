@@ -83,7 +83,7 @@ function FundWalletModal({ onClose }: { onClose: () => void }) {
             <Plus className="w-5 h-5" style={{ color: "var(--primary)" }} />
             Fund Wallet
           </DialogTitle>
-          <DialogDescription>Card and USSD payments via Paystack</DialogDescription>
+          <DialogDescription>Card and USSD payments via Flutterwave</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { initializeTransaction } from "@/lib/paystack";
+import { initializeFlutterwavePayment } from "@/lib/flutterwave";
 import { buyFiveSimNumber } from "@/lib/sms-provider";
 import { finalNumberPurchasePriceNGN, normalizePurchaseCarrier } from "@/lib/number-purchase-price";
 import { generateReference } from "@/lib/utils";
@@ -23,7 +23,7 @@ const schema = z.object({
 function normalizeInitError(message: string): { error: string; status: number } {
   if (!message) return { error: "Payment initialization failed. Please try again.", status: 500 };
 
-  if (message.includes("Missing secret key") || message.includes("PAYSTACK_SECRET_KEY") || message.includes("PAYSTACK_LIVE_SECRET_KEY")) {
+  if (message.includes("Missing secret key") || message.includes("FLW_SECRET_KEY") || message.includes("FLUTTERWAVE_SECRET_KEY")) {
     return {
       error: "Payment gateway is not configured yet. Please contact support.",
       status: 500,
@@ -220,23 +220,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, number: finalNumberStr, expiresAt });
     }
 
-    // ── WALLET_TOPUP: initialize Paystack transaction ─────────────────────────
+    // ── WALLET_TOPUP: initialize Flutterwave transaction ─────────────────────────
     const reference = generateReference();
+    // Use the verify endpoint as callback so we can check status on redirect
     const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/verify`;
 
-    const paymentRes = await initializeTransaction({
-      email,
-      amount: amount * 100, // Paystack uses kobo
-      reference,
-      callback_url: callbackUrl,
-      metadata: {
-        userId,
-        type: "WALLET_TOPUP",
+    const paymentRes = await initializeFlutterwavePayment({
+      tx_ref: reference,
+      amount: amount,
+      currency: "NGN",
+      redirect_url: callbackUrl,
+      customer: {
+        email: email,
+        name: session.user.name || email.split("@")[0],
+      },
+      customizations: {
+        title: process.env.NEXT_PUBLIC_APP_NAME || "Wallet Topup",
+        description: `Funding wallet with ₦${amount.toLocaleString()}`,
+        logo: `${process.env.NEXT_PUBLIC_APP_URL}/logo.png`,
       },
     });
 
-    if (!paymentRes.status) {
-      console.error("[payments/initialize] Paystack rejected:", paymentRes.message);
+    if (paymentRes.status !== "success") {
+      console.error("[payments/initialize] Flutterwave rejected:", paymentRes.message);
       return NextResponse.json(
         { error: "Payment initialization failed", detail: paymentRes.message },
         { status: 502 }
@@ -252,12 +258,12 @@ export async function POST(req: Request) {
         status: "PENDING",
         type: "WALLET_TOPUP",
         metadata: {
-          provider: "Paystack",
+          provider: "Flutterwave",
         },
       },
     });
 
-    return NextResponse.json({ url: paymentRes.data.authorization_url, reference });
+    return NextResponse.json({ url: paymentRes.data.link, reference });
   } catch (err) {
     const error = err as { response?: { data?: unknown }; message?: string };
     const message = error.message ?? "";
