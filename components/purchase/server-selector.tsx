@@ -601,6 +601,11 @@ export function ServerSelector({
         toast.success(data.number ? `${data.number} assigned to your account!` : "Number assigned to your account!");
         setSelected(null);
         void loadActiveAssignments();
+        // Scroll to active numbers section
+        setTimeout(() => {
+          const el = document.getElementById("active-numbers-section");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 500);
       }
     } catch (err) {
       console.error("Purchase error:", err);
@@ -732,7 +737,7 @@ export function ServerSelector({
         >
           <p className="text-xs font-semibold text-foreground mb-2.5">
             Carrier preference
-            <span className="text-muted-foreground font-normal ml-1.5">
+            <span className="text-muted-foreground/80 font-normal ml-1.5">
               (optional — specific carrier or area codes below adds one +{premiumPercentLabel}% premium, not stacked)
             </span>
           </p>
@@ -768,7 +773,7 @@ export function ServerSelector({
               className="h-9 text-black dark:text-zinc-100 bg-white dark:bg-zinc-900 border-zinc-200"
               onChange={(e) => setPreferredAreaCode(sanitizeAreaCodeInput(e.target.value))}
             />
-            <p className="text-[11px] text-slate-500 dark:text-zinc-500">
+            <p className="text-[11px] text-muted-foreground/60">
               US area codes only (digits + commas). Premium applies when carrier is specific or any valid code is entered.
             </p>
           </div>
@@ -977,12 +982,12 @@ export function ServerSelector({
             </CardContent>
           </Card>
 
-          <Card className="w-full max-w-[354px] mx-auto lg:max-w-none rounded-2xl border border-zinc-200/90 dark:border-zinc-900 mb-8 mt-2 shadow-sm">
+          <Card id="active-numbers-section" className="w-full max-w-[354px] mx-auto lg:max-w-none rounded-2xl border border-zinc-200/90 dark:border-zinc-900 mb-8 mt-2 shadow-sm">
             <CardHeader className="pb-2 border-b border-zinc-100 dark:border-zinc-800">
-              <CardTitle className="text-[15px] font-semibold text-slate-900 dark:text-zinc-100">
+              <CardTitle className="text-[15px] font-semibold text-foreground">
                 Active Numbers
               </CardTitle>
-              <p className="text-[11px] text-slate-600 dark:text-zinc-400">
+              <p className="text-[11px] text-muted-foreground">
                 Your assigned lines, countdown, and latest OTP
               </p>
             </CardHeader>
@@ -1079,9 +1084,9 @@ export function ServerSelector({
                 </div>
               ) : activeAssignments.length === 0 ? (
                 <div className="text-center py-8 px-4">
-                  <Phone className="w-8 h-8 mx-auto text-zinc-400 mb-2" />
-                  <p className="text-sm font-medium text-[#2D2D2D] dark:text-zinc-200">No active numbers yet</p>
-                  <p className="text-xs text-slate-600 dark:text-zinc-500 mt-1">
+                  <Phone className="w-8 h-8 mx-auto text-muted-foreground/40 mb-2" />
+                  <p className="text-sm font-medium text-foreground">No active numbers yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">
                     Buy a number below to receive OTPs here.
                   </p>
                 </div>
