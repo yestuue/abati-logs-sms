@@ -34,18 +34,23 @@ export async function POST(req: Request) {
     const resetUrl = `${baseUrl}/reset-password?token=${token}&email=${encodeURIComponent(normalised)}`;
 
     // Attempt to send email via nodemailer if SMTP env vars are present
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+    const host = process.env.SMTP_HOST || "smtp.gmail.com"; // Default to gmail if missing
+    const user = process.env.SMTP_USER || process.env.EMAIL_USER;
+    const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+    const from = process.env.EMAIL_FROM || process.env.SMTP_FROM || `Abati Digital <noreply@abatidigital.com>`;
+
+    if (host && user && pass) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const nm = require("nodemailer") as { createTransport: Function };
         const transporter = nm.createTransport({
-          host: process.env.SMTP_HOST,
+          host,
           port: Number(process.env.SMTP_PORT ?? 587),
           secure: process.env.SMTP_SECURE === "true",
-          auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+          auth: { user, pass },
         }) as { sendMail: Function };
         await transporter.sendMail({
-          from: process.env.EMAIL_FROM ?? `Abati Digital <noreply@abatidigital.com>`,
+          from,
           to: normalised,
           subject: "Reset your Abati Digital password",
           html: `
