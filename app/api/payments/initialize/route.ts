@@ -51,7 +51,7 @@ export async function POST(req: Request) {
     const amount = Math.round(parsed.data.amount);
     const { type, numberId, carrier: carrierRaw, areaCodes: areaCodesRaw, serviceKey } = parsed.data;
     const userId = session.user.id;
-    const email = session.user.email;
+    const email = session.user.email.trim();
 
     // ── NUMBER_PURCHASE: debit wallet directly ──────────────────
     if (type === "NUMBER_PURCHASE" && (numberId || (parsed.data.providerPurchase && serviceKey))) {
@@ -222,8 +222,9 @@ export async function POST(req: Request) {
 
     // ── WALLET_TOPUP: initialize Flutterwave transaction ─────────────────────────
     const reference = generateReference();
-    // Use the verify endpoint as callback so we can check status on redirect
-    const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/verify`;
+    // Normalize app URL and ensure no trailing slash
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
+    const callbackUrl = `${appUrl}/api/payments/verify`;
 
     const paymentRes = await initializeFlutterwavePayment({
       tx_ref: reference,

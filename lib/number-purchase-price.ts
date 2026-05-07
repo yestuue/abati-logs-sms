@@ -21,7 +21,13 @@ export function purchasePremiumActive(params: {
   carrier: string;
   areaCodesRaw: string;
 }): boolean {
-  return params.server === "SERVER1" || params.server === "SERVER2";
+  if (params.server === "SERVER2") return true;
+  if (params.server === "SERVER1") {
+    const hasCarrier = params.carrier !== "any";
+    const hasAreaCodes = params.areaCodesRaw.trim().length > 0;
+    return hasCarrier || hasAreaCodes;
+  }
+  return false;
 }
 
 export function purchasePremiumMultiplier(params: {

@@ -47,7 +47,11 @@ export async function POST(req: Request) {
 
     await tx.log.updateMany({
       where: { id: { in: itemIds } },
-      data: { status: "SOLD" },
+      data: { 
+        status: "SOLD",
+        userId,
+        purchasedAt: new Date()
+      },
     });
 
     const reference = generateReference();

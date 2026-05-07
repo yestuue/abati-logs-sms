@@ -41,6 +41,7 @@ model User {
   sessions       Session[]
   transactions   Transaction[]
   numbers        VirtualNumber[]
+  logs           Log[]
   referredBy     User?           @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull, onUpdate: NoAction)
   referrals      User[]          @relation("UserReferrals")
 }
@@ -110,9 +111,13 @@ model Log {
   twoFA       String?
   price       Float     @default(0)
   status      LogStatus @default(AVAILABLE)
+  userId      String?
+  purchasedAt DateTime?
   createdAt   DateTime  @default(now())
   categoryRef LogCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 }
+
 
 model WithdrawalRequest {
   id          String   @id @default(cuid())

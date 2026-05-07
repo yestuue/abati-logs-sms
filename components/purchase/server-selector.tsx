@@ -595,12 +595,15 @@ export function ServerSelector({
       }
       if (data.url) {
         window.location.href = data.url;
+        // Don't setBuying(false) here to keep loading until redirect
+        return;
       } else if (data.success) {
         toast.success(data.number ? `${data.number} assigned to your account!` : "Number assigned to your account!");
         setSelected(null);
         void loadActiveAssignments();
       }
-    } catch {
+    } catch (err) {
+      console.error("Purchase error:", err);
       toast.error("Network error. Try again.");
     } finally {
       setBuying(false);

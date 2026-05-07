@@ -1,9 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Package, Copy, Check, Search, X, ShoppingBag,
-  ExternalLink, Clock, Filter,
+  ExternalLink, Clock, Filter, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 interface Order {
   id: string;
   product: string;
-  category: "Facebook" | "Instagram" | "TikTok" | "Twitter/X" | "Gmail" | "Other";
+  category: string;
   username: string;
   password: string;
   recoveryEmail?: string;
@@ -24,66 +24,7 @@ interface Order {
   status: "delivered" | "pending";
 }
 
-// ── Mock vault data — replace with real API in production ─────────────────────
-const MOCK_ORDERS: Order[] = [
-  {
-    id: "ord-001",
-    product: "HQ Facebook Aged Account",
-    category: "Facebook",
-    username: "john.d.usa2019",
-    password: "Fb@Secure!99",
-    recoveryEmail: "jd2019recovery@gmail.com",
-    twoFAKey: "JBSWY3DPEHPK3PXP",
-    price: 1200,
-    date: "Apr 2, 2026",
-    status: "delivered",
-  },
-  {
-    id: "ord-002",
-    product: "Instagram 500+ Followers",
-    category: "Instagram",
-    username: "insta_fresh_uk",
-    password: "Insta#2024!",
-    recoveryEmail: "ukaccount@proton.me",
-    price: 1800,
-    date: "Apr 1, 2026",
-    status: "delivered",
-  },
-  {
-    id: "ord-003",
-    product: "USA Gmail PVA",
-    category: "Gmail",
-    username: "usadev.account2023@gmail.com",
-    password: "Gm@ilPass#55",
-    price: 600,
-    date: "Mar 30, 2026",
-    status: "delivered",
-  },
-  {
-    id: "ord-004",
-    product: "TikTok 1K Followers",
-    category: "TikTok",
-    username: "tiktok_verified_ng",
-    password: "Tik!T0k@2025",
-    twoFAKey: "MFRGGZDFMZTWQ2LK",
-    price: 2200,
-    date: "Mar 28, 2026",
-    status: "delivered",
-  },
-  {
-    id: "ord-005",
-    product: "Twitter/X Aged Account",
-    category: "Twitter/X",
-    username: "@dgtl_pioneer_2020",
-    password: "Tw1tter#Aged",
-    recoveryEmail: "pioneer2020alt@yahoo.com",
-    price: 900,
-    date: "Mar 25, 2026",
-    status: "delivered",
-  },
-];
-
-const CATEGORY_ICONS: Record<Order["category"], string> = {
+const CATEGORY_ICONS: Record<string, string> = {
   Facebook: "📘", Instagram: "📸", TikTok: "🎵",
   "Twitter/X": "🐦", Gmail: "📧", Other: "🔗",
 };
@@ -163,7 +104,7 @@ function OrderCard({ order }: { order: Order }) {
           {/* Header row */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
-              <span className="text-xl flex-shrink-0">{CATEGORY_ICONS[order.category]}</span>
+              <span className="text-xl flex-shrink-0">{CATEGORY_ICONS[order.category] || "🔗"}</span>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-foreground truncate">{order.product}</p>
                 <div className="flex items-center gap-2 mt-0.5">
@@ -180,11 +121,11 @@ function OrderCard({ order }: { order: Order }) {
               <Badge
                 variant="secondary"
                 className="text-[10px]"
-                style={order.status === "delivered"
+                style={order.status === "delivered" || order.status === "sold"
                   ? { background: `${MINT}18`, color: MINT, border: `1px solid ${MINT}28` }
                   : {}}
               >
-                {order.status === "delivered" ? "✓ Delivered" : "Pending"}
+                {order.status === "delivered" || order.status === "sold" ? "✓ Delivered" : "Pending"}
               </Badge>
               <button
                 onClick={() => setExpanded((p) => !p)}
@@ -227,19 +168,38 @@ function OrderCard({ order }: { order: Order }) {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function OrdersPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch]         = useState("");
-  const [filter, setFilter]         = useState<Order["category"] | "All">("All");
+  const [filter, setFilter]         = useState<string>("All");
 
-  const categories = ["All", "Facebook", "Instagram", "TikTok", "Twitter/X", "Gmail", "Other"] as const;
+  useEffect(() => {
+    async function fetchOrders() {
+      try {
+        const res = await fetch("/api/user/orders");
+        if (res.ok) {
+          const data = await res.json();
+          setOrders(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch orders:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchOrders();
+  }, []);
 
-  const filtered = MOCK_ORDERS.filter((o) => {
+  const categories = ["All", "Facebook", "Instagram", "TikTok", "Twitter/X", "Gmail", "Other"];
+
+  const filtered = orders.filter((o) => {
     const matchCat    = filter === "All" || o.category === filter;
     const matchSearch = o.product.toLowerCase().includes(search.toLowerCase()) ||
                         o.username.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
-  const totalSpent = MOCK_ORDERS.reduce((s, o) => s + o.price, 0);
+  const totalSpent = orders.reduce((s, o) => s + o.price, 0);
 
   return (
     <div className="space-y-6">
@@ -256,8 +216,8 @@ export default function OrdersPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         {[
-          { label: "Total Orders",   value: MOCK_ORDERS.length,                      icon: Package },
-          { label: "Delivered",      value: MOCK_ORDERS.filter((o) => o.status === "delivered").length, icon: Check },
+          { label: "Total Orders",   value: orders.length,                      icon: Package },
+          { label: "Delivered",      value: orders.length, icon: Check },
           { label: "Total Spent",    value: `₦${totalSpent.toLocaleString()}`,        icon: ShoppingBag },
         ].map((s) => {
           const Icon = s.icon;
@@ -297,23 +257,27 @@ export default function OrdersPage() {
           <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as Order["category"] | "All")}
+            onChange={(e) => setFilter(e.target.value)}
             className="pl-9 pr-8 py-2 rounded-xl border text-sm font-medium appearance-none cursor-pointer"
             style={{ background: "var(--card)", borderColor: "var(--border)", color: "var(--foreground)", minWidth: 160 }}
           >
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
-          <ExternalLink className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none opacity-0" />
         </div>
       </div>
 
       {/* Orders list */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">Loading your vault…</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <ShoppingBag className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
           <p className="font-semibold text-foreground">No orders found</p>
           <p className="text-sm text-muted-foreground mt-1">
-            {MOCK_ORDERS.length === 0
+            {orders.length === 0
               ? "You haven't purchased any logs yet."
               : "Try adjusting your search or filter."}
           </p>

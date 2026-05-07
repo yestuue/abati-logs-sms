@@ -24,11 +24,22 @@ export async function fiveSimFetch(input: string | URL, init?: RequestInit): Pro
   if (extra && typeof extra === "object" && !Array.isArray(extra)) {
     Object.assign(merged, headersToRecord(extra as HeadersInit));
   }
-  return fetch(input, {
-    ...init,
-    headers: merged,
-    cache: "no-store",
-  });
+  
+  // Add a 10-second timeout to prevent hanging the request
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+  try {
+    const res = await fetch(input, {
+      ...init,
+      headers: merged,
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    return res;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 function headersToRecord(h: HeadersInit): Record<string, string> {

@@ -159,22 +159,48 @@ export async function GET(req: Request) {
       }
     }
 
-    const pricedServices = services.map((s) => {
-      const cfg = configMap.get(s.key);
-      const effective =
-        serverForPremium === "SERVER2"
-          ? (cfg?.basePriceServer2 ?? cfg?.effectiveBase ?? s.basePriceNGN)
-          : (cfg?.effectiveBase ?? s.basePriceNGN);
-      return {
-        key: s.key,
-        name: cfg?.name ?? s.name,
-        category: s.category,
-        qty: s.qty,
-        priceUsd: s.priceUsd,
-        priceNGN: Math.round(effective),
-        premiumRate: globalPremiumRate,
-      };
-    });
+    const pricedServices = await Promise.all(
+      services.map(async (s) => {
+        const cfg = configMap.get(s.key);
+        
+        // If we have a cached config, check if the provider price changed significantly
+        // and update the DB if it's not a customPrice override.
+        if (cfg && cfg.customPrice == null) {
+          const oldBase = serverForPremium === "SERVER2" ? cfg.basePriceServer2 : cfg.basePrice;
+          if (oldBase !== s.basePriceNGN) {
+            await prisma.service.update({
+              where: { serviceKey: s.key },
+              data: {
+                ...(serverForPremium === "SERVER2" 
+                  ? { basePriceServer2: s.basePriceNGN } 
+                  : { basePrice: s.basePriceNGN }
+                ),
+                updatedAt: new Date(),
+              },
+            });
+            // Update local config object for immediate display
+            if (serverForPremium === "SERVER2") cfg.basePriceServer2 = s.basePriceNGN;
+            else cfg.basePrice = s.basePriceNGN;
+            cfg.effectiveBase = s.basePriceNGN;
+          }
+        }
+
+        const effective =
+          serverForPremium === "SERVER2"
+            ? (cfg?.basePriceServer2 ?? cfg?.effectiveBase ?? s.basePriceNGN)
+            : (cfg?.effectiveBase ?? s.basePriceNGN);
+            
+        return {
+          key: s.key,
+          name: cfg?.name ?? s.name,
+          category: s.category,
+          qty: s.qty,
+          priceUsd: s.priceUsd,
+          priceNGN: Math.round(effective),
+          premiumRate: globalPremiumRate,
+        };
+      })
+    );
 
     return NextResponse.json(
       {
