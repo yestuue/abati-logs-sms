@@ -744,7 +744,7 @@ export function ServerSelector({
         >
           <p className="text-xs font-semibold text-foreground mb-2.5">
             Carrier preference
-            <span className="text-muted-foreground/80 font-normal ml-1.5">
+            <span className="text-muted-foreground font-normal ml-1.5">
               (optional — specific carrier or area codes below adds one +{premiumPercentLabel}% premium, not stacked)
             </span>
           </p>
@@ -777,10 +777,10 @@ export function ServerSelector({
             <Input
               value={preferredAreaCode}
               placeholder="e.g. 212, 646, 917"
-              className="h-9 text-black dark:text-zinc-100 bg-card dark:bg-zinc-900 border-zinc-200"
+              className="h-9 text-foreground bg-card dark:bg-zinc-900 border-zinc-200"
               onChange={(e) => setPreferredAreaCode(sanitizeAreaCodeInput(e.target.value))}
             />
-            <p className="text-[11px] text-muted-foreground/60">
+            <p className="text-[11px] text-muted-foreground">
               US area codes only (digits + commas). Premium applies when carrier is specific or any valid code is entered.
             </p>
           </div>
@@ -807,17 +807,17 @@ export function ServerSelector({
         <>
           {activeServer === "SERVER2" && (
             <div className="w-full max-w-[354px] mx-auto lg:max-w-none space-y-2 mb-2">
-              <Label className="text-sm font-medium text-[#2D2D2D] dark:text-zinc-100">
+              <Label className="text-sm font-medium text-foreground font-semibold">
                 Select country
               </Label>
               {countries.length === 0 ? (
-                <p className="text-xs text-muted-foreground/70 py-2">Loading countries…</p>
+                <p className="text-xs text-muted-foreground py-2">Loading countries…</p>
               ) : (
                 <div className="relative">
                   <Input
                     value={countrySearch}
                     placeholder="Type country: USA, Nigeria…"
-                    className="h-10 text-black dark:text-zinc-100 bg-card dark:bg-zinc-900 border-zinc-200"
+                    className="h-10 text-foreground bg-card dark:bg-zinc-900 border-zinc-200"
                     onFocus={() => setCountryOpen(true)}
                     onChange={(e) => {
                       setCountrySearch(e.target.value);
@@ -835,7 +835,7 @@ export function ServerSelector({
                           <button
                             key={c.slug}
                             type="button"
-                            className="w-full text-left px-3 py-2.5 text-sm text-slate-900 dark:text-zinc-100 hover:bg-violet-50 dark:hover:bg-violet-950/30 border-b border-zinc-100 dark:border-zinc-800 last:border-0"
+                            className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-violet-50 dark:hover:bg-violet-950/30 border-b border-zinc-100 dark:border-zinc-800 last:border-0"
                             onClick={() => {
                               setServer2Country(c.slug);
                               setServer2CountryId(c.id);
@@ -867,7 +867,7 @@ export function ServerSelector({
             <CardHeader className="pb-3 bg-gradient-to-b from-violet-50/50 to-card dark:from-violet-950/20 dark:to-transparent border-b border-zinc-100 dark:border-zinc-900">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <CardTitle className="text-[14px] flex items-center gap-1.5 font-semibold text-slate-900 dark:text-zinc-100">
+                  <CardTitle className="text-[14px] flex items-center gap-1.5 font-semibold text-foreground">
                     <span>{SERVER_INFO[activeServer].icon}</span>
                     {SERVER_INFO[activeServer].label} — {SERVER_INFO[activeServer].sublabel}
                   </CardTitle>
@@ -892,14 +892,14 @@ export function ServerSelector({
                 </Button>
               </div>
 
-              <p className="text-[12px] font-medium text-muted-foreground/80 mt-2">
+              <p className="text-[12px] font-medium text-muted-foreground mt-2">
                 Select Service
               </p>
               <div className="relative z-40 mt-1.5">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400 pointer-events-none z-10" />
                 <Input
                   placeholder="Search: WhatsApp, Telegram, Google…"
-                  className="relative z-10 pl-8 pr-8 h-9 text-[11.5px] text-black dark:text-zinc-100 rounded-xl border-zinc-200 bg-card dark:bg-zinc-900 focus-visible:ring-violet-400/40"
+                  className="relative z-10 pl-8 pr-8 h-9 text-[11.5px] text-foreground rounded-xl border-zinc-200 bg-card dark:bg-zinc-900 focus-visible:ring-violet-400/40"
                   value={search}
                   onChange={(e) => onSearchChange(e.target.value)}
                   autoComplete="off"
@@ -935,7 +935,7 @@ export function ServerSelector({
                               onClick={() => selectServiceRow(row)}
                             >
                               <div className="min-w-0">
-                                <p className="text-[13px] font-medium text-slate-900 dark:text-zinc-100 truncate">
+                                <p className="text-[13px] font-medium text-foreground truncate">
                                   {row.serviceName}
                                 </p>
                                 <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
@@ -982,7 +982,7 @@ export function ServerSelector({
             </CardHeader>
             <CardContent className="p-3 pt-0">
               {!queryReady && (
-                <p className="text-center text-xs text-muted-foreground/60 py-2">
+                <p className="text-center text-xs text-muted-foreground py-2">
                   Type at least {MIN_SERVICE_QUERY_LEN} characters to search services.
                 </p>
               )}
@@ -1018,11 +1018,11 @@ export function ServerSelector({
                       >
                         Selected service
                       </p>
-                      <p className="text-[14px] font-semibold text-[#2D2D2D] dark:text-zinc-100">
+                      <p className="text-[14px] font-semibold text-foreground font-semibold">
                         {selectedService.serviceName}
                       </p>
                       {activeServer === "SERVER2" && selectedCountry && (
-                        <p className="text-[11px] font-medium text-muted-foreground/80 mt-0.5">
+                        <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
                           {flagFromIso2(selectedCountry.iso2)} {selectedCountry.name}
                         </p>
                       )}
@@ -1108,11 +1108,11 @@ export function ServerSelector({
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <p className="font-mono text-sm font-semibold text-[#2D2D2D] dark:text-zinc-100">
+                            <p className="font-mono text-sm font-semibold text-foreground font-semibold">
                               {a.number}
                             </p>
                             <p className="text-[11px] text-muted-foreground">{a.country}</p>
-                            <div className="flex items-center gap-1 mt-1 text-[11px] text-muted-foreground/80">
+                            <div className="flex items-center gap-1 mt-1 text-[11px] text-muted-foreground">
                               <Clock className="w-3 h-3 shrink-0" />
                               {a.expiresAt
                                 ? `Expires in ${formatCountdown(a.expiresAt)}`
@@ -1125,7 +1125,7 @@ export function ServerSelector({
                         </div>
                         <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
                           <div>
-                            <p className="text-[10px] uppercase text-muted-foreground/60 font-medium">
+                            <p className="text-[10px] uppercase text-muted-foreground font-medium">
                               Latest OTP
                             </p>
                             <p className="text-lg font-bold tracking-wide text-violet-700 dark:text-violet-300 font-mono">
@@ -1158,7 +1158,7 @@ export function ServerSelector({
               className="w-full max-w-[354px] mx-auto lg:max-w-none rounded-2xl border border-zinc-200/90 dark:border-zinc-800 overflow-hidden mb-8"
             >
               <CardHeader className="pb-2 border-b border-zinc-100 dark:border-zinc-800">
-                <CardTitle className="text-[14px] font-semibold text-slate-900 dark:text-zinc-100">
+                <CardTitle className="text-[14px] font-semibold text-foreground">
                   Available numbers
                 </CardTitle>
                 <p className="text-[11px] text-muted-foreground">Tap a row to purchase</p>
@@ -1178,10 +1178,10 @@ export function ServerSelector({
                       >
                         <div className="text-lg flex-shrink-0">{SERVER_INFO[activeServer].icon}</div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-mono font-semibold text-[#2D2D2D] dark:text-zinc-100">
+                          <p className="text-[12px] font-mono font-semibold text-foreground font-semibold">
                             {n.number}
                           </p>
-                          <p className="text-[10px] text-muted-foreground/70">{n.country}</p>
+                          <p className="text-[10px] text-muted-foreground">{n.country}</p>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="text-[12px] font-semibold text-violet-600 dark:text-violet-300">
@@ -1218,12 +1218,12 @@ export function ServerSelector({
           )}
 
           <div className="w-full max-w-[354px] mx-auto lg:max-w-none rounded-2xl border border-violet-200/70 dark:border-violet-900/50 bg-[#F3F0FF] dark:bg-violet-950/30 px-4 py-4 mb-8 shadow-sm">
-            <h3 className="text-sm font-semibold text-[#2D2D2D] dark:text-zinc-100 mb-3">How it works</h3>
+            <h3 className="text-sm font-semibold text-foreground font-semibold mb-3">How it works</h3>
             <ul className="space-y-2.5">
               {HOW_IT_WORKS_RULES.map((rule) => (
                 <li
                   key={rule}
-                  className="flex gap-2.5 text-[13px] leading-snug text-[#2D2D2D] dark:text-zinc-100"
+                  className="flex gap-2.5 text-[13px] leading-snug text-foreground font-semibold"
                 >
                   <CheckCircle2
                     className="w-4 h-4 flex-shrink-0 text-violet-700 dark:text-violet-400 mt-0.5"
