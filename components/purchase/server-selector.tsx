@@ -770,7 +770,7 @@ export function ServerSelector({
             <Input
               value={preferredAreaCode}
               placeholder="e.g. 212, 646, 917"
-              className="h-9 text-black dark:text-zinc-100 bg-white dark:bg-zinc-900 border-zinc-200"
+              className="h-9 text-black dark:text-zinc-100 bg-card dark:bg-zinc-900 border-zinc-200"
               onChange={(e) => setPreferredAreaCode(sanitizeAreaCodeInput(e.target.value))}
             />
             <p className="text-[11px] text-muted-foreground/60">
@@ -810,7 +810,7 @@ export function ServerSelector({
                   <Input
                     value={countrySearch}
                     placeholder="Type country: USA, Nigeria…"
-                    className="h-10 text-black dark:text-zinc-100 bg-white dark:bg-zinc-900 border-zinc-200"
+                    className="h-10 text-black dark:text-zinc-100 bg-card dark:bg-zinc-900 border-zinc-200"
                     onFocus={() => setCountryOpen(true)}
                     onChange={(e) => {
                       setCountrySearch(e.target.value);
@@ -818,9 +818,9 @@ export function ServerSelector({
                     }}
                   />
                   {countryOpen && (
-                    <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 bg-white dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
+                    <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 bg-card dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
                       {filteredCountries.length === 0 ? (
-                        <div className="px-3 py-2.5 text-xs text-muted-foreground/90">
+                        <div className="px-3 py-2.5 text-xs text-muted-foreground">
                           No country found
                         </div>
                       ) : (
@@ -856,15 +856,15 @@ export function ServerSelector({
             </div>
           )}
 
-          <Card className="relative z-30 w-full max-w-[354px] mx-auto lg:max-w-none overflow-visible rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-card shadow-sm">
-            <CardHeader className="pb-3 bg-gradient-to-b from-violet-50/50 to-white dark:from-violet-950/20 dark:to-transparent border-b border-zinc-100 dark:border-zinc-900">
+          <Card className="relative z-30 w-full max-w-[354px] mx-auto lg:max-w-none overflow-visible rounded-2xl border border-zinc-200/90 dark:border-zinc-800 bg-card dark:bg-card shadow-sm">
+            <CardHeader className="pb-3 bg-gradient-to-b from-violet-50/50 to-card dark:from-violet-950/20 dark:to-transparent border-b border-zinc-100 dark:border-zinc-900">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <CardTitle className="text-[14px] flex items-center gap-1.5 font-semibold text-slate-900 dark:text-zinc-100">
                     <span>{SERVER_INFO[activeServer].icon}</span>
                     {SERVER_INFO[activeServer].label} — {SERVER_INFO[activeServer].sublabel}
                   </CardTitle>
-                  <p className="text-[10.5px] text-muted-foreground/90 mt-0.5 leading-snug">
+                  <p className="text-[10.5px] text-muted-foreground mt-0.5 leading-snug">
                     {SERVER_INFO[activeServer].description}
                   </p>
                 </div>
@@ -892,7 +892,7 @@ export function ServerSelector({
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-zinc-400 pointer-events-none z-10" />
                 <Input
                   placeholder="Search: WhatsApp, Telegram, Google…"
-                  className="relative z-10 pl-8 pr-8 h-9 text-[11.5px] text-black dark:text-zinc-100 rounded-xl border-zinc-200 bg-white dark:bg-zinc-900 focus-visible:ring-violet-400/40"
+                  className="relative z-10 pl-8 pr-8 h-9 text-[11.5px] text-black dark:text-zinc-100 rounded-xl border-zinc-200 bg-card dark:bg-zinc-900 focus-visible:ring-violet-400/40"
                   value={search}
                   onChange={(e) => onSearchChange(e.target.value)}
                   autoComplete="off"
@@ -908,14 +908,14 @@ export function ServerSelector({
                 )}
 
                 {queryReady && (loading || serviceResults.length > 0) && (
-                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 bg-white dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
+                  <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 bg-card dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
                     {loading ? (
-                      <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground/90">
+                      <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         Searching…
                       </div>
                     ) : serviceResults.length === 0 ? (
-                      <div className="py-8 px-4 text-center text-sm text-muted-foreground/90">
+                      <div className="py-8 px-4 text-center text-sm text-muted-foreground">
                         No results found
                       </div>
                     ) : (
@@ -1078,7 +1078,7 @@ export function ServerSelector({
               )}
 
               {loadingActive && activeAssignments.length === 0 ? (
-                <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground/90">
+                <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Loading…
                 </div>
@@ -1097,14 +1097,14 @@ export function ServerSelector({
                     return (
                       <li
                         key={a.id}
-                        className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/50 p-3"
+                        className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-card/90 dark:bg-zinc-950/50 p-3"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <p className="font-mono text-sm font-semibold text-[#2D2D2D] dark:text-zinc-100">
                               {a.number}
                             </p>
-                            <p className="text-[11px] text-muted-foreground/90">{a.country}</p>
+                            <p className="text-[11px] text-muted-foreground">{a.country}</p>
                             <div className="flex items-center gap-1 mt-1 text-[11px] text-muted-foreground/80">
                               <Clock className="w-3 h-3 shrink-0" />
                               {a.expiresAt
@@ -1154,7 +1154,7 @@ export function ServerSelector({
                 <CardTitle className="text-[14px] font-semibold text-slate-900 dark:text-zinc-100">
                   Available numbers
                 </CardTitle>
-                <p className="text-[11px] text-muted-foreground/90">Tap a row to purchase</p>
+                <p className="text-[11px] text-muted-foreground">Tap a row to purchase</p>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-0">
