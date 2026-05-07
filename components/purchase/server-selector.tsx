@@ -166,6 +166,7 @@ export function ServerSelector({
   const [countries, setCountries] = useState<CountryOption[]>([]);
   const [activeAssignments, setActiveAssignments] = useState<ActiveAssignment[]>([]);
   const [loadingActive, setLoadingActive] = useState(false);
+  const [searchingServices, setSearchingServices] = useState(false);
   const [purchaseLegalAccepted, setPurchaseLegalAccepted] = useState(false);
   const [serviceFetchError, setServiceFetchError] = useState<string | null>(null);
 
@@ -186,6 +187,7 @@ export function ServerSelector({
       }
 
       setLoading(true);
+      setSearchingServices(true);
       try {
         const countryIdQs =
           activeServer === "SERVER2" && server2CountryId
@@ -241,6 +243,7 @@ export function ServerSelector({
         setServiceResults([]);
       } finally {
         setLoading(false);
+        setSearchingServices(false);
       }
     },
     [activeServer, server2CountryId]
@@ -333,6 +336,7 @@ export function ServerSelector({
       setCountryOpen(false);
       setPreferredAreaCode("");
       setServiceFetchError(null);
+      setSearchingServices(false);
     }
   }
 
@@ -909,10 +913,10 @@ export function ServerSelector({
 
                 {queryReady && (loading || serviceResults.length > 0) && (
                   <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 bg-card dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
-                    {loading ? (
+                    {searchingServices ? (
                       <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Searching…
+                        Fetching latest pricing…
                       </div>
                     ) : serviceResults.length === 0 ? (
                       <div className="py-8 px-4 text-center text-sm text-muted-foreground">

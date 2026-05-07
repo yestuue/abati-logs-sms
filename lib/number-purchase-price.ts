@@ -36,7 +36,7 @@ export function purchasePremiumMultiplier(params: {
   areaCodesRaw: string;
   premiumRate?: number;
 }): number {
-  const rate = typeof params.premiumRate === "number" ? params.premiumRate : 0.35;
+  const rate = typeof params.premiumRate === "number" ? params.premiumRate : 0.20;
   return purchasePremiumActive(params) ? 1 + rate : 1;
 }
 

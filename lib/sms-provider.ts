@@ -83,3 +83,13 @@ export async function buyFiveSimNumber(country: string, operator: string, produc
   const data = await res.json();
   return { data };
 }
+
+export async function checkFiveSimOrder(orderId: string | number): Promise<{ id: number; phone: string; operator: string; product: string; price: number; status: string; expires: string; sms: { date: string; from: string; text: string; code: string }[] | null } | null> {
+  const base = getFiveSimApiBase();
+  const url = `${base}/user/check/activation/${orderId}`;
+  const res = await fiveSimFetch(url);
+  if (!res.ok) {
+    return null;
+  }
+  return res.json();
+}
