@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const patchSchema = z.object({
+  premiumTarget: z.enum(["SERVER1", "SERVER2"]).optional(),
   marginPct: z.number().min(0).max(500).optional(),
   siteName: z.string().trim().min(1).max(120).optional(),
   fixedProfitNGN: z.number().min(0).optional(),
