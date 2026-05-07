@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { getPublicSiteUrl } from "@/lib/site-url";
 
 export async function POST(req: Request) {
   try {
@@ -29,7 +30,7 @@ export async function POST(req: Request) {
     });
 
     // Build reset URL
-    const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+    const baseUrl = getPublicSiteUrl();
     const resetUrl = `${baseUrl}/reset-password?token=${token}&email=${encodeURIComponent(normalised)}`;
 
     // Attempt to send email via nodemailer if SMTP env vars are present

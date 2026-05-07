@@ -21,7 +21,7 @@ interface Order {
   twoFAKey?: string;
   price: number;
   date: string;
-  status: "delivered" | "pending";
+  status: "delivered" | "pending" | "sold";
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
