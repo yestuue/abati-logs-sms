@@ -5,9 +5,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const patchSchema = z.object({
-  premiumTarget: z.enum(["SERVER1", "SERVER2"]),
-  marginPct: z.number().min(0).max(500),
+  marginPct: z.number().min(0).max(500).optional(),
   siteName: z.string().trim().min(1).max(120).optional(),
+  fixedProfitNGN: z.number().min(0).optional(),
 });
 
 import { isAdmin } from "@/lib/admin-access";
@@ -36,6 +36,7 @@ export async function GET() {
       s2Margin: true,
       smsGlobalPremiumRate: true,
       smsGlobalPremiumRateServer2: true,
+      fixedProfitNGN: true,
     },
   });
 
@@ -46,6 +47,7 @@ export async function GET() {
     siteName: settings?.siteName ?? "Abati Digital",
     S1_MARGIN: s1,
     S2_MARGIN: s2,
+    fixedProfitNGN: settings?.fixedProfitNGN ?? 0,
   });
 }
 
@@ -57,26 +59,27 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const { premiumTarget, marginPct } = parsed.data;
+  const { premiumTarget, marginPct, fixedProfitNGN } = parsed.data;
   const settingsId = await getLatestSettingsId();
   const normalizedSiteName = parsed.data.siteName?.trim();
-  const data =
-    premiumTarget === "SERVER2"
-      ? {
-          s2Margin: marginPct,
-          smsGlobalPremiumRateServer2: marginPct / 100,
-          ...(normalizedSiteName ? { siteName: normalizedSiteName } : {}),
-        }
-      : {
-          s1Margin: marginPct,
-          smsGlobalPremiumRate: marginPct / 100,
-          ...(normalizedSiteName ? { siteName: normalizedSiteName } : {}),
-        };
+  
+  const data: any = {
+    ...(normalizedSiteName ? { siteName: normalizedSiteName } : {}),
+    ...(fixedProfitNGN != null ? { fixedProfitNGN } : {}),
+  };
+
+  if (premiumTarget === "SERVER2" && marginPct != null) {
+    data.s2Margin = marginPct;
+    data.smsGlobalPremiumRateServer2 = marginPct / 100;
+  } else if (premiumTarget === "SERVER1" && marginPct != null) {
+    data.s1Margin = marginPct;
+    data.smsGlobalPremiumRate = marginPct / 100;
+  }
 
   if (settingsId) {
     await prisma.globalSettings.update({ where: { id: settingsId }, data });
   } else {
-    await prisma.globalSettings.create({ data });
+    await prisma.globalSettings.create({ data: { ...data, premiumTarget: premiumTarget || "SERVER1" } as any });
   }
 
   revalidatePath("/admin/pricing");

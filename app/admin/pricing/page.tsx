@@ -116,6 +116,12 @@ export default function AdminPricingPage() {
     );
   }
 
+  const [globalPremiumS1Pct, setGlobalPremiumS1Pct] = useState("35");
+  const [globalPremiumS2Pct, setGlobalPremiumS2Pct] = useState("35");
+  const [globalFixedProfitNGN, setGlobalFixedProfitNGN] = useState("0");
+  const [categories, setCategories] = useState<LogCategory[]>([]);
+  const [logs, setLogs] = useState<LogItem[]>([]);
+
   async function loadPremiumSettings() {
     const res = await fetch("/api/admin/settings", { cache: "no-store" });
     if (!res.ok) {
@@ -125,8 +131,23 @@ export default function AdminPricingPage() {
     const data = await res.json();
     const s1 = Number(data.S1_MARGIN ?? 35) || 35;
     const s2 = Number(data.S2_MARGIN ?? 35) || 35;
+    const fixed = Number(data.fixedProfitNGN ?? 0) || 0;
     setGlobalPremiumS1Pct(String(Math.round(s1)));
     setGlobalPremiumS2Pct(String(Math.round(s2)));
+    setGlobalFixedProfitNGN(String(Math.round(fixed)));
+  }
+
+  async function saveFixedProfit() {
+    const val = Number(globalFixedProfitNGN);
+    if (!Number.isFinite(val) || val < 0) return toast.error("Invalid profit amount");
+    const res = await fetch("/api/admin/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fixedProfitNGN: val, premiumTarget: "SERVER1" }), // Target doesn't matter for fixed profit
+    });
+    if (!res.ok) return toast.error("Failed to save profit");
+    toast.success("Fixed profit updated");
+    await loadPremiumSettings();
   }
 
   async function loadMarketplace() {
@@ -530,6 +551,22 @@ export default function AdminPricingPage() {
               </div>
               <Button type="button" className="shrink-0" onClick={() => void saveGlobalPremiumServer("SERVER2")}>
                 Save S2 Premium
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-end gap-2 rounded-lg border border-border/80 bg-muted/20 p-3">
+              <div className="space-y-1 min-w-0 flex-1">
+                <Label htmlFor="fixed-profit">Fixed Profit (₦)</Label>
+                <Input
+                  id="fixed-profit"
+                  value={globalFixedProfitNGN}
+                  onChange={(e) => setGlobalFixedProfitNGN(e.target.value.replace(/[^\d.]/g, ""))}
+                  className="max-w-[200px]"
+                  inputMode="decimal"
+                />
+                <p className="text-[11px] text-muted-foreground">Added to every number purchase</p>
+              </div>
+              <Button type="button" className="shrink-0" onClick={() => void saveFixedProfit()}>
+                Save Profit
               </Button>
             </div>
           </div>
