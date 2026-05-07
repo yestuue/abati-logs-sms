@@ -35,11 +35,11 @@ export async function POST(req: Request) {
 
     // Attempt to send email via nodemailer if SMTP env vars are present
     const host = process.env.SMTP_HOST || "smtp.gmail.com"; // Default to gmail if missing
-    const user = process.env.SMTP_USER || process.env.EMAIL_USER;
-    const pass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
+    const smtpUser = process.env.SMTP_USER || process.env.EMAIL_USER;
+    const smtpPass = process.env.SMTP_PASS || process.env.EMAIL_PASS;
     const from = process.env.EMAIL_FROM || process.env.SMTP_FROM || `Abati Digital <noreply@abatidigital.com>`;
 
-    if (host && user && pass) {
+    if (host && smtpUser && smtpPass) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
         const nm = require("nodemailer") as { createTransport: Function };
@@ -47,7 +47,7 @@ export async function POST(req: Request) {
           host,
           port: Number(process.env.SMTP_PORT ?? 587),
           secure: process.env.SMTP_SECURE === "true",
-          auth: { user, pass },
+          auth: { user: smtpUser, pass: smtpPass },
         }) as { sendMail: Function };
         await transporter.sendMail({
           from,

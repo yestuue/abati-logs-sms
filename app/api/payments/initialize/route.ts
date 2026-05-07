@@ -152,9 +152,9 @@ export async function POST(req: Request) {
         const operator = "any";
         const product = serviceKey;
         
-        const activation = await buyFiveSimNumber(country, operator, product);
-        if (!activation || !activation.phone) {
-          return NextResponse.json({ error: "Failed to get number from provider. Try again later." }, { status: 502 });
+        const { data: activation, error: buyError } = await buyFiveSimNumber(country, operator, product);
+        if (buyError || !activation || !activation.phone) {
+          return NextResponse.json({ error: buyError || "Failed to get number from provider. Try again later." }, { status: 502 });
         }
         
         const expiresAt = activation.expires ? new Date(activation.expires) : new Date(Date.now() + 20 * 60 * 1000);

@@ -804,7 +804,7 @@ export function ServerSelector({
                 Select country
               </Label>
               {countries.length === 0 ? (
-                <p className="text-xs text-slate-600 dark:text-zinc-500 py-2">Loading countries…</p>
+                <p className="text-xs text-muted-foreground/70 py-2">Loading countries…</p>
               ) : (
                 <div className="relative">
                   <Input
@@ -820,7 +820,7 @@ export function ServerSelector({
                   {countryOpen && (
                     <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 bg-white dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
                       {filteredCountries.length === 0 ? (
-                        <div className="px-3 py-2.5 text-xs text-slate-600 dark:text-zinc-400">
+                        <div className="px-3 py-2.5 text-xs text-muted-foreground/90">
                           No country found
                         </div>
                       ) : (
@@ -864,7 +864,7 @@ export function ServerSelector({
                     <span>{SERVER_INFO[activeServer].icon}</span>
                     {SERVER_INFO[activeServer].label} — {SERVER_INFO[activeServer].sublabel}
                   </CardTitle>
-                  <p className="text-[10.5px] text-slate-600 dark:text-zinc-400 mt-0.5 leading-snug">
+                  <p className="text-[10.5px] text-muted-foreground/90 mt-0.5 leading-snug">
                     {SERVER_INFO[activeServer].description}
                   </p>
                 </div>
@@ -885,7 +885,7 @@ export function ServerSelector({
                 </Button>
               </div>
 
-              <p className="text-[12px] font-medium text-slate-700 dark:text-zinc-300 mt-2">
+              <p className="text-[12px] font-medium text-muted-foreground/80 mt-2">
                 Select Service
               </p>
               <div className="relative z-40 mt-1.5">
@@ -910,12 +910,12 @@ export function ServerSelector({
                 {queryReady && (loading || serviceResults.length > 0) && (
                   <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-zinc-200 bg-white dark:bg-zinc-950 shadow-[0_12px_40px_rgba(0,0,0,0.12)] max-h-64 overflow-y-auto">
                     {loading ? (
-                      <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-600 dark:text-zinc-400">
+                      <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground/90">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         Searching…
                       </div>
                     ) : serviceResults.length === 0 ? (
-                      <div className="py-8 px-4 text-center text-sm text-slate-600 dark:text-zinc-400">
+                      <div className="py-8 px-4 text-center text-sm text-muted-foreground/90">
                         No results found
                       </div>
                     ) : (
@@ -975,7 +975,7 @@ export function ServerSelector({
             </CardHeader>
             <CardContent className="p-3 pt-0">
               {!queryReady && (
-                <p className="text-center text-xs text-slate-500 dark:text-zinc-500 py-2">
+                <p className="text-center text-xs text-muted-foreground/60 py-2">
                   Type at least {MIN_SERVICE_QUERY_LEN} characters to search services.
                 </p>
               )}
@@ -1015,7 +1015,7 @@ export function ServerSelector({
                         {selectedService.serviceName}
                       </p>
                       {activeServer === "SERVER2" && selectedCountry && (
-                        <p className="text-[11px] font-medium text-slate-700 dark:text-zinc-300 mt-0.5">
+                        <p className="text-[11px] font-medium text-muted-foreground/80 mt-0.5">
                           {flagFromIso2(selectedCountry.iso2)} {selectedCountry.name}
                         </p>
                       )}
@@ -1078,7 +1078,7 @@ export function ServerSelector({
               )}
 
               {loadingActive && activeAssignments.length === 0 ? (
-                <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-600 dark:text-zinc-400">
+                <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground/90">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Loading…
                 </div>
@@ -1104,8 +1104,8 @@ export function ServerSelector({
                             <p className="font-mono text-sm font-semibold text-[#2D2D2D] dark:text-zinc-100">
                               {a.number}
                             </p>
-                            <p className="text-[11px] text-slate-600 dark:text-zinc-400">{a.country}</p>
-                            <div className="flex items-center gap-1 mt-1 text-[11px] text-slate-700 dark:text-zinc-300">
+                            <p className="text-[11px] text-muted-foreground/90">{a.country}</p>
+                            <div className="flex items-center gap-1 mt-1 text-[11px] text-muted-foreground/80">
                               <Clock className="w-3 h-3 shrink-0" />
                               {a.expiresAt
                                 ? `Expires in ${formatCountdown(a.expiresAt)}`
@@ -1118,7 +1118,7 @@ export function ServerSelector({
                         </div>
                         <div className="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between gap-2">
                           <div>
-                            <p className="text-[10px] uppercase text-slate-500 dark:text-zinc-500 font-medium">
+                            <p className="text-[10px] uppercase text-muted-foreground/60 font-medium">
                               Latest OTP
                             </p>
                             <p className="text-lg font-bold tracking-wide text-violet-700 dark:text-violet-300 font-mono">
@@ -1154,7 +1154,7 @@ export function ServerSelector({
                 <CardTitle className="text-[14px] font-semibold text-slate-900 dark:text-zinc-100">
                   Available numbers
                 </CardTitle>
-                <p className="text-[11px] text-slate-600 dark:text-zinc-400">Tap a row to purchase</p>
+                <p className="text-[11px] text-muted-foreground/90">Tap a row to purchase</p>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-0">
@@ -1174,7 +1174,7 @@ export function ServerSelector({
                           <p className="text-[12px] font-mono font-semibold text-[#2D2D2D] dark:text-zinc-100">
                             {n.number}
                           </p>
-                          <p className="text-[10px] text-slate-600 dark:text-zinc-500">{n.country}</p>
+                          <p className="text-[10px] text-muted-foreground/70">{n.country}</p>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="text-[12px] font-semibold text-violet-600 dark:text-violet-300">

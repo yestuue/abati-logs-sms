@@ -69,14 +69,17 @@ export function computeSmsDisplayPriceNgn(priceUsd: number): number {
   const raw = priceUsd * rate + (Number.isFinite(margin) ? margin : 0);
   return Math.ceil(raw);
 }
-export async function buyFiveSimNumber(country: string, operator: string, product: string): Promise<{ id: number; phone: string; operator: string; product: string; price: number; status: string; expires: string } | null> {
+export async function buyFiveSimNumber(country: string, operator: string, product: string): Promise<{ data?: { id: number; phone: string; operator: string; product: string; price: number; status: string; expires: string }; error?: string }> {
   const base = getFiveSimApiBase();
   const url = `${base}/user/buy/activation/${encodeURIComponent(country)}/${encodeURIComponent(operator)}/${encodeURIComponent(product)}`;
   const res = await fiveSimFetch(url);
   if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    console.error("[5sim buy error]", err);
-    return null;
+    const text = await res.text();
+    console.error("[5sim buy error]", text);
+    if (res.status === 401) return { error: "Invalid 5Sim API Key. Please check your settings." };
+    if (res.status === 400) return { error: text || "Service out of stock or invalid parameters." };
+    return { error: `Provider error: ${text || res.statusText}` };
   }
-  return res.json();
+  const data = await res.json();
+  return { data };
 }
