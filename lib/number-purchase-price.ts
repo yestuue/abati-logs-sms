@@ -42,7 +42,8 @@ export function purchasePremiumMultiplier(params: {
 
 export function finalNumberPurchasePriceNGN(
   baseNgN: number,
-  params: { server: ServerType; carrier: string; areaCodesRaw: string; premiumRate?: number }
+  params: { server: ServerType; carrier: string; areaCodesRaw: string; premiumRate?: number; fixedProfitNGN?: number }
 ): number {
-  return Math.ceil(baseNgN * purchasePremiumMultiplier(params));
+  const baseWithMultiplier = Math.ceil(baseNgN * purchasePremiumMultiplier(params));
+  return baseWithMultiplier + (params.fixedProfitNGN ?? 0);
 }

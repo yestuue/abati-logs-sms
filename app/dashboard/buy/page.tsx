@@ -16,6 +16,7 @@ export default async function BuyPage() {
   let serverConfigs: { server: "SERVER1" | "SERVER2"; name: string; isEnabled: boolean }[] = [];
   let s1Margin = 35;
   let s2Margin = 35;
+  let fixedProfitNGN = 0;
 
   try {
     const [user, configs, settings] = await Promise.all([
@@ -43,6 +44,7 @@ export default async function BuyPage() {
     if (settings) {
       s1Margin = settings.s1Margin ?? (settings.smsGlobalPremiumRate != null ? settings.smsGlobalPremiumRate * 100 : 35);
       s2Margin = settings.s2Margin ?? (settings.smsGlobalPremiumRateServer2 != null ? settings.smsGlobalPremiumRateServer2 * 100 : 35);
+      fixedProfitNGN = settings.fixedProfitNGN ?? 0;
     }
   } catch (err) {
     console.error("[BuyPage] DB error:", err);
@@ -65,6 +67,7 @@ export default async function BuyPage() {
         userId={userId}
         s1Margin={s1Margin}
         s2Margin={s2Margin}
+        fixedProfitNGN={fixedProfitNGN}
       />
     </div>
   );

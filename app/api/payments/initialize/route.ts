@@ -105,12 +105,14 @@ export async function POST(req: Request) {
       const areaCodes = areaCodesRaw ?? "";
       const settings = await prisma.globalSettings.findFirst({
         orderBy: { updatedAt: "desc" },
-        select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true, s1Margin: true, s2Margin: true },
+        select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true, s1Margin: true, s2Margin: true, fixedProfitNGN: true },
       });
       
       const premiumRate = targetNumber.server === "SERVER2"
         ? (settings?.s2Margin != null ? settings.s2Margin / 100 : (settings?.smsGlobalPremiumRateServer2 ?? 0.35))
         : (settings?.s1Margin != null ? settings.s1Margin / 100 : (settings?.smsGlobalPremiumRate ?? 0.35));
+      
+      const fixedProfitNGN = settings?.fixedProfitNGN ?? 0;
 
       let chargeBase = targetNumber.priceNGN;
       if (serviceKey) {
@@ -130,6 +132,7 @@ export async function POST(req: Request) {
         carrier,
         areaCodesRaw: areaCodes,
         premiumRate,
+        fixedProfitNGN,
       });
 
       if (Math.round(amount) !== chargeNGN) {

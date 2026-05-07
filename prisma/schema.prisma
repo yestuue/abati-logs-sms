@@ -153,6 +153,8 @@ model GlobalSettings {
   smsGlobalPremiumRate Float @default(0.35)
   /// Same role as smsGlobalPremiumRate for Server 2 (global countries).
   smsGlobalPremiumRateServer2 Float @default(0.35)
+  /// Fixed profit amount added to every number purchase.
+  fixedProfitNGN  Float @default(0)
   updatedAt       DateTime @default(now()) @updatedAt
 }
 

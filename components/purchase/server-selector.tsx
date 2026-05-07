@@ -82,6 +82,7 @@ interface ServerSelectorProps {
   userId: string;
   s1Margin: number;
   s2Margin: number;
+  fixedProfitNGN: number;
 }
 
 const SERVER_INFO = {
@@ -147,6 +148,7 @@ export function ServerSelector({
   userId: _userId,
   s1Margin,
   s2Margin,
+  fixedProfitNGN,
 }: ServerSelectorProps) {
   const [activeServer, setActiveServer] = useState<"SERVER1" | "SERVER2">("SERVER1");
   const [numbers, setNumbers] = useState<NumberItem[]>([]);
@@ -536,6 +538,7 @@ export function ServerSelector({
       carrier,
       areaCodesRaw: preferredAreaCode.trim(),
       premiumRate: selectedPremiumRate,
+      fixedProfitNGN: fixedProfitNGN,
     });
   }
 
