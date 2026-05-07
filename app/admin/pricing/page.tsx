@@ -116,11 +116,7 @@ export default function AdminPricingPage() {
     );
   }
 
-  const [globalPremiumS1Pct, setGlobalPremiumS1Pct] = useState("35");
-  const [globalPremiumS2Pct, setGlobalPremiumS2Pct] = useState("35");
   const [globalFixedProfitNGN, setGlobalFixedProfitNGN] = useState("0");
-  const [categories, setCategories] = useState<LogCategory[]>([]);
-  const [logs, setLogs] = useState<LogItem[]>([]);
 
   async function loadPremiumSettings() {
     const res = await fetch("/api/admin/settings", { cache: "no-store" });
