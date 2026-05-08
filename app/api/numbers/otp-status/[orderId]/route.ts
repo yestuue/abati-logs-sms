@@ -5,12 +5,12 @@ import { checkFiveSimOrder } from "@/lib/sms-provider";
 
 export async function GET(
   req: Request,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { orderId } = params;
+  const { orderId } = await params;
 
   try {
     const activation = await checkFiveSimOrder(orderId);

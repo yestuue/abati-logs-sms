@@ -5,12 +5,12 @@ import { cancelFiveSimOrder } from "@/lib/sms-provider";
 
 export async function POST(
   req: Request,
-  { params }: { params: { orderId: string } }
+  { params }: { params: Promise<{ orderId: string }> }
 ) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { orderId } = params;
+  const { orderId } = await params;
 
   try {
     const success = await cancelFiveSimOrder(orderId);
