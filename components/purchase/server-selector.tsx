@@ -171,6 +171,12 @@ export function ServerSelector({
   const [searchingServices, setSearchingServices] = useState(false);
   const [purchaseLegalAccepted, setPurchaseLegalAccepted] = useState(false);
   const [serviceFetchError, setServiceFetchError] = useState<string | null>(null);
+  const [operators, setOperators] = useState<{ name: string; priceNGN: number; count: number; rate: number }[]>([]);
+  const [fetchingOperators, setFetchingOperators] = useState(false);
+  const [selectedOperator, setSelectedOperator] = useState<string | null>(null);
+  const [activeOrder, setActiveOrder] = useState<{ orderId: string; phone: string; sms: any[]; expires: string; status: string } | null>(null);
+  const [countdown, setCountdown] = useState<number>(0);
+
 
   useEffect(() => {
     if (selected) setPurchaseLegalAccepted(false);
@@ -310,11 +316,30 @@ export function ServerSelector({
     }
   }
 
+  async function fetchOperators(serviceKey: string, country: string) {
+    setFetchingOperators(true);
+    setOperators([]);
+    setSelectedOperator(null);
+    try {
+      const res = await fetch(`/api/numbers/operators?service=${encodeURIComponent(serviceKey)}&country=${encodeURIComponent(country)}&server=${activeServer}`);
+      if (!res.ok) throw new Error("Failed to fetch operators");
+      const data = await res.json();
+      setOperators(data.operators || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load operators");
+    } finally {
+      setFetchingOperators(false);
+    }
+  }
+
   function selectServiceRow(row: ServiceSearchResult) {
-    // Replace selected service immediately and hide the dropdown list.
     setSelectedService(row);
     setServiceResults([]);
     setCountryOpen(false);
+    
+    const countrySlug = activeServer === "SERVER1" ? "usa" : server2Country;
+    void fetchOperators(row.serviceKey, countrySlug);
   }
 
   function clearSearch() {
@@ -434,6 +459,8 @@ export function ServerSelector({
               priceNGN: row.priceNGN,
               premiumRate: typeof row.premiumRate === "number" ? row.premiumRate : (activeServer === "SERVER2" ? s2Margin / 100 : s1Margin / 100),
             });
+            // Update operators if country changed
+            void fetchOperators(row.key, server2Country);
           }
         } catch {
           /* ignore */
@@ -445,6 +472,51 @@ export function ServerSelector({
       window.clearTimeout(t);
     };
   }, [server2Country, server2CountryId, activeServer, selectedService?.serviceKey]);
+
+  // Polling for active order
+  useEffect(() => {
+    if (!activeOrder?.orderId || activeOrder.status === "FINISHED" || activeOrder.status === "CANCELLED" || activeOrder.status === "BANNED") return;
+    
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/numbers/otp-status/${activeOrder.orderId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setActiveOrder(prev => ({ ...prev!, ...data }));
+          if (data.sms && data.sms.length > 0) {
+            toast.success("New message received!");
+          }
+          if (data.status === "FINISHED" || data.status === "CANCELLED" || data.status === "BANNED") {
+            clearInterval(interval);
+          }
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+      }
+    }, 5000);
+    
+    return () => clearInterval(interval);
+  }, [activeOrder?.orderId, activeOrder?.status]);
+
+  // Countdown timer for active order
+  useEffect(() => {
+    if (!activeOrder?.expires) {
+      setCountdown(0);
+      return;
+    }
+    
+    const target = new Date(activeOrder.expires).getTime();
+    const update = () => {
+      const now = Date.now();
+      const diff = Math.max(0, Math.floor((target - now) / 1000));
+      setCountdown(diff);
+      if (diff <= 0) clearInterval(timer);
+    };
+    
+    update();
+    const timer = setInterval(update, 1000);
+    return () => clearInterval(timer);
+  }, [activeOrder?.expires]);
 
   useEffect(() => {
     if (countries.length === 0) return;
@@ -551,16 +623,11 @@ export function ServerSelector({
     return Math.round(((item.priceUSD * finalNGN) / base) * 100) / 100;
   }
 
-  async function handlePurchase(overrideItem?: NumberItem) {
-    const itemToBuy = overrideItem || selected;
-    if (!itemToBuy) return;
-    if (itemToBuy.source === "provider" && !selectedService) return;
+  async function handleDirectPurchase(op: { name: string; priceNGN: number }) {
+    if (!selectedService) return;
     
     setBuying(true);
-    const finalNGN = getPurchasePriceNGN(itemToBuy);
-    const purchaseDebit = getPurchaseWalletDebit(itemToBuy);
-    
-    if (walletBalance < purchaseDebit) {
+    if (walletBalance < op.priceNGN) {
       toast.error("Low Balance", {
         description: "Your wallet balance is insufficient for this purchase.",
         action: {
@@ -571,54 +638,80 @@ export function ServerSelector({
       setBuying(false);
       return;
     }
+
     try {
-      const res = await fetch("/api/payments/initialize", {
+      const countrySlug = activeServer === "SERVER1" ? "usa" : server2Country;
+      const res = await fetch("/api/numbers/buy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "NUMBER_PURCHASE",
-          numberId: itemToBuy.source === "inventory" ? itemToBuy.id : undefined,
-          amount: finalNGN,
-          carrier,
-          areaCodes: preferredAreaCode.trim(),
-          ...(selectedService?.serviceKey ? { serviceKey: selectedService.serviceKey } : {}),
-          ...(itemToBuy.source === "provider" ? { providerPurchase: true, country: server2Country } : {}),
+          service: selectedService.serviceKey,
+          country: countrySlug,
+          operator: op.name,
+          server: activeServer,
         }),
       });
+      
       const data = await res.json();
       if (!res.ok) {
-        if (data.error?.toLowerCase().includes("balance")) {
-          toast.error("Insufficient Balance", {
-            description: "Please top up your wallet to complete this purchase.",
-            action: {
-              label: "Top Up",
-              onClick: () => window.location.href = "/dashboard/wallet",
-            },
-          });
-        } else {
-          toast.error(data.error ?? "Purchase failed");
-        }
+        toast.error(data.error ?? "Purchase failed");
         return;
       }
-      if (data.url) {
-        window.location.href = data.url;
-        // Don't setBuying(false) here to keep loading until redirect
-        return;
-      } else if (data.success) {
-        toast.success(data.number ? `${data.number} assigned to your account!` : "Number assigned to your account!");
-        setSelected(null);
-        void loadActiveAssignments();
-        // Scroll to active numbers section
-        setTimeout(() => {
-          const el = document.getElementById("active-numbers-section");
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }, 500);
-      }
+
+      toast.success("Number assigned!");
+      setActiveOrder({
+        orderId: data.orderId,
+        phone: data.number,
+        sms: [],
+        expires: data.expiresAt,
+        status: "RECEIVED",
+      });
+      void loadActiveAssignments();
     } catch (err) {
-      console.error("Purchase error:", err);
-      toast.error("Network error. Try again.");
+      console.error(err);
+      toast.error("Network error");
     } finally {
       setBuying(false);
+    }
+  }
+
+  async function handleCancelOrder() {
+    if (!activeOrder) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/numbers/cancel/${activeOrder.orderId}`, { method: "POST" });
+      if (res.ok) {
+        toast.success("Order cancelled and refunded");
+        setActiveOrder(null);
+        void loadActiveAssignments();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to cancel");
+      }
+    } catch (err) {
+      toast.error("Network error");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleBanOrder() {
+    if (!activeOrder) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/numbers/ban/${activeOrder.orderId}`, { method: "POST" });
+      if (res.ok) {
+        toast.success("Number reported and banned");
+        setActiveOrder(null);
+        void loadActiveAssignments();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to ban");
+      }
+    } catch (err) {
+      toast.error("Network error");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -723,74 +816,114 @@ export function ServerSelector({
         })}
       </div>
 
-      {/* Carrier selector — only for USA (SERVER1) */}
-      {activeServer === "SERVER2" && (
-        <div
-          className="p-3 rounded-xl"
-          style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
-        >
-          <p className="text-xs font-semibold text-foreground">US area codes</p>
-          <p className="text-[11px] text-muted-foreground mt-1 leading-snug">
-            Configure <strong>Area Code(s)</strong> on <strong>Server 1</strong> (USA). That value is still sent with
-            every checkout—including Server 2—so the backend receives your preference on each purchase.
-          </p>
+      {/* Operator List — Dynamic from 5sim */}
+      {selectedService && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-foreground">Available Operators</h3>
+            {fetchingOperators && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+          </div>
+          
+          <div className="grid grid-cols-1 gap-2">
+            {operators.length === 0 && !fetchingOperators ? (
+              <p className="text-xs text-muted-foreground p-4 text-center border border-dashed rounded-xl">
+                No operators available for this service in {activeServer === "SERVER1" ? "USA" : selectedCountry?.name}
+              </p>
+            ) : (
+              operators.map((op) => (
+                <button
+                  key={op.name}
+                  onClick={() => handleDirectPurchase(op)}
+                  disabled={buying || op.count === 0}
+                  className="flex items-center justify-between p-3 rounded-xl border border-border bg-card hover:border-primary/50 transition-all group"
+                >
+                  <div className="flex flex-col text-left">
+                    <span className="text-sm font-bold text-foreground uppercase">{op.name}</span>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-emerald-500 font-medium">{op.rate}% Success</span>
+                      <span className="text-[10px] text-muted-foreground">{op.count} in stock</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-primary">₦{op.priceNGN.toLocaleString()}</span>
+                    <Button size="sm" variant="brand" className="h-8 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                      Buy
+                    </Button>
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
         </div>
       )}
 
-      {activeServer === "SERVER1" && (
-        <div
-          className="p-3 rounded-xl"
-          style={{ background: "var(--muted)", border: "1px solid var(--border)" }}
-        >
-          <p className="text-xs font-semibold text-foreground mb-2.5">
-            Carrier preference
-            <span className="text-muted-foreground font-normal ml-1.5">
-              (optional — specific carrier or area codes below adds one +{premiumPercentLabel}% premium, not stacked)
-            </span>
-          </p>
-          <div className="flex gap-2 flex-wrap">
-            {CARRIERS.map((c) => (
-              <button
-                key={c.value}
-                onClick={() => setCarrier(c.value)}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={
-                  carrier === c.value
-                    ? {
-                        background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))",
-                        color: "#fff",
-                        boxShadow: "0 2px 8px oklch(0.68 0.22 278 / 0.30)",
-                      }
-                    : {
-                        background: "var(--card)",
-                        color: "var(--muted-foreground)",
-                        border: "1px solid var(--border)",
-                      }
-                }
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
-          <div className="mt-3 space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">Area Code(s)</Label>
-            <Input
-              value={preferredAreaCode}
-              placeholder="e.g. 212, 646, 917"
-              className="h-9 text-foreground bg-card dark:bg-zinc-900 border-zinc-200"
-              onChange={(e) => setPreferredAreaCode(sanitizeAreaCodeInput(e.target.value))}
-            />
-            <p className="text-[11px] text-muted-foreground">
-              US area codes only (digits + commas). Premium applies when carrier is specific or any valid code is entered.
-            </p>
-          </div>
-          {server1PreferencePremiumActive && (
-            <p className="text-xs mt-2 font-medium text-amber-700 dark:text-amber-400">
-              +{premiumPercentLabel}% preference premium applied to USA prices below (carrier and/or area codes — not stacked)
-            </p>
-          )}
-        </div>
-      )}
+      {/* Active Order / Wait State */}
+      <AnimatePresence>
+        {activeOrder && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="fixed inset-x-4 bottom-4 z-[100] lg:inset-x-auto lg:right-4 lg:w-96"
+          >
+            <Card className="border-2 border-primary shadow-2xl bg-card/95 backdrop-blur-md">
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base">Waiting for SMS</CardTitle>
+                  <Badge variant="outline" className="font-mono text-primary border-primary/30">
+                    {formatCountdown(activeOrder.expires)}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-3 rounded-xl bg-muted/50 border border-border/30">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[10px] uppercase text-muted-foreground font-bold">Number</span>
+                    <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={() => copyNumber(activeOrder.phone)}>
+                      <Copy className="w-3 h-3 mr-1" /> Copy
+                    </Button>
+                  </div>
+                  <p className="text-xl font-bold font-mono tracking-wider text-foreground">{activeOrder.phone}</p>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Messages</p>
+                  {activeOrder.sms.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-6 text-center">
+                      <Loader2 className="w-6 h-6 animate-spin text-primary mb-2" />
+                      <p className="text-xs text-muted-foreground animate-pulse">Waiting for code...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {activeOrder.sms.map((sms, i) => (
+                        <div key={i} className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] font-bold text-emerald-600 uppercase">Received</span>
+                            <span className="text-[10px] text-muted-foreground">{new Date(sms.date).toLocaleTimeString()}</span>
+                          </div>
+                          <p className="text-sm text-foreground font-medium mb-2">{sms.text}</p>
+                          <Button variant="outline" size="sm" className="w-full h-8 text-xs border-emerald-500/30 hover:bg-emerald-500/10" onClick={() => copyNumber(sms.code || extractOtp(sms.text) || "")}>
+                            Copy Code
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-border">
+                  <Button variant="destructive" size="sm" className="h-9 text-xs" onClick={handleCancelOrder}>
+                    Cancel Order
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-9 text-xs" onClick={handleBanOrder}>
+                    Ban Number
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Numbers flow: search → active numbers → rules */}
       {isDisabled ? (

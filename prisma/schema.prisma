@@ -50,6 +50,8 @@ model VirtualNumber {
   id           String        @id @default(cuid())
   number       String        @unique
   providerId   String?
+  orderId      String?
+  operator     String?
   country      String
   countryCode  String
   dialCode     String?

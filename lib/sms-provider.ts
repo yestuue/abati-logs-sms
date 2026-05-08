@@ -93,3 +93,30 @@ export async function checkFiveSimOrder(orderId: string | number): Promise<{ id:
   }
   return res.json();
 }
+
+export async function getFiveSimPrices(product: string, country: string): Promise<Record<string, { cost: number; count: number; rate: number }>> {
+  const base = getFiveSimApiBase();
+  // Guest prices endpoint: /guest/prices?product=...&country=...
+  const url = `${base}/guest/prices?product=${encodeURIComponent(product)}&country=${encodeURIComponent(country)}`;
+  const res = await fiveSimFetch(url);
+  if (!res.ok) {
+    return {};
+  }
+  const data = await res.json();
+  // The response structure for guest/prices is: { [country]: { [product]: { [operator]: { cost: number, count: number, rate: number } } } }
+  return data?.[country]?.[product] || {};
+}
+
+export async function cancelFiveSimOrder(orderId: string | number): Promise<boolean> {
+  const base = getFiveSimApiBase();
+  const url = `${base}/user/cancel/activation/${orderId}`;
+  const res = await fiveSimFetch(url);
+  return res.ok;
+}
+
+export async function banFiveSimOrder(orderId: string | number): Promise<boolean> {
+  const base = getFiveSimApiBase();
+  const url = `${base}/user/ban/activation/${orderId}`;
+  const res = await fiveSimFetch(url);
+  return res.ok;
+}
