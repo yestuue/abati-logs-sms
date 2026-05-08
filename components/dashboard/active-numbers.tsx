@@ -33,15 +33,23 @@ export function ActiveNumbers({ numbers }: ActiveNumbersProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ numberId }),
       });
-      const data = await res.json();
+      
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        throw new Error("Failed to parse server response");
+      }
+
       if (!res.ok) {
         toast.error(data.error ?? "Cancel failed");
         return;
       }
       toast.success(data.refunded ? "Order cancelled and refund completed" : "Order cancelled");
       router.refresh();
-    } catch {
-      toast.error("Network error while cancelling number");
+    } catch (err: any) {
+      console.error("Cancel error:", err);
+      toast.error(err?.message || "Network error while cancelling number");
     } finally {
       setCancellingId(null);
     }
