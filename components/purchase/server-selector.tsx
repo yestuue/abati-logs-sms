@@ -675,6 +675,44 @@ export function ServerSelector({
     }
   }
 
+  async function handlePurchase() {
+    if (!selected) return;
+
+    setBuying(true);
+    try {
+      const charge = getPurchasePriceNGN(selected);
+      const res = await fetch("/api/payments/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "NUMBER_PURCHASE",
+          amount: charge,
+          numberId: selected.source === "inventory" ? selected.id : undefined,
+          serviceKey: selectedService?.serviceKey,
+          providerPurchase: selected.source === "provider",
+          country: activeServer === "SERVER1" ? "usa" : server2Country,
+          carrier: carrier !== "any" ? carrier : undefined,
+          areaCodes: preferredAreaCode.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Purchase failed");
+        return;
+      }
+
+      toast.success("Purchase successful!");
+      setSelected(null);
+      void loadActiveAssignments();
+    } catch (err) {
+      console.error(err);
+      toast.error("Network error");
+    } finally {
+      setBuying(false);
+    }
+  }
+
   async function handleCancelOrder() {
     if (!activeOrder) return;
     setLoading(true);
