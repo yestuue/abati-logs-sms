@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { buyFiveSimNumber, computeSmsDisplayPriceNgn, cancelFiveSimOrder } from "@/lib/sms-provider";
+import { computeSmsDisplayPriceNgn } from "@/lib/sms-provider";
 import { finalNumberPurchasePriceNGN } from "@/lib/number-purchase-price";
 import { generateReference } from "@/lib/utils";
 import { getGlobalSmsPremiumRateForServer } from "@/lib/price-calculator";
@@ -42,24 +42,26 @@ export async function POST(req: Request) {
 
     const premiumRate = await getGlobalSmsPremiumRateForServer(server);
     const fixedProfitNGN = settings?.fixedProfitNGN ?? 0;
+    const exchangeRate = settings?.rateNGN ?? Number(process.env.SMS_EXCHANGE_RATE ?? "1550");
 
-    // We'll trust the price calculation for now or just deduct based on the service's base price
-    // A more robust way is to fetch the specific operator price from 5sim guest prices
-    
-    // Let's call 5sim buy first to get the cost
-    const { data: activation, error: buyError } = await buyFiveSimNumber(country, operator, service);
+    // Get the correct provider for this server
+    const { getProvider } = await import("@/lib/sms-providers");
+    const provider = getProvider(server);
+
+    // Buy number from provider
+    const { data: activation, error: buyError } = await provider.buyNumber(country, operator, service);
     if (buyError || !activation || !activation.phone) {
       return NextResponse.json({ error: buyError || "Failed to get number from provider." }, { status: 502 });
     }
 
-    // Calculate final price based on the actual cost from 5sim
-    const basePriceNGN = computeSmsDisplayPriceNgn(activation.price);
+    // Calculate final price based on the actual cost from provider
+    const basePriceNGN = computeSmsDisplayPriceNgn(activation.price, exchangeRate);
     const chargeNGN = Math.ceil(basePriceNGN * (1 + premiumRate) + fixedProfitNGN);
 
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { walletBalance: true } });
     if ((user?.walletBalance ?? 0) < chargeNGN) {
-      // If insufficient, we should try to cancel the order on 5sim
-      await cancelFiveSimOrder(activation.id);
+      // If insufficient, we should try to cancel the order
+      await provider.cancelOrder(String(activation.id));
       return NextResponse.json({ error: "Insufficient wallet balance" }, { status: 400 });
     }
 

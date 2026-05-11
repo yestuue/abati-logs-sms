@@ -1,11 +1,12 @@
-const DEFAULT_FIVE_SIM_BASE = "https://5sim.net/v1";
+import { getProvider } from "./sms-providers";
 
 export function getFiveSimApiBase(): string {
-  return (process.env.FIVE_SIM_API_BASE ?? DEFAULT_FIVE_SIM_BASE).replace(/\/$/, "");
+  const base = process.env.FIVE_SIM_API_BASE ?? "https://5sim.net/v1";
+  return base.replace(/\/$/, "");
 }
 
 /**
- * Headers for 5SIM API requests. Uses Bearer auth when FIVE_SIM_API_KEY is set.
+ * Headers for 5SIM API requests.
  */
 export function fiveSimHeaders(): HeadersInit {
   const key = process.env.FIVE_SIM_API_KEY;
@@ -19,20 +20,19 @@ export function fiveSimHeaders(): HeadersInit {
 }
 
 export async function fiveSimFetch(input: string | URL, init?: RequestInit): Promise<Response> {
-  const extra = init?.headers;
-  const merged: Record<string, string> = { ...headersToRecord(fiveSimHeaders()) };
-  if (extra && typeof extra === "object" && !Array.isArray(extra)) {
-    Object.assign(merged, headersToRecord(extra as HeadersInit));
-  }
+  const key = process.env.FIVE_SIM_API_KEY;
+  const merged: Record<string, string> = {
+    Accept: "application/json",
+    ...(key ? { Authorization: `Bearer ${key}` } : {}),
+  };
   
-  // Add a 10-second timeout to prevent hanging the request
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
 
   try {
     const res = await fetch(input, {
       ...init,
-      headers: merged,
+      headers: { ...merged, ...(init?.headers as Record<string, string>) },
       cache: "no-store",
       signal: controller.signal,
     });
@@ -42,81 +42,38 @@ export async function fiveSimFetch(input: string | URL, init?: RequestInit): Pro
   }
 }
 
-function headersToRecord(h: HeadersInit): Record<string, string> {
-  if (h instanceof Headers) {
-    const o: Record<string, string> = {};
-    h.forEach((v, k) => {
-      o[k] = v;
-    });
-    return o;
-  }
-  if (Array.isArray(h)) {
-    return Object.fromEntries(h);
-  }
-  return { ...(h as Record<string, string>) };
-}
-
 /**
- * Display price in NGN: (5sim_price_usd * SMS_EXCHANGE_RATE) + SMS_PROFIT_MARGIN
+ * Converts USD price to NGN based on exchange rate.
+ * @param priceUsd Price in USD from provider
+ * @param rate Optional exchange rate override (defaults to env or 1550)
+ * @returns Rounded NGN price
  */
-export function computeSmsDisplayPriceNgn(priceUsd: number): number {
-  const rate = Number(process.env.SMS_EXCHANGE_RATE ?? "1550");
-  const margin = Number(process.env.SMS_PROFIT_MARGIN ?? "0");
-  if (!Number.isFinite(priceUsd) || priceUsd < 0) return Math.max(0, margin);
-  if (!Number.isFinite(rate) || rate < 0) {
-    return Math.max(0, margin);
-  }
-  const raw = priceUsd * rate + (Number.isFinite(margin) ? margin : 0);
-  return Math.ceil(raw);
-}
-export async function buyFiveSimNumber(country: string, operator: string, product: string): Promise<{ data?: { id: number; phone: string; operator: string; product: string; price: number; status: string; expires: string }; error?: string }> {
-  const base = getFiveSimApiBase();
-  const url = `${base}/user/buy/activation/${encodeURIComponent(country)}/${encodeURIComponent(operator)}/${encodeURIComponent(product)}`;
-  const res = await fiveSimFetch(url);
-  if (!res.ok) {
-    const text = await res.text();
-    console.error("[5sim buy error]", text);
-    if (res.status === 401) return { error: "Invalid 5Sim API Key. Please check your settings." };
-    if (res.status === 400) return { error: text || "Service out of stock or invalid parameters." };
-    return { error: `Provider error: ${text || res.statusText}` };
-  }
-  const data = await res.json();
-  return { data };
+export function computeSmsDisplayPriceNgn(priceUsd: number, rate?: number): number {
+  const exchangeRate = rate ?? Number(process.env.SMS_EXCHANGE_RATE ?? "1550");
+  if (!Number.isFinite(priceUsd) || priceUsd < 0) return 0;
+  return Math.ceil(priceUsd * exchangeRate);
 }
 
-export async function checkFiveSimOrder(orderId: string | number): Promise<{ id: number; phone: string; operator: string; product: string; price: number; status: string; expires: string; sms: { date: string; from: string; text: string; code: string }[] | null } | null> {
-  const base = getFiveSimApiBase();
-  const url = `${base}/user/check/activation/${orderId}`;
-  const res = await fiveSimFetch(url);
-  if (!res.ok) {
-    return null;
-  }
-  return res.json();
+export async function buyFiveSimNumber(country: string, operator: string, product: string) {
+  return getProvider("SERVER2").buyNumber(country, operator, product);
 }
 
-export async function getFiveSimPrices(product: string, country: string): Promise<Record<string, { cost: number; count: number; rate: number }>> {
-  const base = getFiveSimApiBase();
-  // Guest prices endpoint: /guest/prices?product=...&country=...
-  const url = `${base}/guest/prices?product=${encodeURIComponent(product)}&country=${encodeURIComponent(country)}`;
-  const res = await fiveSimFetch(url);
-  if (!res.ok) {
-    return {};
-  }
-  const data = await res.json();
-  // The response structure for guest/prices is: { [country]: { [product]: { [operator]: { cost: number, count: number, rate: number } } } }
-  return data?.[country]?.[product] || {};
+export async function checkOrder(server: string, orderId: string | number) {
+  return getProvider(server).checkOrder(String(orderId));
 }
 
-export async function cancelFiveSimOrder(orderId: string | number): Promise<boolean> {
-  const base = getFiveSimApiBase();
-  const url = `${base}/user/cancel/activation/${orderId}`;
-  const res = await fiveSimFetch(url);
-  return res.ok;
+export async function checkFiveSimOrder(orderId: string | number) {
+  return getProvider("SERVER2").checkOrder(String(orderId));
 }
 
-export async function banFiveSimOrder(orderId: string | number): Promise<boolean> {
-  const base = getFiveSimApiBase();
-  const url = `${base}/user/ban/activation/${orderId}`;
-  const res = await fiveSimFetch(url);
-  return res.ok;
+export async function getFiveSimPrices(product: string, country: string) {
+  return getProvider("SERVER2").getPrices(product, country);
+}
+
+export async function cancelFiveSimOrder(orderId: string | number) {
+  return getProvider("SERVER2").cancelOrder(String(orderId));
+}
+
+export async function banFiveSimOrder(orderId: string | number) {
+  return getProvider("SERVER2").banOrder(String(orderId));
 }

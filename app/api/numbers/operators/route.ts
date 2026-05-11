@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getFiveSimPrices, computeSmsDisplayPriceNgn } from "@/lib/sms-provider";
+import { computeSmsDisplayPriceNgn } from "@/lib/sms-provider";
 import { prisma } from "@/lib/prisma";
 import { getGlobalSmsPremiumRateForServer } from "@/lib/price-calculator";
 
@@ -20,18 +20,21 @@ export async function GET(req: Request) {
   }
 
   try {
-    const operatorsData = await getFiveSimPrices(service, country);
-    
     const settings = await prisma.globalSettings.findFirst({
       orderBy: { updatedAt: "desc" },
-      select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true, s1Margin: true, s2Margin: true, fixedProfitNGN: true },
+      select: { smsGlobalPremiumRate: true, smsGlobalPremiumRateServer2: true, s1Margin: true, s2Margin: true, fixedProfitNGN: true, rateNGN: true },
     });
 
+    const { getProvider } = await import("@/lib/sms-providers");
+    const provider = getProvider(server);
+    const operatorsData = await provider.getPrices(service, country);
+    
     const globalPremiumRate = await getGlobalSmsPremiumRateForServer(server);
     const fixedProfitNGN = settings?.fixedProfitNGN ?? 0;
+    const exchangeRate = settings?.rateNGN ?? Number(process.env.SMS_EXCHANGE_RATE ?? "1550");
 
     const operators = Object.entries(operatorsData).map(([name, info]) => {
-      const basePriceNGN = computeSmsDisplayPriceNgn(info.cost);
+      const basePriceNGN = computeSmsDisplayPriceNgn(info.cost, exchangeRate);
       // Final price including premium and profit
       const finalPriceNGN = Math.ceil(basePriceNGN * (1 + globalPremiumRate) + fixedProfitNGN);
       

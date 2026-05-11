@@ -109,6 +109,11 @@ export async function GET(req: Request) {
 
     const data = (await res.json()) as Record<string, FiveSimGuestProduct>;
 
+    const settings = await prisma.globalSettings.findFirst({
+      orderBy: { updatedAt: "desc" },
+    });
+    const exchangeRate = settings?.rateNGN ?? Number(process.env.SMS_EXCHANGE_RATE ?? "1550");
+
     const services = Object.entries(data)
       .filter(([key]) => matchesServiceQuery(key, query))
       .map(([key, v]) => {
@@ -121,7 +126,7 @@ export async function GET(req: Request) {
           category,
           qty,
           priceUsd,
-          basePriceNGN: computeSmsDisplayPriceNgn(priceUsd),
+          basePriceNGN: computeSmsDisplayPriceNgn(priceUsd, exchangeRate),
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }))

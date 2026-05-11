@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { banFiveSimOrder } from "@/lib/sms-provider";
+
 
 export async function POST(
   req: Request,
@@ -13,7 +13,19 @@ export async function POST(
   const { orderId } = await params;
 
   try {
-    const success = await banFiveSimOrder(orderId);
+    const vn = await prisma.virtualNumber.findFirst({
+      where: { orderId: String(orderId) },
+      select: { server: true }
+    });
+
+    if (!vn) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    const { getProvider } = await import("@/lib/sms-providers");
+    const provider = getProvider(vn.server);
+    const success = await provider.banOrder(orderId);
+    
     if (!success) {
       return NextResponse.json({ error: "Failed to ban order on provider" }, { status: 502 });
     }

@@ -20,7 +20,7 @@ export async function GET() {
     },
   });
 
-  const { checkFiveSimOrder } = await import("@/lib/sms-provider");
+  const { checkOrder } = await import("@/lib/sms-provider");
 
   // Sync numbers that were assigned recently or have no SMS
   const now = new Date();
@@ -36,12 +36,12 @@ export async function GET() {
       }
 
       // If we already have an SMS or it's a Server 1 number (manual sync for now), or it's been more than 20 mins
-      if (n.smsMessages.length > 0 || !n.providerId || n.server === "SERVER1") {
+      if (n.smsMessages.length > 0 || !n.providerId) {
         return n;
       }
 
       try {
-        const status = await checkFiveSimOrder(n.providerId);
+        const status = await checkOrder(n.server, n.providerId);
         if (status && status.sms && status.sms.length > 0) {
           const latestSms = status.sms[status.sms.length - 1]!;
           // Save to DB
