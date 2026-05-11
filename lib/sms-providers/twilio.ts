@@ -3,10 +3,12 @@ import { SmsProvider, SmsActivationResponse, SmsOrderDetails, SmsOperatorPrice }
 const TWILIO_BASE = "https://api.twilio.com/2010-04-01";
 
 function getTwilioAuth(): string {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  if (!sid || !token) return "";
-  return Buffer.from(`${sid}:${token}`).toString("base64");
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const apiKeySid = process.env.TWILIO_API_KEY_SID || accountSid;
+  const secret = process.env.TWILIO_API_KEY_SECRET || process.env.TWILIO_AUTH_TOKEN;
+  
+  if (!apiKeySid || !secret) return "";
+  return Buffer.from(`${apiKeySid}:${secret}`).toString("base64");
 }
 
 export const TwilioProvider: SmsProvider = {
