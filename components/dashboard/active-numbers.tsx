@@ -17,6 +17,7 @@ export function ActiveNumbers({ numbers }: ActiveNumbersProps) {
   const router = useRouter();
   const [copied, setCopied] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [banningId, setBanningId] = useState<string | null>(null);
   const [now, setNow] = useState(new Date());
 
   // Update countdown every second
@@ -92,6 +93,26 @@ export function ActiveNumbers({ numbers }: ActiveNumbersProps) {
       toast.error(err?.message || "Network error while cancelling number");
     } finally {
       setCancellingId(null);
+    }
+  }
+
+  async function banNumber(orderId: string) {
+    setBanningId(orderId);
+    try {
+      const res = await fetch(`/api/numbers/ban/${orderId}`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Ban failed");
+        return;
+      }
+      toast.success(data.refunded ? "Number banned and refunded" : "Number banned");
+      router.refresh();
+    } catch (err) {
+      toast.error("Network error while banning number");
+    } finally {
+      setBanningId(null);
     }
   }
 
@@ -183,9 +204,20 @@ export function ActiveNumbers({ numbers }: ActiveNumbersProps) {
 
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <button
+                      onClick={() => void banNumber(n.orderId!)}
+                      disabled={banningId === n.orderId || cancellingId === n.id}
+                      className="px-3 py-2 text-[10px] font-bold rounded-xl border border-orange-500/20 bg-orange-500/5 text-orange-500 hover:bg-orange-500/10 transition-all disabled:opacity-50"
+                    >
+                      {banningId === n.orderId ? (
+                        <RefreshCw className="w-3 h-3 animate-spin" />
+                      ) : (
+                        "Ban"
+                      )}
+                    </button>
+                    <button
                       onClick={() => void cancelNumber(n.id)}
-                      disabled={cancellingId === n.id}
-                      className="px-4 py-2 text-xs font-bold rounded-xl border border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500/10 transition-all disabled:opacity-50"
+                      disabled={cancellingId === n.id || banningId === n.orderId}
+                      className="px-3 py-2 text-[10px] font-bold rounded-xl border border-red-500/20 bg-red-500/5 text-red-500 hover:bg-red-500/10 transition-all disabled:opacity-50"
                     >
                       {cancellingId === n.id ? (
                         <RefreshCw className="w-3 h-3 animate-spin" />

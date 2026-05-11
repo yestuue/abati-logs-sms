@@ -106,7 +106,7 @@ export const TwilioProvider: SmsProvider = {
         from: m.from,
         text: m.body,
         code: m.body.match(/\d{4,8}/)?.[0] || ""
-      }));
+      })).reverse(); // Reverse to ascending order (oldest first, newest last)
 
       return {
         id: orderId,

@@ -66,6 +66,14 @@ export async function checkFiveSimOrder(orderId: string | number) {
   return getProvider("SERVER2").checkOrder(String(orderId));
 }
 
+export async function cancelOrder(server: string, orderId: string | number) {
+  return getProvider(server).cancelOrder(String(orderId));
+}
+
+export async function banOrder(server: string, orderId: string | number) {
+  return getProvider(server).banOrder(String(orderId));
+}
+
 export async function getFiveSimPrices(product: string, country: string) {
   return getProvider("SERVER2").getPrices(product, country);
 }

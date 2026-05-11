@@ -73,7 +73,8 @@ export async function POST(req: Request) {
     let providerCancelled = false;
     if (number.orderId) {
       try {
-        providerCancelled = await cancelFiveSimOrder(number.orderId);
+        const { cancelOrder } = await import("@/lib/sms-provider");
+        providerCancelled = await cancelOrder(number.server, number.orderId);
         console.log(`[SMS_CANCEL] Provider cancel result for order ${number.orderId}: ${providerCancelled}`);
       } catch (err) {
         console.error(`[SMS_CANCEL] provider call failed:`, err);

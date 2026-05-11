@@ -30,13 +30,44 @@ export async function POST(
       return NextResponse.json({ error: "Failed to ban order on provider" }, { status: 502 });
     }
 
-    // Mark as suspended/banned in DB
+    // Check if OTP has been used/received for refund logic
+    const fullVn = await prisma.virtualNumber.findUnique({
+      where: { orderId: String(orderId) },
+      include: { smsMessages: true }
+    });
+
+    if (fullVn && fullVn.smsMessages.length === 0) {
+      await prisma.$transaction([
+        prisma.user.update({
+          where: { id: fullVn.userId! },
+          data: { walletBalance: { increment: fullVn.priceNGN } }
+        }),
+        prisma.virtualNumber.update({
+          where: { id: fullVn.id },
+          data: { status: "SUSPENDED" }
+        }),
+        prisma.transaction.create({
+          data: {
+            userId: fullVn.userId!,
+            amount: fullVn.priceNGN,
+            currency: "NGN",
+            reference: `REFUND-BAN-${orderId}-${Date.now()}`,
+            status: "SUCCESS",
+            type: "REFUND",
+            metadata: { orderId, reason: "User banned number" }
+          }
+        })
+      ]);
+      return NextResponse.json({ success: true, refunded: true });
+    }
+
+    // Mark as suspended/banned in DB without refund if SMS was received
     await prisma.virtualNumber.updateMany({
       where: { orderId: String(orderId) },
       data: { status: "SUSPENDED" }
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, refunded: false });
   } catch (error) {
     console.error("[ban] Error:", error);
     return NextResponse.json({ error: "Failed to ban order" }, { status: 500 });
