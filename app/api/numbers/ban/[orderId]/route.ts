@@ -31,7 +31,7 @@ export async function POST(
     }
 
     // Check if OTP has been used/received for refund logic
-    const fullVn = await prisma.virtualNumber.findUnique({
+    const fullVn = await prisma.virtualNumber.findFirst({
       where: { orderId: String(orderId) },
       include: { smsMessages: true }
     });
