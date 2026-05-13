@@ -152,6 +152,19 @@ export default function AdminInventoryPage() {
   const [parsed, setParsed]           = useState<ParsedLog[] | null>(null);
   const [uploading, setUploading]     = useState(false);
 
+  // Auto-parse on text change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (rawText.trim()) {
+        const result = parseLogs(rawText);
+        setParsed(result);
+      } else {
+        setParsed(null);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [rawText]);
+
   function handleParse() {
     if (!rawText.trim()) { toast.error("Paste some log data first."); return; }
     const result = parseLogs(rawText);
@@ -322,15 +335,14 @@ export default function AdminInventoryPage() {
               id="rawLogs"
               rows={10}
               value={rawText}
-              onChange={(e) => { setRawText(e.target.value); setParsed(null); }}
-              placeholder={`# Example entries:\nFacebook | john.doe2019 | Fb@Pass99! | recovery@gmail.com | JBSWY3DP\nInstagram | insta_user | Insta#2024 |\njohn.fresh | FreshPass@1`}
-              className="w-full px-3 py-2.5 rounded-xl text-sm font-mono resize-y leading-relaxed"
+              onChange={(e) => setRawText(e.target.value)}
+              placeholder="PASTE LOG DATA HERE... Example:&#10;Username | Password | Email | 2FA"
+              className="w-full px-3 py-2.5 rounded-xl text-sm font-mono resize-y leading-relaxed outline-none focus:ring-2 focus:ring-primary/20 transition-all"
               style={{
                 background: "var(--card)",
                 border: "1px solid var(--border)",
                 color: "var(--foreground)",
-                minHeight: 200,
-                outline: "none",
+                minHeight: 250,
               }}
             />
             <p className="text-xs text-muted-foreground">

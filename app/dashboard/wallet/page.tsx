@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Wallet, Plus,
   Loader2, TrendingDown, TrendingUp,
-  RefreshCw, CreditCard, ArrowUpRight, ArrowDownLeft, Upload, Mail
+  RefreshCw, CreditCard, ArrowUpRight, ArrowDownLeft, Upload, Mail, Copy, ShieldCheck
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -214,12 +214,61 @@ function ManualPaymentModal({ onClose }: { onClose: () => void }) {
             Transfer to our bank account and upload the screenshot below.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="bg-muted/50 p-4 rounded-lg border border-border space-y-1 text-sm">
-            <p className="font-semibold text-primary">Bank Details:</p>
-            <p>Bank: <span className="font-medium">Opay</span></p>
-            <p>Account Name: <span className="font-medium">ABATI DIGITAL</span></p>
-            <p>Account Number: <span className="font-medium">8161108253</span></p>
+        <div className="space-y-5 py-2">
+          <div className="relative overflow-hidden bg-slate-900 rounded-2xl border border-primary/20 p-5 space-y-4">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <ShieldCheck className="w-20 h-20 text-primary" />
+            </div>
+            
+            <div className="relative z-10">
+              <h3 className="text-primary font-bold text-lg tracking-tight mb-1">ABATI DIGITALS 🧘💕</h3>
+              <p className="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">Official Payment Accounts</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 relative z-10">
+              <div className="bg-white/5 rounded-xl p-3 border border-white/10 hover:border-primary/30 transition-colors group">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase">Kuda Bank 🏦</span>
+                  <Copy 
+                    className="w-3 h-3 text-zinc-500 cursor-pointer group-hover:text-primary" 
+                    onClick={() => { navigator.clipboard.writeText("2072659593"); toast.success("Kuda Account Copied"); }}
+                  />
+                </div>
+                <p className="text-lg font-mono font-bold text-white tracking-wider">2072659593</p>
+              </div>
+
+              <div className="bg-white/5 rounded-xl p-3 border border-white/10 hover:border-primary/30 transition-colors group">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] text-zinc-500 font-bold uppercase">Palmpay 🏦</span>
+                  <Copy 
+                    className="w-3 h-3 text-zinc-500 cursor-pointer group-hover:text-primary" 
+                    onClick={() => { navigator.clipboard.writeText("9049386397"); toast.success("Palmpay Account Copied"); }}
+                  />
+                </div>
+                <p className="text-lg font-mono font-bold text-white tracking-wider">9049386397</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-white/10 relative z-10">
+              <div>
+                <p className="text-[10px] text-zinc-500 font-bold uppercase">Account Name</p>
+                <p className="text-sm font-bold text-white">ABATI</p>
+              </div>
+              <div className="text-right">
+                <Badge variant="outline" className="text-[10px] border-red-500/50 text-red-400 bg-red-500/5 px-2 py-0">
+                  NO REFUND ⚠️
+                </Badge>
+              </div>
+            </div>
+
+            <a 
+              href="https://chat.whatsapp.com/H3gMVzCwe5sFDYFb0HoKGL" 
+              target="_blank"
+              className="flex items-center justify-center gap-2 w-full py-2 rounded-xl bg-green-500/10 border border-green-500/20 text-green-500 text-xs font-bold hover:bg-green-500/20 transition-all"
+            >
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              JOIN WHATSAPP COMMUNITY
+            </a>
           </div>
 
           <div className="space-y-2">

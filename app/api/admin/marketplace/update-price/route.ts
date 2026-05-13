@@ -10,6 +10,7 @@ const bodySchema = z.object({
   categoryName: z.string().optional(),
   description: z.string().optional(),
   price: z.number().optional(),
+  stock: z.number().optional(),
   enabled: z.boolean().optional(),
   logId: z.string().optional(),
   percent: z.number().optional(),
@@ -56,6 +57,7 @@ export async function PUT(req: Request) {
           name: body.categoryName.trim(),
           description: body.description?.trim() || null,
           price: body.price,
+          stock: body.stock ?? 0,
           enabled: body.enabled ?? true,
         },
       });
@@ -70,6 +72,7 @@ export async function PUT(req: Request) {
           ...(body.categoryName ? { name: body.categoryName.trim() } : {}),
           ...(typeof body.description === "string" ? { description: body.description.trim() || null } : {}),
           ...(typeof body.price === "number" ? { price: body.price } : {}),
+          ...(typeof body.stock === "number" ? { stock: body.stock } : {}),
           ...(typeof body.enabled === "boolean" ? { enabled: body.enabled } : {}),
         },
       });

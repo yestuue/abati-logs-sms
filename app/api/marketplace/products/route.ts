@@ -16,7 +16,7 @@ export async function GET() {
     prisma.logCategory.findMany({
       where: { enabled: true },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, description: true, price: true },
+      select: { id: true, name: true, description: true, price: true, stock: true },
     }),
     prisma.log.findMany({
       where: { status: "AVAILABLE" },
@@ -37,6 +37,8 @@ export async function GET() {
   const products = categories
     .map((cat) => {
       const agg = byCategory.get(cat.name) ?? { count: 0, minPrice: Math.ceil(cat.price), rules: null };
+      const manualStock = (cat as any).stock ?? 0;
+      const available = Math.max(agg.count, manualStock);
       const basePrice = Number.isFinite(agg.minPrice) ? agg.minPrice : Math.ceil(cat.price || 0);
       return {
         id: cat.id,
@@ -48,11 +50,10 @@ export async function GET() {
           agg.rules ||
           "Do not change password or security settings for 24 hours after purchase.",
         price: Math.ceil(basePrice),
-        available: agg.count,
-        status: agg.count > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
+        available: available,
+        status: available > 0 ? "IN_STOCK" : "OUT_OF_STOCK",
       };
     })
-    .filter((p) => p.available > 0)
     .sort((a, b) => a.title.localeCompare(b.title, "en", { sensitivity: "base" }));
 
   return NextResponse.json({ products });

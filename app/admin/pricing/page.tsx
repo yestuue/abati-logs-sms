@@ -468,6 +468,7 @@ export default function AdminPricingPage() {
         categoryName: patch.name,
         description: patch.description,
         price: patch.price,
+        stock: (patch as any).stock,
         enabled: patch.enabled,
       }),
     });
@@ -819,16 +820,18 @@ export default function AdminPricingPage() {
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[920px] text-sm">
-              <thead><tr className="border-b border-border"><th className="text-left py-2">Category</th><th className="text-left py-2">Rules</th><th className="text-left py-2">Price</th><th className="text-left py-2">Enabled</th><th className="text-right py-2">Actions</th></tr></thead>
+              <thead><tr className="border-b border-border"><th className="text-left py-2">Category</th><th className="text-left py-2">Rules</th><th className="text-left py-2">Price</th><th className="text-left py-2">Stock</th><th className="text-left py-2">Enabled</th><th className="text-right py-2">Actions</th></tr></thead>
               <tbody>
                 {categories.map((c) => (
                   <tr key={c.id} className="border-b border-border/50">
                     <td className="py-2">{c.name}</td>
                     <td className="py-2 max-w-[340px] truncate text-muted-foreground">{c.description || "—"}</td>
                     <td className="py-2">₦{Math.round(c.price).toLocaleString()}</td>
+                    <td className="py-2">{c.stock || 0}</td>
                     <td className="py-2">{c.enabled ? "Yes" : "No"}</td>
                     <td className="py-2 text-right space-x-2">
-                      <Button size="sm" variant="outline" onClick={() => void updateCategory(c.id, { price: Number(prompt(`New price for ${c.name}`, String(c.price)) || c.price) })}>Edit</Button>
+                      <Button size="sm" variant="outline" onClick={() => void updateCategory(c.id, { price: Number(prompt(`New price for ${c.name}`, String(c.price)) || c.price) })}>Price</Button>
+                      <Button size="sm" variant="outline" onClick={() => void updateCategory(c.id, { stock: Number(prompt(`Manual stock for ${c.name}`, String(c.stock)) || c.stock) })}>Stock</Button>
                       <Button
                         size="sm"
                         variant="outline"
