@@ -458,7 +458,7 @@ export default function AdminPricingPage() {
     setCategories((prev) => [data.category, ...prev]);
   }
 
-  async function updateCategory(id: string, patch: Partial<Pick<LogCategory, "name" | "description" | "price" | "enabled">>) {
+  async function updateCategory(id: string, patch: Partial<Pick<LogCategory, "name" | "description" | "price" | "enabled" | "stock">>) {
     const res = await fetch("/api/admin/marketplace/update-price", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
