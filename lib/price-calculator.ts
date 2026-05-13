@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 export type SmsGlobalPremiumSettings = { server1: number; server2: number };
-export type SmsGlobalMarginSettings = { server1MarginPct: number; server2MarginPct: number };
+export type SmsGlobalMarginSettings = { server1MarginPct: number; server2MarginPct: number; fixedProfitNGN: number };
 
 function sanitizeMarginPct(value: unknown, fallback = 35): number {
   const n = Number(value);
