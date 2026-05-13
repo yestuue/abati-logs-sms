@@ -12,4 +12,4 @@ export function getProvider(server: string): SmsProvider {
 }
 
 export * from "./types";
-export { FiveSimProvider, TwilioProvider };
+export { TwilioProvider };
