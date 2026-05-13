@@ -9,6 +9,10 @@ const patchSchema = z.object({
   marginPct: z.number().min(0).max(500).optional(),
   siteName: z.string().trim().min(1).max(120).optional(),
   fixedProfitNGN: z.number().min(0).optional(),
+  fiveSimApiKey: z.string().trim().optional(),
+  smsExchangeRate: z.number().min(1).optional(),
+  smsProvider: z.string().trim().optional(),
+  grizzlyApiKey: z.string().trim().optional(),
 });
 
 import { isAdmin } from "@/lib/admin-access";
@@ -38,6 +42,10 @@ export async function GET() {
       smsGlobalPremiumRate: true,
       smsGlobalPremiumRateServer2: true,
       fixedProfitNGN: true,
+      fiveSimApiKey: true,
+      smsExchangeRate: true,
+      smsProvider: true,
+      grizzlyApiKey: true,
     },
   });
 
@@ -49,6 +57,10 @@ export async function GET() {
     S1_MARGIN: s1,
     S2_MARGIN: s2,
     fixedProfitNGN: settings?.fixedProfitNGN ?? 0,
+    fiveSimApiKey: settings?.fiveSimApiKey ?? "",
+    smsExchangeRate: settings?.smsExchangeRate ?? 1550,
+    smsProvider: settings?.smsProvider ?? "FIVESIM",
+    grizzlyApiKey: settings?.grizzlyApiKey ?? "",
   });
 }
 
@@ -60,13 +72,17 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  const { premiumTarget, marginPct, fixedProfitNGN } = parsed.data;
+  const { premiumTarget, marginPct, fixedProfitNGN, fiveSimApiKey, smsExchangeRate, smsProvider, grizzlyApiKey } = parsed.data;
   const settingsId = await getLatestSettingsId();
   const normalizedSiteName = parsed.data.siteName?.trim();
   
   const data: any = {
     ...(normalizedSiteName ? { siteName: normalizedSiteName } : {}),
     ...(fixedProfitNGN != null ? { fixedProfitNGN } : {}),
+    ...(fiveSimApiKey !== undefined ? { fiveSimApiKey } : {}),
+    ...(smsExchangeRate != null ? { smsExchangeRate } : {}),
+    ...(smsProvider !== undefined ? { smsProvider } : {}),
+    ...(grizzlyApiKey !== undefined ? { grizzlyApiKey } : {}),
   };
 
   if (premiumTarget === "SERVER2" && marginPct != null) {

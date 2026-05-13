@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { computeSmsDisplayPriceNgn, fiveSimFetch, getFiveSimApiBase } from "@/lib/sms-provider";
 import { z } from "zod";
-
-type FiveSimGuestProduct = {
-  Price?: number;
-};
 
 const globalSchema = z.object({
   premiumRate: z.number().min(0).max(5),
@@ -25,37 +20,12 @@ async function ensureServiceSeed(globalPremiumRate: number) {
     "instagram",
     "tiktok",
   ];
-  const base = getFiveSimApiBase();
-  const url = `${base}/guest/products/usa/any`;
-
-  try {
-    const res = await fiveSimFetch(url);
-    if (!res.ok) throw new Error("seed fetch failed");
-    const data = (await res.json()) as Record<string, FiveSimGuestProduct>;
-    const rows = Object.entries(data).slice(0, 500).map(([serviceKey, v]) => {
-      const usd = typeof v?.Price === "number" ? v.Price : Number(v?.Price) || 0;
-      return {
-        serviceKey,
-        key: serviceKey,
-        name: serviceKey,
-        basePrice: computeSmsDisplayPriceNgn(usd),
-        basePriceServer2: computeSmsDisplayPriceNgn(usd),
-        premiumRate: globalPremiumRate,
-      };
-    });
-    if (rows.length > 0) {
-      await prisma.service.createMany({ data: rows, skipDuplicates: true });
-      return;
-    }
-  } catch {
-    // fallback below
-  }
 
   await prisma.service.createMany({
     data: fallback.map((serviceKey) => ({
       key: serviceKey,
       serviceKey,
-      name: serviceKey,
+      name: serviceKey.charAt(0).toUpperCase() + serviceKey.slice(1),
       basePrice: 2500,
       basePriceServer2: 2500,
       premiumRate: globalPremiumRate,

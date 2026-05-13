@@ -2,27 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getGlobalSmsPremiumRateForServer, getServicePriceConfigMap } from "@/lib/price-calculator";
-import {
-  computeSmsDisplayPriceNgn,
-  fiveSimFetch,
-  getFiveSimApiBase,
-} from "@/lib/sms-provider";
+import { computeSmsDisplayPriceNgn } from "@/lib/sms-provider";
 import { normalizeServiceSearchQuery } from "@/lib/utils";
-
-type FiveSimGuestProduct = {
-  Category?: string;
-  Qty?: number;
-  Price?: number;
-};
-
-function matchesServiceQuery(key: string, query: string): boolean {
-  const k = key.toLowerCase();
-  const q = query.toLowerCase().trim();
-  if (!q) return false;
-  if (k.includes(q)) return true;
-  const parts = q.split(/\s+/).filter(Boolean);
-  return parts.every((p) => k.includes(p));
-}
+import { getActiveProvider } from "@/lib/sms-providers";
 
 function formatServiceLabel(key: string): string {
   const lower = key.toLowerCase();
@@ -49,22 +31,9 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.FIVE_SIM_API_KEY) {
-    return NextResponse.json(
-      { error: "API Gateway not configured (Key Missing)" },
-      { status: 503 }
-    );
-  }
-
   const { searchParams } = new URL(req.url);
-  let query = normalizeServiceSearchQuery(searchParams.get("service") ?? searchParams.get("q") ?? "");
-  let country = (searchParams.get("country") ?? process.env.FIVE_SIM_GUEST_COUNTRY ?? "usa")
-    .toLowerCase()
-    .trim();
-  const operator = (searchParams.get("operator") ?? process.env.FIVE_SIM_GUEST_OPERATOR ?? "any")
-    .toLowerCase()
-    .trim();
-  const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "30", 10) || 30, 1), 50);
+  const query = normalizeServiceSearchQuery(searchParams.get("service") ?? searchParams.get("q") ?? "");
+  let country = (searchParams.get("country") ?? "usa").toLowerCase().trim();
   const serverRaw = (searchParams.get("server") ?? "SERVER1").toUpperCase();
   const serverForPremium = serverRaw === "SERVER2" ? "SERVER2" : "SERVER1";
 
@@ -72,153 +41,61 @@ export async function GET(req: Request) {
     return NextResponse.json({ services: [], query, total: 0 });
   }
 
-  const countryIdParam = searchParams.get("countryId")?.trim();
-  if (countryIdParam) {
-    const row = await prisma.country.findFirst({
-      where: { OR: [{ id: countryIdParam }, { slug: countryIdParam }] },
-      select: { slug: true },
-    });
-    if (row?.slug) country = row.slug.toLowerCase();
-  }
+  const settings = await prisma.globalSettings.findFirst({
+    orderBy: { updatedAt: "desc" },
+  });
 
-  const base = getFiveSimApiBase();
-  const url = `${base}/guest/products/${encodeURIComponent(country)}/${encodeURIComponent(operator)}`;
+  const exchangeRate = settings?.smsExchangeRate ?? settings?.rateNGN ?? Number(process.env.SMS_EXCHANGE_RATE ?? "1550");
+  const provider = await getActiveProvider(serverForPremium);
 
   try {
-    const res = await fiveSimFetch(url);
+    // Since Twilio (and other providers) might not have a guest products list,
+    // we use getPrices which for Twilio returns a fixed price.
+    const ops = await provider.getPrices(query, country);
+    
+    const services = Object.entries(ops).map(([opName, op]) => ({
+      key: query,
+      name: `${formatServiceLabel(query)} (${opName})`,
+      qty: op.count,
+      priceUsd: op.cost,
+      category: "",
+      basePriceNGN: computeSmsDisplayPriceNgn(op.cost, exchangeRate),
+    }));
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      console.error("[numbers/search] 5SIM guest products error:", err);
-      let message =
-        typeof err === "object" && err && "message" in err
-          ? String((err as { message: string }).message)
-          : "Failed to fetch products from gateway";
-      if (res.status === 401) {
-        message = "Invalid API Key";
-      } else if (res.status === 404) {
-        message = serverForPremium === "SERVER2" ? "Server 2 Busy" : "Service unavailable";
-      } else if (res.status >= 500) {
-        message = "Server 2 Busy";
-      }
-      return NextResponse.json(
-        { error: message, providerStatus: res.status },
-        { status: res.status }
-      );
+    if (services.length === 0) {
+      return NextResponse.json({ services: [], query, total: 0 });
     }
 
-    const data = (await res.json()) as Record<string, FiveSimGuestProduct>;
-
-    const settings = await prisma.globalSettings.findFirst({
-      orderBy: { updatedAt: "desc" },
-    });
-    const exchangeRate = settings?.rateNGN ?? Number(process.env.SMS_EXCHANGE_RATE ?? "1550");
-
-    const services = Object.entries(data)
-      .filter(([key]) => matchesServiceQuery(key, query))
-      .map(([key, v]) => {
-        const priceUsd = typeof v?.Price === "number" ? v.Price : Number(v?.Price) || 0;
-        const qty = typeof v?.Qty === "number" ? v.Qty : Number(v?.Qty) || 0;
-        const category = typeof v?.Category === "string" ? v.Category : "";
-        return {
-          key,
-          name: formatServiceLabel(key),
-          category,
-          qty,
-          priceUsd,
-          basePriceNGN: computeSmsDisplayPriceNgn(priceUsd, exchangeRate),
-        };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name, "en", { sensitivity: "base" }))
-      .slice(0, limit);
-
     const globalPremiumRate = await getGlobalSmsPremiumRateForServer(serverForPremium);
-
     const keys = services.map((s) => s.key);
     const configMap = await getServicePriceConfigMap(keys);
 
-    const missing = services
-      .filter((s) => !configMap.has(s.key))
-      .map((s) => ({
-        serviceKey: s.key,
+    const pricedServices = services.map((s) => {
+      const cfg = configMap.get(s.key);
+      const effective =
+        serverForPremium === "SERVER2"
+          ? (cfg?.basePriceServer2 ?? cfg?.effectiveBase ?? s.basePriceNGN)
+          : (cfg?.effectiveBase ?? s.basePriceNGN);
+          
+      return {
         key: s.key,
-        name: s.name,
-        basePrice: s.basePriceNGN,
-        ...(serverForPremium === "SERVER2" ? { basePriceServer2: s.basePriceNGN } : {}),
+        name: cfg?.name ?? s.name,
+        category: s.category,
+        qty: s.qty,
+        priceUsd: s.priceUsd,
+        priceNGN: Math.round(effective),
         premiumRate: globalPremiumRate,
-      }));
-    if (missing.length > 0) {
-      await prisma.service.createMany({
-        data: missing,
-        skipDuplicates: true,
-      });
-      for (const m of missing) {
-        configMap.set(m.serviceKey, {
-          basePrice: m.basePrice,
-          basePriceServer2: "basePriceServer2" in m ? m.basePriceServer2 ?? null : null,
-          customPrice: null,
-          effectiveBase: m.basePrice,
-          premiumRate: m.premiumRate,
-          name: m.name,
-        });
-      }
-    }
+      };
+    });
 
-    const pricedServices = await Promise.all(
-      services.map(async (s) => {
-        const cfg = configMap.get(s.key);
-        
-        // If we have a cached config, check if the provider price changed significantly
-        // and update the DB if it's not a customPrice override.
-        if (cfg && cfg.customPrice == null) {
-          const oldBase = serverForPremium === "SERVER2" ? cfg.basePriceServer2 : cfg.basePrice;
-          if (oldBase !== s.basePriceNGN) {
-            await prisma.service.update({
-              where: { serviceKey: s.key },
-              data: {
-                ...(serverForPremium === "SERVER2" 
-                  ? { basePriceServer2: s.basePriceNGN } 
-                  : { basePrice: s.basePriceNGN }
-                ),
-                updatedAt: new Date(),
-              },
-            });
-            // Update local config object for immediate display
-            if (serverForPremium === "SERVER2") cfg.basePriceServer2 = s.basePriceNGN;
-            else cfg.basePrice = s.basePriceNGN;
-            cfg.effectiveBase = s.basePriceNGN;
-          }
-        }
-
-        const effective =
-          serverForPremium === "SERVER2"
-            ? (cfg?.basePriceServer2 ?? cfg?.effectiveBase ?? s.basePriceNGN)
-            : (cfg?.effectiveBase ?? s.basePriceNGN);
-            
-        return {
-          key: s.key,
-          name: cfg?.name ?? s.name,
-          category: s.category,
-          qty: s.qty,
-          priceUsd: s.priceUsd,
-          priceNGN: Math.round(effective),
-          premiumRate: globalPremiumRate,
-        };
-      })
-    );
-
-    return NextResponse.json(
-      {
-        services: pricedServices,
-        query,
-        country,
-        operator,
-        total: pricedServices.length,
-      },
-      { headers: { "Cache-Control": "no-store, must-revalidate" } }
-    );
+    return NextResponse.json({
+      services: pricedServices,
+      query,
+      country,
+      total: pricedServices.length,
+    });
   } catch (err) {
-    console.error("[numbers/search] Network error:", err);
-    return NextResponse.json({ error: "Network error contacting API Gateway" }, { status: 502 });
+    console.error("[numbers/search] Error:", err);
+    return NextResponse.json({ error: "Failed to fetch services" }, { status: 500 });
   }
 }

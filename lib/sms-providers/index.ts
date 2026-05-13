@@ -1,13 +1,14 @@
-import { FiveSimProvider } from "./fivesim";
 import { TwilioProvider } from "./twilio";
 import { SmsProvider } from "./types";
 
+export async function getActiveProvider(server: string): Promise<SmsProvider> {
+  // We are now only using Twilio
+  return TwilioProvider;
+}
+
+/** Synchronous version for compatibility */
 export function getProvider(server: string): SmsProvider {
-  // SERVER1 is Twilio, SERVER2 is 5sim
-  if (server === "SERVER1") {
-    return TwilioProvider;
-  }
-  return FiveSimProvider;
+  return TwilioProvider;
 }
 
 export * from "./types";

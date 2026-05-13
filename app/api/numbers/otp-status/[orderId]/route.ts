@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getActiveProvider } from "@/lib/sms-providers";
 
 
 export async function GET(
@@ -22,8 +23,7 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    const { getProvider } = await import("@/lib/sms-providers");
-    const provider = getProvider(vn.server);
+    const provider = await getActiveProvider(vn.server);
     const activation = await provider.checkOrder(orderId);
     
     if (!activation) {

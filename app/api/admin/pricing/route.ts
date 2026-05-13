@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { computeSmsDisplayPriceNgn, fiveSimFetch, getFiveSimApiBase } from "@/lib/sms-provider";
-import { getGlobalSmsPremiumRate } from "@/lib/price-calculator";
 import { seedServices } from "@/prisma/seed-admin-data";
-
 import { isAdmin } from "@/lib/admin-access";
 
 async function requireAdmin() {
@@ -15,73 +12,29 @@ async function requireAdmin() {
   return session;
 }
 
-/** Upsert all guest product keys from API Gateway into Service (does not clear customPrice). */
+/** Upsert fallback catalog keys into Service. */
 async function syncCatalogFromProvider() {
-  // When provider key is missing, seed a practical fallback catalog so admin can still manage pricing.
-  if (!process.env.FIVE_SIM_API_KEY) {
-    await prisma.$transaction(
-      seedServices.map((s) =>
-        prisma.service.upsert({
-          where: { serviceKey: s.serviceKey },
-          update: { name: s.name },
-          create: {
-            key: s.key,
-            serviceKey: s.serviceKey,
-            name: s.name,
-            basePrice: s.basePrice,
-            basePriceServer2: s.basePrice,
-            premiumRate: 0.35,
-          },
-        })
-      )
-    );
-    return seedServices.length;
-  }
-
-  const url = `${getFiveSimApiBase()}/guest/products/usa/any`;
-  const res = await fiveSimFetch(url);
-  if (!res.ok) return 0;
-
-  const data = (await res.json()) as Record<string, { Price?: number }>;
-  const globalPremium = await getGlobalSmsPremiumRate();
-  const entries = Object.entries(data);
-  let n = 0;
-
-  for (const [key, v] of entries) {
-    const usd = typeof v?.Price === "number" ? v.Price : Number(v?.Price) || 0;
-    const basePrice = computeSmsDisplayPriceNgn(usd);
-    const existing = await prisma.service.findUnique({
-      where: { serviceKey: key },
-      select: { id: true, customPrice: true, basePriceServer2: true },
-    });
-    if (!existing) {
-      await prisma.service.create({
-        data: {
-          key,
-          serviceKey: key,
-          name: key,
-          basePrice,
-          basePriceServer2: basePrice,
-          premiumRate: globalPremium,
+  await prisma.$transaction(
+    seedServices.map((s) =>
+      prisma.service.upsert({
+        where: { serviceKey: s.serviceKey },
+        update: { name: s.name },
+        create: {
+          key: s.key,
+          serviceKey: s.serviceKey,
+          name: s.name,
+          basePrice: s.basePrice,
+          basePriceServer2: s.basePrice,
+          premiumRate: 0.35,
         },
-      });
-      n++;
-    } else if (existing.customPrice == null) {
-      await prisma.service.update({
-        where: { id: existing.id },
-        data: {
-          basePrice,
-          ...(existing.basePriceServer2 == null ? { basePriceServer2: basePrice } : {}),
-        },
-      });
-      n++;
-    }
-  }
-  return entries.length;
+      })
+    )
+  );
+  return seedServices.length;
 }
 
 /**
- * GET /api/admin/pricing?syncCatalog=1 — list all SMS services (optionally refresh catalog from provider first).
+ * GET /api/admin/pricing?syncCatalog=1 — list all SMS services (optionally refresh catalog first).
  */
 export async function GET(req: Request) {
   const session = await requireAdmin();

@@ -158,6 +158,14 @@ model GlobalSettings {
   smsGlobalPremiumRateServer2 Float @default(0.35)
   /// Fixed profit amount added to every number purchase.
   fixedProfitNGN  Float @default(0)
+  /// SMS Provider Selection (FIVESIM, GRIZZLY, TWILIO)
+  smsProvider     String   @default("FIVESIM")
+  /// SMS Provider API Key (5SIM)
+  fiveSimApiKey   String?
+  /// SMS Provider API Key (Grizzly)
+  grizzlyApiKey   String?
+  /// SMS Exchange Rate (USD to NGN)
+  smsExchangeRate Float @default(1550)
   updatedAt       DateTime @default(now()) @updatedAt
 }
 

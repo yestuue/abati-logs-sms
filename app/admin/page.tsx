@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { fiveSimFetch, getFiveSimApiBase } from "@/lib/sms-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -59,7 +58,6 @@ export default async function AdminPage() {
   let serverConfigs: {
     id: string; server: string; name: string; isEnabled: boolean;
   }[] = [];
-  let providerOnline = false;
 
   let recentTransactions: {
     id: string; amount: number; currency: string; type: string;
@@ -148,13 +146,6 @@ export default async function AdminPage() {
           userEmail: tx.user?.email ?? "",
         }))
       : [];
-
-  try {
-    const probe = await fiveSimFetch(`${getFiveSimApiBase()}/guest/countries`);
-    providerOnline = probe.ok;
-  } catch {
-    providerOnline = false;
-  }
 
   const stats = [
     {
@@ -311,12 +302,12 @@ export default async function AdminPage() {
                     <div>
                       <span className="text-sm font-medium">{cfg.name}</span>
                       <p className="text-xs text-muted-foreground">
-                        {cfg.server === "SERVER1" ? "USA (+1) numbers" : "Global 50+ countries"}
+                        {cfg.server === "SERVER1" ? "USA (+1) numbers" : "Global countries"}
                       </p>
                     </div>
                   </div>
-                  <Badge variant={cfg.isEnabled && providerOnline ? "success" : "secondary"}>
-                    {cfg.isEnabled && providerOnline ? "Online" : !cfg.isEnabled ? "Disabled" : "Provider Down"}
+                  <Badge variant={cfg.isEnabled ? "success" : "secondary"}>
+                    {cfg.isEnabled ? "Online" : "Disabled"}
                   </Badge>
                 </div>
               ))

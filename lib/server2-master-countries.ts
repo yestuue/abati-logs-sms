@@ -1,18 +1,13 @@
 import type { PrismaClient } from "@prisma/client";
-import {
-  computeSmsDisplayPriceNgn,
-  fiveSimFetch,
-  getFiveSimApiBase,
-} from "@/lib/sms-provider";
 
-/** Canonical slug for Australia (5SIM + master list). */
+/** Canonical slug for Australia. */
 export const SERVER2_AUSTRALIA_SLUG = "australia";
 
 const SERVER2 = "SERVER2";
 
 export type Server2MasterCountry = { slug: string; name: string };
 
-/** Master catalog: AU/US/UK/CA plus broad EU/Asia/Africa/LatAm (5SIM-style slugs). */
+/** Master catalog: AU/US/UK/CA plus broad EU/Asia/Africa/LatAm. */
 const MASTER_PAIRS: [string, string][] = [
   ["australia", "Australia"],
   ["usa", "United States"],
@@ -172,26 +167,4 @@ export function buildCountrySamplePriceSlugOrder(providerSlugs: string[]): strin
 
 export function isServer2MasterSlug(slug: string): boolean {
   return MASTER_SLUG_SET.has(slug);
-}
-
-export async function enrichCountrySamplePrices(
-  prisma: PrismaClient,
-  slugsOrdered: string[],
-  limit: number
-): Promise<void> {
-  const slice = slugsOrdered.slice(0, Math.max(0, limit));
-  const base = getFiveSimApiBase();
-  for (const slug of slice) {
-    const res = await fiveSimFetch(`${base}/guest/products/${encodeURIComponent(slug)}/any`);
-    if (!res.ok) continue;
-    const data = (await res.json()) as Record<string, { Price?: number }>;
-    let min = Number.POSITIVE_INFINITY;
-    for (const v of Object.values(data)) {
-      const p = typeof v?.Price === "number" ? v.Price : NaN;
-      if (Number.isFinite(p) && p < min) min = p;
-    }
-    if (!Number.isFinite(min)) continue;
-    const ngn = Math.round(computeSmsDisplayPriceNgn(min));
-    await prisma.country.updateMany({ where: { slug }, data: { samplePrice: ngn } });
-  }
 }

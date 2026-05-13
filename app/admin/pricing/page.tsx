@@ -117,6 +117,7 @@ export default function AdminPricingPage() {
   }
 
   const [globalFixedProfitNGN, setGlobalFixedProfitNGN] = useState("0");
+  const [smsExchangeRate, setSmsExchangeRate] = useState("1550");
 
   async function loadPremiumSettings() {
     const res = await fetch("/api/admin/settings", { cache: "no-store" });
@@ -131,6 +132,7 @@ export default function AdminPricingPage() {
     setGlobalPremiumS1Pct(String(Math.round(s1)));
     setGlobalPremiumS2Pct(String(Math.round(s2)));
     setGlobalFixedProfitNGN(String(Math.round(fixed)));
+    setSmsExchangeRate(String(data.smsExchangeRate ?? 1550));
   }
 
   async function saveFixedProfit() {
@@ -143,6 +145,21 @@ export default function AdminPricingPage() {
     });
     if (!res.ok) return toast.error("Failed to save profit");
     toast.success("Fixed profit updated");
+    await loadPremiumSettings();
+  }
+
+  async function saveGatewaySettings() {
+    const rate = Number(smsExchangeRate);
+    if (!Number.isFinite(rate) || rate <= 0) return toast.error("Invalid exchange rate");
+    const res = await fetch("/api/admin/settings", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        smsExchangeRate: rate,
+      }),
+    });
+    if (!res.ok) return toast.error("Failed to save gateway settings");
+    toast.success("Gateway settings updated");
     await loadPremiumSettings();
   }
 
@@ -568,10 +585,40 @@ export default function AdminPricingPage() {
             </div>
           </div>
 
+          <div className="space-y-6 rounded-xl border border-border/80 bg-muted/20 p-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold">SMS Gateway Configuration</h3>
+              <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">Twilio Active</Badge>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <Label htmlFor="sms-rate">SMS Exchange Rate (₦/$)</Label>
+                <Input
+                  id="sms-rate"
+                  value={smsExchangeRate}
+                  onChange={(e) => setSmsExchangeRate(e.target.value.replace(/[^\d.]/g, ""))}
+                />
+                <p className="text-[11px] text-muted-foreground">Used for price conversion on global numbers</p>
+              </div>
+              <div className="pt-4">
+                <Button className="w-full" onClick={() => void saveGatewaySettings()}>
+                  Save Configuration
+                </Button>
+              </div>
+            </div>
+            
+            <div className="mt-2 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                <strong>Twilio-Only Mode:</strong> The platform is configured to use Twilio for all virtual number services. Credentials are managed via environment variables.
+              </p>
+            </div>
+          </div>
+
           <div className="flex flex-wrap items-end gap-3">
-            <Button variant="outline" onClick={() => void syncServer2Countries()}>Fetch Server 2 Countries</Button>
+            <Button variant="outline" onClick={() => void syncServer2Countries()}>Refresh Country List</Button>
             <Button variant="secondary" onClick={() => void syncSmsCatalog()} disabled={loading}>
-              Sync SMS catalog (Server 2)
+              Seed Common Services
             </Button>
           </div>
 

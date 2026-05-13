@@ -6,6 +6,7 @@ import { finalNumberPurchasePriceNGN } from "@/lib/number-purchase-price";
 import { generateReference } from "@/lib/utils";
 import { getGlobalSmsPremiumRateForServer } from "@/lib/price-calculator";
 import { grantReferralPurchaseCommissionInTx } from "@/lib/referral-reward";
+import { getActiveProvider } from "@/lib/sms-providers";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -45,8 +46,7 @@ export async function POST(req: Request) {
     const exchangeRate = settings?.rateNGN ?? Number(process.env.SMS_EXCHANGE_RATE ?? "1550");
 
     // Get the correct provider for this server
-    const { getProvider } = await import("@/lib/sms-providers");
-    const provider = getProvider(server);
+    const provider = await getActiveProvider(server);
 
     // Buy number from provider
     const { data: activation, error: buyError } = await provider.buyNumber(country, operator, service);

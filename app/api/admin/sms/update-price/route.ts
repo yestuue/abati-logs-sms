@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { fiveSimFetch, getFiveSimApiBase } from "@/lib/sms-provider";
 import {
-  buildCountrySamplePriceSlugOrder,
-  enrichCountrySamplePrices,
   upsertServer2MasterCountries,
 } from "@/lib/server2-master-countries";
 import { z } from "zod";
@@ -144,39 +141,12 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Unsupported mode" }, { status: 400 });
     }
 
-    const url = `${getFiveSimApiBase()}/guest/countries`;
-    const res = await fiveSimFetch(url);
-    if (!res.ok) return NextResponse.json({ error: "Provider country sync failed" }, { status: res.status });
-    const data = (await res.json()) as Record<string, { text_en?: string }>;
-    const countries = Object.entries(data);
-
-    // Provider list: add/update rows from 5SIM (new rows enabled for users).
-    await prisma.$transaction(
-      countries.map(([slug, meta]) =>
-        prisma.country.upsert({
-          where: { slug },
-          update: { name: meta?.text_en || slug, server: "SERVER2" },
-          create: {
-            slug,
-            name: meta?.text_en || slug,
-            enabled: true,
-            server: "SERVER2",
-            samplePrice: 0,
-          },
-        })
-      )
-    );
-
-    // Master catalog: ensure AU/US/UK/CA + broad EU/Asia/Africa coverage and canonical names.
+    // Master catalog: ensure AU/US/UK/CA + broad coverage.
     await upsertServer2MasterCountries(prisma);
 
-    const providerSlugs = countries.map(([slug]) => slug);
-    const priceOrder = buildCountrySamplePriceSlugOrder(providerSlugs);
-    // Australia first, then masters, then provider extras; cap requests to keep the admin request bounded.
-    await enrichCountrySamplePrices(prisma, priceOrder, 40);
-
-    return NextResponse.json({ success: true, synced: countries.length });
-  } catch {
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error("[admin/update-price] Error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
