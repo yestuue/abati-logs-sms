@@ -44,6 +44,7 @@ model User {
   logs           Log[]
   referredBy     User?           @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull, onUpdate: NoAction)
   referrals      User[]          @relation("UserReferrals")
+  manualPayments ManualPayment[]
 }
 
 model VirtualNumber {
@@ -187,7 +188,7 @@ model LogCategory {
   logs      Log[]
 }
 
-/// Server 2 / provider countries (synced from 5SIM guest API). Table name kept for existing DBs.
+/// Server 2 / provider countries (synced from API). Table name kept for existing DBs.
 model Country {
   id           String   @id @default(cuid())
   name         String
@@ -277,6 +278,18 @@ enum TransactionStatus {
   SUCCESS
   FAILED
   REVERSED
+}
+
+model ManualPayment {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Float
+  email       String
+  screenshot  String
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
 }
 
 enum TransactionType {

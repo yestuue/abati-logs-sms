@@ -570,7 +570,7 @@ export default function AdminPricingPage() {
           <div className="flex flex-wrap items-end gap-3">
             <Button variant="outline" onClick={() => void syncServer2Countries()}>Fetch Server 2 Countries</Button>
             <Button variant="secondary" onClick={() => void syncSmsCatalog()} disabled={loading}>
-              Sync SMS catalog (5SIM)
+              Sync SMS catalog (Server 2)
             </Button>
           </div>
 
@@ -710,7 +710,7 @@ export default function AdminPricingPage() {
             {!servicesLoading && filteredServices.length === 0 && (
               <p className="text-sm text-muted-foreground py-4">
                 {services.length === 0
-                  ? "No services in database yet. Click “Sync SMS catalog (5SIM)” to populate this table."
+                  ? "No services in database yet. Click “Sync SMS catalog (Server 2)” to populate this table."
                   : "No services match your name/key filters."}
               </p>
             )}

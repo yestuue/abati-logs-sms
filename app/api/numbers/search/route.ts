@@ -51,7 +51,7 @@ export async function GET(req: Request) {
 
   if (!process.env.FIVE_SIM_API_KEY) {
     return NextResponse.json(
-      { error: "FIVE_SIM_API_KEY not configured" },
+      { error: "API Gateway not configured (Key Missing)" },
       { status: 503 }
     );
   }
@@ -93,7 +93,7 @@ export async function GET(req: Request) {
       let message =
         typeof err === "object" && err && "message" in err
           ? String((err as { message: string }).message)
-          : "Failed to fetch 5SIM products";
+          : "Failed to fetch products from gateway";
       if (res.status === 401) {
         message = "Invalid API Key";
       } else if (res.status === 404) {
@@ -219,6 +219,6 @@ export async function GET(req: Request) {
     );
   } catch (err) {
     console.error("[numbers/search] Network error:", err);
-    return NextResponse.json({ error: "Network error contacting 5SIM" }, { status: 502 });
+    return NextResponse.json({ error: "Network error contacting API Gateway" }, { status: 502 });
   }
 }

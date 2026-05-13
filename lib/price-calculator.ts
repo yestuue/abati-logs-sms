@@ -17,6 +17,7 @@ export async function getGlobalSmsMarginSettings(): Promise<SmsGlobalMarginSetti
       s2Margin: true,
       smsGlobalPremiumRate: true,
       smsGlobalPremiumRateServer2: true,
+      fixedProfitNGN: true,
     },
   });
   // Backward-compatible fallback: derive margin % from legacy premium-rate decimals.
@@ -31,14 +32,16 @@ export async function getGlobalSmsMarginSettings(): Promise<SmsGlobalMarginSetti
         : 35),
     35
   );
-  return { server1MarginPct: s1Pct, server2MarginPct: s2Pct };
+  const fixedProfit = settings?.fixedProfitNGN ?? 0;
+  return { server1MarginPct: s1Pct, server2MarginPct: s2Pct, fixedProfitNGN: fixedProfit };
 }
 
-export async function getGlobalSmsPremiumSettings(): Promise<SmsGlobalPremiumSettings> {
+export async function getGlobalSmsPremiumSettings(): Promise<SmsGlobalPremiumSettings & { fixedProfitNGN: number }> {
   const margins = await getGlobalSmsMarginSettings();
   return {
     server1: margins.server1MarginPct / 100,
     server2: margins.server2MarginPct / 100,
+    fixedProfitNGN: margins.fixedProfitNGN,
   };
 }
 

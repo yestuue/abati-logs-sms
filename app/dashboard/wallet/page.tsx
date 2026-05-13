@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Wallet, Plus,
   Loader2, TrendingDown, TrendingUp,
-  RefreshCw, CreditCard, ArrowUpRight, ArrowDownLeft
+  RefreshCw, CreditCard, ArrowUpRight, ArrowDownLeft, Upload, Mail
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -149,10 +149,147 @@ function FundWalletModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+function ManualPaymentModal({ onClose }: { onClose: () => void }) {
+  const [amount, setAmount] = useState("");
+  const [email, setEmail] = useState("");
+  const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setScreenshot(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  async function handleSubmit() {
+    if (!amount || parseFloat(amount) < 100) { toast.error("Minimum amount is ₦100"); return; }
+    if (!email || !email.includes("@")) { toast.error("Please enter a valid email"); return; }
+    if (!screenshot) { toast.error("Please upload a payment screenshot"); return; }
+
+    setLoading(true);
+    try {
+      // Convert image to base64 for simplicity in this implementation
+      const base64 = previewUrl;
+      
+      const res = await fetch("/api/payments/manual", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: parseFloat(amount),
+          email,
+          screenshot: base64,
+        }),
+      });
+
+      if (res.ok) {
+        toast.success("Payment proof submitted! Admin will review it shortly.");
+        onClose();
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to submit proof");
+      }
+    } catch (err) {
+      toast.error("An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Upload className="w-5 h-5 text-primary" />
+            Manual Bank Transfer
+          </DialogTitle>
+          <DialogDescription>
+            Transfer to our bank account and upload the screenshot below.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="bg-muted/50 p-4 rounded-lg border border-border space-y-1 text-sm">
+            <p className="font-semibold text-primary">Bank Details:</p>
+            <p>Bank: <span className="font-medium">Opay</span></p>
+            <p>Account Name: <span className="font-medium">ABATI DIGITAL</span></p>
+            <p>Account Number: <span className="font-medium">8161108253</span></p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="manual-amount">Amount Paid (₦)</Label>
+            <Input
+              id="manual-amount"
+              type="number"
+              placeholder="e.g. 5000"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="manual-email">Your Email (for top-up)</Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="manual-email"
+                type="email"
+                placeholder="you@example.com"
+                className="pl-9"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Payment Screenshot</Label>
+            <div 
+              className="border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-muted/30 transition-all"
+              onClick={() => document.getElementById("screenshot-upload")?.click()}
+            >
+              {previewUrl ? (
+                <img src={previewUrl} alt="Preview" className="max-h-32 rounded-md mb-2" />
+              ) : (
+                <>
+                  <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-xs text-muted-foreground">Click to upload screenshot</p>
+                </>
+              )}
+              <input
+                id="screenshot-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </div>
+          </div>
+
+          <Button 
+            className="w-full font-bold h-11"
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...</> : "Submit Proof"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function WalletPage() {
   const { data: session, status } = useSession();
   const [showFundWallet, setShowFundWallet] = useState(false);
+  const [showManualPayment, setShowManualPayment] = useState(false);
   const [walletData, setWalletData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -244,19 +381,26 @@ export default function WalletPage() {
             </div>
 
             <div className="mt-6 flex gap-3 flex-wrap">
-              <Button
-                size="sm"
-                className="font-semibold"
-                style={{
-                  background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))",
-                  color: "#fff",
-                  boxShadow: "0 4px 14px oklch(0.68 0.22 278 / 0.40)",
-                }}
-                onClick={() => setShowFundWallet(true)}
-              >
-                <Plus className="w-4 h-4" />
-                Fund via Card
-              </Button>
+                <Button
+                  size="sm"
+                  className="font-bold uppercase"
+                  style={{
+                    background: "linear-gradient(135deg, oklch(0.68 0.22 278), oklch(0.55 0.24 278))",
+                    color: "#fff",
+                    boxShadow: "0 4px 14px oklch(0.68 0.22 278 / 0.40)",
+                  }}
+                  onClick={() => setShowFundWallet(true)}
+                >
+                  FUND WALLET 💳
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="font-bold border-primary/40 text-primary-foreground hover:bg-primary/10"
+                  onClick={() => setShowManualPayment(true)}
+                >
+                  BANK TRANSFER
+                </Button>
             </div>
           </CardContent>
         </Card>
@@ -356,6 +500,7 @@ export default function WalletPage() {
 
       {/* Modals */}
       {showFundWallet && <FundWalletModal onClose={() => setShowFundWallet(false)} />}
+      {showManualPayment && <ManualPaymentModal onClose={() => setShowManualPayment(false)} />}
     </div>
   );
 }

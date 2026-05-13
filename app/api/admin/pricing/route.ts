@@ -15,7 +15,7 @@ async function requireAdmin() {
   return session;
 }
 
-/** Upsert all guest product keys from 5SIM into Service (does not clear customPrice). */
+/** Upsert all guest product keys from API Gateway into Service (does not clear customPrice). */
 async function syncCatalogFromProvider() {
   // When provider key is missing, seed a practical fallback catalog so admin can still manage pricing.
   if (!process.env.FIVE_SIM_API_KEY) {

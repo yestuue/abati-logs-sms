@@ -51,7 +51,8 @@ export async function POST(req: Request) {
     // Buy number from provider
     const { data: activation, error: buyError } = await provider.buyNumber(country, operator, service);
     if (buyError || !activation || !activation.phone) {
-      return NextResponse.json({ error: buyError || "Failed to get number from provider." }, { status: 502 });
+      const msg = buyError || "Gateway Error: No number returned";
+      return NextResponse.json({ error: msg }, { status: 502 });
     }
 
     // Calculate final price based on the actual cost from provider

@@ -38,6 +38,7 @@ const adminNav: NavItem[] = [
   { label: "Servers",    href: "/admin/servers",     icon: Server },
   { label: "Numbers",    href: "/admin/numbers",     icon: Phone },
   { label: "Pricing Management", href: "/admin/pricing", icon: BadgeDollarSign },
+  { label: "Manual Payments", href: "/admin/payments/manual", icon: CreditCard },
   { label: "Services",   href: "/admin/services",    icon: MessageSquare },
   { label: "Inventory",  href: "/admin/inventory",   icon: PackageSearch },
   { label: "Users",      href: "/admin/users",       icon: Users },
