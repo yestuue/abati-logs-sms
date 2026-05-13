@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { initializeFlutterwavePayment } from "@/lib/flutterwave";
-import { buyFiveSimNumber } from "@/lib/sms-provider";
+import { buyNumber } from "@/lib/sms-provider";
 import { finalNumberPurchasePriceNGN, normalizePurchaseCarrier } from "@/lib/number-purchase-price";
 import { generateReference } from "@/lib/utils";
 import { grantReferralPurchaseCommissionInTx } from "@/lib/referral-reward";
@@ -155,7 +155,7 @@ export async function POST(req: Request) {
         const operator = "any";
         const product = serviceKey;
         
-        const { data: activation, error: buyError } = await buyFiveSimNumber(country, operator, product);
+        const { data: activation, error: buyError } = await buyNumber("SERVER2", country, operator, product);
         if (buyError || !activation || !activation.phone) {
           return NextResponse.json({ error: buyError || "Failed to get number from provider. Try again later." }, { status: 502 });
         }

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { refundUserBalance } from "@/lib/wallet-logic";
-import { cancelFiveSimOrder } from "@/lib/sms-provider";
 import { z } from "zod";
 
 const schema = z.object({
