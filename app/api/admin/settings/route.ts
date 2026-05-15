@@ -80,7 +80,7 @@ export async function PATCH(req: Request) {
     ...(normalizedSiteName ? { siteName: normalizedSiteName } : {}),
     ...(fixedProfitNGN != null ? { fixedProfitNGN } : {}),
     ...(fiveSimApiKey !== undefined ? { fiveSimApiKey } : {}),
-    ...(smsExchangeRate != null ? { smsExchangeRate } : {}),
+    ...(smsExchangeRate != null ? { smsExchangeRate, rateNGN: smsExchangeRate } : {}),
     ...(smsProvider !== undefined ? { smsProvider } : {}),
     ...(grizzlyApiKey !== undefined ? { grizzlyApiKey } : {}),
   };
@@ -96,7 +96,9 @@ export async function PATCH(req: Request) {
   if (settingsId) {
     await prisma.globalSettings.update({ where: { id: settingsId }, data });
   } else {
-    await prisma.globalSettings.create({ data: { ...data, premiumTarget: premiumTarget || "SERVER1" } as any });
+    // Remove fields not in schema before create
+    const { premiumTarget: _, ...cleanData } = data;
+    await prisma.globalSettings.create({ data: cleanData });
   }
 
   revalidatePath("/admin/pricing");

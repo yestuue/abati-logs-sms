@@ -144,7 +144,10 @@ export default function AdminPricingPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fixedProfitNGN: val, premiumTarget: "SERVER1" }), // Target doesn't matter for fixed profit
     });
-    if (!res.ok) return toast.error("Failed to save profit");
+    if (!res.ok) {
+      const data = await res.json();
+      return toast.error(data.error ?? "Failed to save profit");
+    }
     toast.success("Fixed profit updated");
     await loadPremiumSettings();
   }
@@ -159,7 +162,10 @@ export default function AdminPricingPage() {
         smsExchangeRate: rate,
       }),
     });
-    if (!res.ok) return toast.error("Failed to save gateway settings");
+    if (!res.ok) {
+      const data = await res.json();
+      return toast.error(data.error ?? "Failed to save gateway settings");
+    }
     toast.success("Gateway settings updated");
     await loadPremiumSettings();
   }
