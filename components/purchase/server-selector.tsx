@@ -876,46 +876,7 @@ export function ServerSelector({
         })}
       </div>
 
-      {/* Operator List — Dynamic from 5sim */}
-      {selectedService && (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">Available Operators</h3>
-            {fetchingOperators && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
-          </div>
-          
-          <div className="grid grid-cols-1 gap-2">
-            {operators.length === 0 && !fetchingOperators ? (
-              <p className="text-xs text-muted-foreground p-4 text-center border border-dashed rounded-xl">
-                No operators available for this service in {activeServer === "SERVER1" ? "USA" : selectedCountry?.name}
-              </p>
-            ) : (
-              operators.map((op) => (
-                <button
-                  key={op.name}
-                  onClick={() => handleDirectPurchase(op)}
-                  disabled={buying || op.count === 0}
-                  className="flex items-center justify-between p-3 rounded-xl border border-border bg-card hover:border-primary/50 transition-all group"
-                >
-                  <div className="flex flex-col text-left">
-                    <span className="text-sm font-bold text-foreground uppercase">{op.name}</span>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-emerald-500 font-medium">{op.rate}% Success</span>
-                      <span className="text-[10px] text-muted-foreground">{op.count} in stock</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-primary">₦{op.priceNGN.toLocaleString()}</span>
-                    <Button size="sm" variant="brand" className="h-8 text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                      Buy
-                    </Button>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      )}
+
 
       {/* Active Order / Wait State */}
       <AnimatePresence>
@@ -1182,6 +1143,47 @@ export function ServerSelector({
             </CardContent>
           </Card>
 
+          {/* Operator List — Dynamic from 5sim */}
+          {selectedService && (
+            <div className="space-y-3 mt-4 mb-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">Available Operators</h3>
+                {fetchingOperators && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+              </div>
+              
+              <div className="grid grid-cols-1 gap-2">
+                {operators.length === 0 && !fetchingOperators ? (
+                  <p className="text-xs text-muted-foreground p-4 text-center border border-dashed rounded-xl">
+                    No operators available for this service in {activeServer === "SERVER1" ? "USA" : selectedCountry?.name}
+                  </p>
+                ) : (
+                  operators.map((op) => (
+                    <button
+                      key={op.name}
+                      onClick={() => handleDirectPurchase(op)}
+                      disabled={buying || op.count === 0}
+                      className="flex items-center justify-between p-3 rounded-xl border border-border bg-card hover:border-primary/50 transition-all group shadow-sm"
+                    >
+                      <div className="flex flex-col text-left">
+                        <span className="text-sm font-bold text-foreground uppercase">{op.name}</span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-emerald-500 font-medium">{op.rate}% Success</span>
+                          <span className="text-[10px] text-muted-foreground">{op.count} in stock</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-bold text-primary">₦{op.priceNGN.toLocaleString()}</span>
+                        <Button size="sm" variant="brand" className="h-8 text-xs">
+                          Buy
+                        </Button>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
           <Card id="active-numbers-section" className="w-full max-w-[354px] mx-auto lg:max-w-none rounded-2xl border border-zinc-200/90 dark:border-zinc-900 mb-8 mt-2 shadow-sm">
             <CardHeader className="pb-2 border-b border-zinc-100 dark:border-zinc-800">
               <CardTitle className="text-[15px] font-semibold text-foreground">
@@ -1244,8 +1246,21 @@ export function ServerSelector({
                       type="button"
                       size="sm"
                       variant="brand"
-                      className="shrink-0 text-xs"
+                      className="shrink-0 text-xs font-bold"
+                      disabled={buying || fetchingOperators}
                       onClick={() => {
+                        if (activeServer === "SERVER1") {
+                          if (operators.length > 0) {
+                            void handleDirectPurchase(operators[0]);
+                          } else {
+                            toast.info("Loading operator prices... please wait.");
+                            if (selectedService) {
+                              void fetchOperators(selectedService.serviceKey, "usa");
+                            }
+                          }
+                          return;
+                        }
+                        
                         if (activeServer !== "SERVER2") return;
                         if (numbers.length === 0) {
                           // No inventory? Buy directly from provider.
@@ -1271,6 +1286,7 @@ export function ServerSelector({
                         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
                       }}
                     >
+                      {buying || fetchingOperators ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
                       Get Number
                     </Button>
                   </div>
