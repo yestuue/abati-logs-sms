@@ -64,16 +64,42 @@ export async function GET(req: Request) {
   }
 
   try {
+    // 1. Search our database for services matching the query
+    const matchingServices = await prisma.service.findMany({
+      where: {
+        OR: [
+          { name: { startsWith: query, mode: 'insensitive' } },
+          { serviceKey: { startsWith: query, mode: 'insensitive' } }
+        ]
+      },
+      take: 20
+    });
+
+    // 2. Fetch prices from provider (Twilio returns a fixed price)
     const ops = await provider.getPrices(query, providerCountry);
-    
-    const services = Object.entries(ops).map(([opName, op]) => ({
-      key: query,
-      name: `${formatServiceLabel(query)} (${opName})`,
-      qty: op.count,
-      priceUsd: op.cost,
+    const twilioPrice = ops["Twilio"]?.cost ?? 0.5;
+
+    // 3. Map database services to the result format
+    let services = matchingServices.map(s => ({
+      key: s.serviceKey,
+      name: s.name,
+      qty: 999, // Twilio usually has plenty of stock
+      priceUsd: twilioPrice,
       category: "",
-      basePriceNGN: computeSmsDisplayPriceNgn(op.cost, exchangeRate),
+      basePriceNGN: computeSmsDisplayPriceNgn(twilioPrice, exchangeRate),
     }));
+
+    // 4. If no services found in DB, fallback to the user's raw query
+    if (services.length === 0) {
+      services = [{
+        key: query,
+        name: `${formatServiceLabel(query)} (Twilio)`,
+        qty: 999,
+        priceUsd: twilioPrice,
+        category: "",
+        basePriceNGN: computeSmsDisplayPriceNgn(twilioPrice, exchangeRate),
+      }];
+    }
 
     if (services.length === 0) {
       return NextResponse.json({ services: [], query, total: 0 });
