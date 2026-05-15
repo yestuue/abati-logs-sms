@@ -47,15 +47,13 @@ export async function POST(req: Request) {
 
     // Get the correct provider for this server
     const provider = await getActiveProvider(server);
-
+    
     let providerCountry = country;
-    if (server === "SERVER2") {
-      const countryRecord = await prisma.country.findFirst({
-        where: { slug: country, enabled: true },
-      });
-      if (countryRecord?.iso2) {
-        providerCountry = countryRecord.iso2;
-      }
+    const countryRecord = await prisma.country.findFirst({
+      where: { slug: country },
+    });
+    if (countryRecord?.iso2) {
+      providerCountry = countryRecord.iso2;
     }
     
     // Buy number from provider

@@ -29,13 +29,11 @@ export async function GET(req: Request) {
     const provider = getProvider(server);
 
     let providerCountry = country;
-    if (server === "SERVER2") {
-      const countryRecord = await prisma.country.findFirst({
-        where: { slug: country, enabled: true },
-      });
-      if (countryRecord?.iso2) {
-        providerCountry = countryRecord.iso2;
-      }
+    const countryRecord = await prisma.country.findFirst({
+      where: { slug: country },
+    });
+    if (countryRecord?.iso2) {
+      providerCountry = countryRecord.iso2;
     }
     
     const operatorsData = await provider.getPrices(service, providerCountry);

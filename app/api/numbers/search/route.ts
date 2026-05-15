@@ -44,23 +44,22 @@ export async function GET(req: Request) {
   const settings = await prisma.globalSettings.findFirst({
     orderBy: { updatedAt: "desc" },
   });
-
   const exchangeRate = settings?.smsExchangeRate ?? settings?.rateNGN ?? Number(process.env.SMS_EXCHANGE_RATE ?? "1550");
+
   const provider = await getActiveProvider(serverForPremium);
 
-  let providerCountry = country;
-  if (serverForPremium === "SERVER2") {
-    const countryRecord = await prisma.country.findFirst({
-      where: { slug: country, enabled: true },
-    });
-    if (countryRecord?.iso2) {
-      providerCountry = countryRecord.iso2;
-    }
+  let providerCountry = country; // Default to slug (e.g. "nigeria")
+  
+  // Twilio requires 2-letter ISO codes (e.g. "NG", "US"). 
+  // We fetch this from our country catalog.
+  const countryRecord = await prisma.country.findFirst({
+    where: { slug: country },
+  });
+  if (countryRecord?.iso2) {
+    providerCountry = countryRecord.iso2;
   }
 
   try {
-    // Since Twilio (and other providers) might not have a guest products list,
-    // we use getPrices which for Twilio returns a fixed price.
     const ops = await provider.getPrices(query, providerCountry);
     
     const services = Object.entries(ops).map(([opName, op]) => ({
