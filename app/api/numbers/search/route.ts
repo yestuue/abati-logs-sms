@@ -80,15 +80,24 @@ export async function GET(req: Request) {
     }
 
     const globalPremiumRate = await getGlobalSmsPremiumRateForServer(serverForPremium);
+    const fixedProfitNGN = settings?.fixedProfitNGN ?? 0;
     const keys = services.map((s) => s.key);
     const configMap = await getServicePriceConfigMap(keys);
 
     const pricedServices = services.map((s) => {
       const cfg = configMap.get(s.key);
-      const effective =
-        serverForPremium === "SERVER2"
-          ? (cfg?.basePriceServer2 ?? cfg?.effectiveBase ?? s.basePriceNGN)
-          : (cfg?.effectiveBase ?? s.basePriceNGN);
+      
+      // The "base" price to use: 
+      // 1. Specific server price from DB
+      // 2. Global base price from DB
+      // 3. Fallback to current provider cost
+      const sourcePrice = serverForPremium === "SERVER2"
+        ? (cfg?.basePriceServer2 ?? cfg?.effectiveBase ?? s.basePriceNGN)
+        : (cfg?.effectiveBase ?? s.basePriceNGN);
+      
+      // IMPORTANT: Apply the global profit margin and fixed profit on top of the base price
+      // to ensure the admin's profit settings are reflected.
+      const finalPrice = Math.ceil(sourcePrice * (1 + globalPremiumRate) + fixedProfitNGN);
           
       return {
         key: s.key,
@@ -96,16 +105,32 @@ export async function GET(req: Request) {
         category: s.category,
         qty: s.qty,
         priceUsd: s.priceUsd,
-        priceNGN: Math.round(effective),
+        priceNGN: finalPrice,
         premiumRate: globalPremiumRate,
       };
     });
 
+    // Consolidate services by key to ensure stability in the UI
+    const consolidatedMap = new Map<string, typeof pricedServices[0]>();
+    for (const s of pricedServices) {
+      if (!consolidatedMap.has(s.key)) {
+        consolidatedMap.set(s.key, s);
+      } else {
+        // If we have multiple, keep the one with higher stock or just the first one found
+        const existing = consolidatedMap.get(s.key)!;
+        if (s.qty > existing.qty) {
+          consolidatedMap.set(s.key, s);
+        }
+      }
+    }
+
+    const finalServices = Array.from(consolidatedMap.values());
+
     return NextResponse.json({
-      services: pricedServices,
+      services: finalServices,
       query,
       country,
-      total: pricedServices.length,
+      total: finalServices.length,
     }, {
       headers: { "Cache-Control": "no-store" }
     });
