@@ -176,6 +176,8 @@ export function ServerSelector({
   const [selectedOperator, setSelectedOperator] = useState<string | null>(null);
   const [activeOrder, setActiveOrder] = useState<{ orderId: string; phone: string; sms: any[]; expires: string; status: string } | null>(null);
   const [countdown, setCountdown] = useState<number>(0);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
 
   useEffect(() => {
@@ -753,6 +755,26 @@ export function ServerSelector({
     }
   }
 
+  async function handleCancelAssignment(assignment: ActiveAssignment) {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/numbers/cancel/${assignment.id}`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success("Order cancelled and refunded");
+        void loadActiveAssignments();
+      } else {
+        toast.error(data.error || "Failed to cancel");
+      }
+    } catch (err) {
+      toast.error("Network error");
+    } finally {
+      setLoading(false);
+      setShowCancelConfirm(false);
+      setCancellingId(null);
+    }
+  }
+
   async function copyNumber(num: string) {
     await navigator.clipboard.writeText(num);
     setCopied(num);
@@ -1303,17 +1325,33 @@ export function ServerSelector({
                               {otp ?? "—"}
                             </p>
                           </div>
-                          {otp && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-8 text-xs"
-                              onClick={() => void copyNumber(otp)}
-                            >
-                              Copy OTP
-                            </Button>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {otp && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-8 text-xs"
+                                onClick={() => void copyNumber(otp)}
+                              >
+                                Copy OTP
+                              </Button>
+                            )}
+                            {!otp && (
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="sm"
+                                className="h-8 text-xs font-bold bg-red-600 hover:bg-red-700"
+                                onClick={() => {
+                                  setCancellingId(a.id);
+                                  setShowCancelConfirm(true);
+                                }}
+                              >
+                                Cancel & Refund
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </li>
                     );
@@ -1539,6 +1577,33 @@ export function ServerSelector({
                   Buy Now
                 </>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel confirmation dialog */}
+      <Dialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Confirm Cancel</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this order? The money will be refunded immediately to your balance if no SMS was received.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="grid grid-cols-2 gap-2">
+            <Button variant="outline" onClick={() => setShowCancelConfirm(false)} disabled={loading}>
+              No, Keep it
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                const a = activeAssignments.find(x => x.id === cancellingId);
+                if (a) handleCancelAssignment(a);
+              }}
+              disabled={loading}
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Yes, Cancel"}
             </Button>
           </DialogFooter>
         </DialogContent>

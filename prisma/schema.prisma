@@ -204,6 +204,7 @@ model Country {
   enabled      Boolean  @default(true)
   samplePrice  Int      @default(0)
   server       String   @default("SERVER2")
+  iso2         String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt
 

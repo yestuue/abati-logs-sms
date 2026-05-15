@@ -14,3 +14,6 @@ CREATE TABLE "ManualPayment" (
 
 -- AddForeignKey
 ALTER TABLE "ManualPayment" ADD CONSTRAINT "ManualPayment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- Add iso2 to CountryConfig
+ALTER TABLE "CountryConfig" ADD COLUMN IF NOT EXISTS "iso2" TEXT;

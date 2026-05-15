@@ -15,6 +15,7 @@ export async function GET() {
         id: true,
         slug: true,
         name: true,
+        iso2: true,
         samplePrice: true,
       },
       orderBy: { name: "asc" },

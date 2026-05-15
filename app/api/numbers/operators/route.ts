@@ -27,7 +27,18 @@ export async function GET(req: Request) {
 
     const { getProvider } = await import("@/lib/sms-providers");
     const provider = getProvider(server);
-    const operatorsData = await provider.getPrices(service, country);
+
+    let providerCountry = country;
+    if (server === "SERVER2") {
+      const countryRecord = await prisma.country.findFirst({
+        where: { slug: country, enabled: true },
+      });
+      if (countryRecord?.iso2) {
+        providerCountry = countryRecord.iso2;
+      }
+    }
+    
+    const operatorsData = await provider.getPrices(service, providerCountry);
     
     const globalPremiumRate = await getGlobalSmsPremiumRateForServer(server);
     const fixedProfitNGN = settings?.fixedProfitNGN ?? 0;
