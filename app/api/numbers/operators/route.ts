@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { auth } from "@/lib/auth";
 import { computeSmsDisplayPriceNgn } from "@/lib/sms-provider";
 import { prisma } from "@/lib/prisma";
@@ -56,7 +60,7 @@ export async function GET(req: Request) {
       };
     }).sort((a, b) => b.rate - a.rate); // Sort by success rate
 
-    return NextResponse.json({ operators });
+    return NextResponse.json({ operators }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("[operators] Error fetching operators:", error);
     return NextResponse.json({ error: "Failed to fetch operators" }, { status: 500 });

@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getGlobalSmsPremiumRateForServer, getServicePriceConfigMap } from "@/lib/price-calculator";
@@ -102,6 +106,8 @@ export async function GET(req: Request) {
       query,
       country,
       total: pricedServices.length,
+    }, {
+      headers: { "Cache-Control": "no-store" }
     });
   } catch (err) {
     console.error("[numbers/search] Error:", err);
